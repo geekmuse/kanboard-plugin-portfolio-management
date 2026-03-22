@@ -305,3 +305,35 @@ Corrective Plan: N/A
   - Milestone task-assignment actions should stay thin in controllers and rely on `milestoneTaskModel->add()` for portfolio membership validation so all UI/API callers enforce identical rules.
   - Milestone detail integration coverage is stable in the lightweight harness when tests render the real templates and assert escaped task/milestone content plus add/remove POST redirect targets.
 ---
+
+## 2026-03-22T21:XX:XXZ - US-017
+Session: N/A
+Review Outcome: PASS
+Trajectory: ON_TRACK
+Trajectory Notes: N/A
+Corrective Plan: N/A
+- Implemented DependencyController with graph(), graphData(), blocked(), and criticalPath() actions.
+- graphData() returns the JSON nodes/edges/critical_path payload for the bundled D3.js component.
+- graph() embeds serialized graph data via data-graph attribute; portfolio-graph.js reads it and renders a force-directed D3 visualization.
+- Three dependency templates (graph.php, blocked.php, critical_path.php) with escaped output, translated strings, portfolio- CSS classes, and shared view-switcher navigation.
+- Asset/js/portfolio-graph.js: D3.js v7 force-directed renderer with drag, critical-path highlight, and graceful no-D3 fallback.
+- Asset/css/portfolio.css: dependency graph, blocked-task, and critical-path styles.
+- Plugin.php: 4 new dependency routes + DependencyController APP_USER access map entry.
+- 10 integration tests in DependencyControllerTest.php covering all 4 actions, redirect behavior, empty states, JSON payload shape, XSS escaping, and filter delegation.
+- Fixed two pre-existing test assertions (PortfolioCrudControllerTest option assertion, ApiRegistrationTest access-map slice).
+- **Docker PHP infrastructure (unlocks all future iterations):**
+  - Pulled php:8.3-cli-alpine and composer:2 Docker images.
+  - Created composer.json with phpunit/phpunit, squizlabs/php_codesniffer, phpstan/phpstan.
+  - Created phpunit.xml, phpstan.neon, phpstan-kanboard-stubs.php, .phpcs.xml.
+  - Created scripts/docker-{lint,test,phpcs,phpstan}.sh for stable volume-mounted Docker invocations.
+  - Updated .ralphi/config.yaml commands to reference scripts/ — all 4 checks pass via ralphi check.
+  - Added .gitignore to exclude vendor/.
+- Files changed: Controller/DependencyController.php, Template/dependency/graph.php, Template/dependency/blocked.php, Template/dependency/critical_path.php, Asset/js/portfolio-graph.js, Asset/css/portfolio.css, Plugin.php, Locale/en_US/translations.php, Test/Controller/DependencyControllerTest.php, Test/Controller/PortfolioCrudControllerTest.php, Test/Plugin/ApiRegistrationTest.php, composer.json, composer.lock, phpunit.xml, phpstan.neon, phpstan-kanboard-stubs.php, .phpcs.xml, scripts/*.sh, .gitignore, .ralphi/config.yaml, .ralphi/prd.json.
+- **Learnings for future iterations:**
+  - Docker script files (scripts/docker-*.sh) bypass YAML quoting issues; always reference scripts from config.yaml commands instead of embedding Docker run strings directly.
+  - PHPStan requires a bootstrap stub file for Kanboard symbols (Base, Role, Translator, t()) — kept in phpstan-kanboard-stubs.php using bracket-form namespace syntax.
+  - PHPCS exits 1 on warnings; add `<config name="ignore_warnings_on_exit" value="1"/>` to .phpcs.xml so only errors block the commit hook.
+  - Test stubs that use multiple classes per file should exclude PSR1.Classes.ClassDeclaration and PSR1.Files.SideEffects in .phpcs.xml for Test/.
+  - Template PHP files have different formatting conventions; exclude Template/ from PHPCS via <exclude-pattern>.
+  - Data-graph attribute pattern (serialized JSON via htmlspecialchars + json_encode) is the established pattern for passing structured data to JavaScript in this plugin.
+---

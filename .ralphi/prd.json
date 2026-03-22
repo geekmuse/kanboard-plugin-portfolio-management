@@ -350,15 +350,15 @@
         "Integration tests cover dependency graph page rendering, graph JSON access, blocked tasks view, and critical path view."
       ],
       "priority": 17,
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": [
         "US-009",
         "US-012"
       ],
       "notes": "Spec refs: sections 4.5, 5.1, 5.3, 6, 12.4.",
       "startedAt": "2026-03-22T20:39:30.173Z",
-      "updatedAt": "2026-03-22T20:39:30.173Z",
-      "completedAt": null
+      "updatedAt": "2026-03-22T21:50:35.703Z",
+      "completedAt": "2026-03-22T21:50:35.703Z"
     },
     {
       "id": "US-018",
