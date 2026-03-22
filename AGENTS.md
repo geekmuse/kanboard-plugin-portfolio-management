@@ -2,7 +2,39 @@
 
 ## Quick Orientation
 
-This is a Kanboard plugin (PHP) named "Portfolio" that adds cross-project portfolio management. Read `CLAUDE.md` for concise project context, commands, and constraints. Read `README.md` for user-facing docs. Read `docs/specs/001-kanboard-portfolio.md` for the authoritative implementation specification.
+This is a Kanboard plugin (PHP) named "Portfolio" that adds cross-project portfolio management with grouped projects, shared milestones, and dependency visualization. Read `CLAUDE.md` for concise project context, commands, and constraints. Read `README.md` for user-facing docs. Read `docs/specs/001-kanboard-portfolio.md` for the authoritative implementation specification.
+
+---
+
+## Commands
+
+After **any** code change, run:
+
+```bash
+ralphi check
+```
+
+`ralphi check` uses `.ralphi/config.yaml` and runs:
+- PHPUnit tests (when Kanboard test runtime is available)
+- PHP syntax lint (`php -l`)
+- PHP_CodeSniffer (PSR-12) when installed
+- PHPStan (level 5) when installed
+
+---
+
+## Conventions
+
+1. Use PicoDb query builder for all database queries — no raw SQL string interpolation
+2. All templates escape output with `$this->text->e()` — never echo raw user input
+3. All user-visible strings wrapped in `t('...')` for localization
+4. CSS classes prefixed with `portfolio-` to avoid collisions
+5. Template hooks only — never use `setTemplateOverride()`
+6. Write only to plugin tables — never write to Kanboard core tables
+7. Schema migrations are versioned and append-only — never modify existing `version_N()` functions
+8. Every model method must have a corresponding unit test
+9. Require integration tests for all controller actions
+10. Follow PSR-12 coding standard (enforced via PHP_CodeSniffer)
+11. Maintain PHPStan level 5 compliance — no new baseline errors
 
 ---
 
@@ -12,6 +44,7 @@ This is a Kanboard plugin (PHP) named "Portfolio" that adds cross-project portfo
 |------|-------------|
 | `README.md` | User & contributor guide — install, config, usage, architecture, troubleshooting |
 | `CLAUDE.md` | Agent context — project summary, commands, code style, architectural constraints, gotchas |
+| `.ralphi/config.yaml` | Ralphi loop configuration — commands, rules, boundaries |
 | `docs/specs/001-kanboard-portfolio.md` | **Complete implementation spec** — data model DDL (§3), all 28 API methods with params/returns (§4), controller routes (§5), template & UI hooks (§6), event system (§7), configuration (§8), dependencies (§9), error handling & edge cases (§10), security model (§11), testing strategy (§12), localization (§13), future considerations (§14), full `Plugin.php` registration (Appendix A), CSS conventions (Appendix C) |
 
 ---
@@ -277,7 +310,9 @@ Before marking any task as complete, verify:
 
 ### Code Quality
 - [ ] PHP syntax check passes: `find plugins/Portfolio/ -name "*.php" -exec php -l {} \;`
-- [ ] Code follows PSR-12 / project conventions (see `CLAUDE.md`)
+- [ ] PSR-12 compliant: `./vendor/bin/phpcs --standard=PSR12 plugins/Portfolio/`
+- [ ] PHPStan level 5 clean: `./vendor/bin/phpstan analyse plugins/Portfolio/ --level=5`
+- [ ] Code follows project conventions (see `CLAUDE.md` and `.ralphi/config.yaml`)
 - [ ] No hardcoded link IDs — resolve from `links` table dynamically
 - [ ] No raw SQL string interpolation — PicoDb or PDO prepared statements only
 - [ ] All template output escaped with `$this->text->e()`
@@ -286,7 +321,8 @@ Before marking any task as complete, verify:
 
 ### Functionality
 - [ ] All existing tests pass: `./vendor/bin/phpunit plugins/Portfolio/Test/`
-- [ ] New code has corresponding tests
+- [ ] New model methods have unit tests
+- [ ] New controller actions have integration tests
 - [ ] API return types match Kanboard conventions (`int|false`, `bool`, `dict|null`, `array`)
 - [ ] CSRF protection on all form POST handlers
 - [ ] Access control enforced (check access map in `Plugin.php`)

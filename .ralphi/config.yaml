@@ -1,0 +1,38 @@
+# ralphi configuration
+# Auto-generated — edit as needed
+
+project:
+  name: "kanboard-plugin-portfolio-mgmt"
+  description: "A Kanboard plugin that adds cross-project portfolio management with grouped projects, shared milestones, and dependency visualization."
+  language: "PHP"
+  framework: "Kanboard Plugin"
+
+commands:
+  test: "if [ -x ./vendor/bin/phpunit ] && [ -d Test ]; then ./vendor/bin/phpunit Test/; else echo 'skip test: phpunit or Test directory not available in this environment'; fi"
+  lint: "find . -name '*.php' -not -path './.git/*' -print0 | xargs -0 -r -n1 php -l"
+  phpcs: "if [ -x ./vendor/bin/phpcs ]; then ./vendor/bin/phpcs --standard=PSR12 .; else echo 'skip phpcs: tool not installed'; fi"
+  phpstan: "if [ -x ./vendor/bin/phpstan ]; then ./vendor/bin/phpstan analyse . --level=5; else echo 'skip phpstan: tool not installed'; fi"
+  # build: n/a — PHP templates render directly
+  # typecheck: n/a — covered by phpstan
+
+rules:
+  - "use PicoDb query builder for all database queries — no raw SQL string interpolation"
+  - "all templates escape output with $this->text->e() — never echo raw user input"
+  - "all user-visible strings wrapped in t('...') for localization"
+  - "CSS classes prefixed with portfolio- to avoid collisions"
+  - "template hooks only — never use setTemplateOverride()"
+  - "write only to plugin tables — never write to Kanboard core tables"
+  - "schema migrations are versioned and append-only — never modify existing version_N() functions"
+  - "every model method must have a corresponding unit test"
+  - "require integration tests for all controller actions"
+  - "follow PSR-12 coding standard (enforced via PHP_CodeSniffer)"
+  - "maintain PHPStan level 5 compliance — no new baseline errors"
+
+boundaries:
+  never_touch:
+    - "*.lock"
+    - ".env*"
+    - "Asset/js/d3.v7.min.js"
+
+engine: "pi"
+max_retries: 3

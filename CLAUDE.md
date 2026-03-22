@@ -42,8 +42,11 @@ plugins/Portfolio/          ← Plugin root (deploy here inside Kanboard)
 # PHP syntax check
 find plugins/Portfolio/ -name "*.php" -exec php -l {} \;
 
-# PSR-12 lint (if phpcs available)
+# PSR-12 code style (PHP_CodeSniffer)
 ./vendor/bin/phpcs --standard=PSR12 plugins/Portfolio/
+
+# Static analysis (PHPStan level 5)
+./vendor/bin/phpstan analyse plugins/Portfolio/ --level=5
 
 # No build step — PHP templates render directly
 ```
