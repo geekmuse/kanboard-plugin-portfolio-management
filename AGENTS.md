@@ -62,6 +62,7 @@ ralphi check
 - Never modify existing `version_N()` functions; only add `version_N+1()`
 - Increment `const VERSION` in all 3 driver files simultaneously
 - Test migrations on SQLite at minimum; ideally all 3 drivers
+- `Schema/Sqlite.php`, `Schema/Mysql.php`, and `Schema/Postgres.php` intentionally reuse namespace-level symbols (`VERSION`, `version_N()`), so cross-driver tests should statically inspect non-active driver files instead of requiring all schema files in one PHP process
 
 ---
 
@@ -83,8 +84,12 @@ ralphi check
 - Use `$this->db->table(...)` (PicoDb) for all queries
 - For self-joins on `tasks`, may need `$this->db->execute()` with prepared statements
 - Return types: create → `int|false`, update/delete → `bool`, get-one → `dict|null`, list → `array`
+- Update methods should ignore `null` keys when values come from API `compact(...)` defaults, so omitted fields do not fail validation or overwrite persisted data unintentionally
 - When removing a project from a portfolio, also clean its tasks from the portfolio's milestones
 - `addTaskToMilestone` must verify the task's project is in the milestone's portfolio
+- Dependency queries must resolve dependency link IDs dynamically from `links` and normalize direction using `label`/`opposite_label` so `blocks` and `is blocked by` rows are interpreted consistently
+- Critical-path calculations should run on unresolved active edges only, topologically sort the graph, and deterministically break cycles by removing the latest edge before longest-path evaluation
+- Unified portfolio task queries should precompute project/column/user/dependency lookup maps once, then apply filters/sort/pagination in-memory for deterministic cross-driver behavior without raw SQL joins
 
 ---
 
@@ -104,6 +109,10 @@ ralphi check
 - All form POSTs must call `$this->checkCSRFParam()`
 - Fetch route params with `$this->request->getIntegerParam('portfolio_id')`
 - Read-only routes: `Role::APP_USER`; write routes: `Role::APP_MANAGER`
+- For portfolio membership settings, load current members via `portfolioProjectModel->getProjects()` and compute addable projects by subtracting membership IDs from `projectModel->getAll()` so add/remove forms stay deterministic across runtimes
+- For filterable list views, normalize GET query params in the controller and pass scalar `filters` + `pagination_query` arrays to templates so selected values and previous/next links stay stable across runtimes
+- For aggregate portfolio board/timeline views, fetch active tasks with fixed deterministic filters (`status_id=1`, explicit sort/direction, bounded limit) and build grouped view data in the controller to keep templates simple and testable in the lightweight harness
+- For milestone task membership actions, keep controller handlers thin (`task_id`, `is_critical`, `position`) and delegate project-in-portfolio validation to `milestoneTaskModel->add()` so UI flows and API behavior stay consistent
 
 ---
 
@@ -140,6 +149,7 @@ ralphi check
 - D3.js is bundled — no CDN references
 - jQuery is available (Kanboard bundles it)
 - Vanilla ES5-compatible JS — no build/transpile step
+- Timeline pages pass serialized items via `data-items` on `.portfolio-timeline-chart`; `Asset/js/portfolio-gantt.js` reads that attribute and renders markers through `window.PortfolioGantt.render(...)`
 
 ---
 
@@ -192,6 +202,8 @@ ralphi check
 - Test both success and failure paths (e.g., duplicate name → `false`)
 - Test cascade deletes
 - Test access control (unauthorized → error)
+- If Kanboard runtime dependencies are unavailable locally, model tests may use an in-memory SQLite harness plus a minimal `Kanboard\Core\Base` stub and PicoDb-like adapter to validate behavior deterministically
+- If full HTTP functional helpers are unavailable, controller integration tests may execute controller actions directly using lightweight stubs for request/response/template/flash services, while still asserting rendered templates, redirects, and access-map role wiring
 
 ---
 

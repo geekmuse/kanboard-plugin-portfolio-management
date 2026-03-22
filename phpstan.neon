@@ -1,0 +1,31 @@
+parameters:
+    level: 5
+    paths:
+        - Controller
+        - Model
+        - Helper
+        - Validator
+        - Action
+        - Filter
+        - Formatter
+        - Notification
+        - Plugin.php
+    excludePaths:
+        - vendor
+    bootstrapFiles:
+        - phpstan-kanboard-stubs.php
+    ignoreErrors:
+        # Models and controllers resolve services via Kanboard\Core\Base::__get
+        # magic properties (e.g. $this->portfolioModel, $this->request).
+        - '#Access to an undefined property Kanboard\\Plugin\\Portfolio\\#'
+
+        # Defensive ?? fallbacks on known array literals — belt-and-suspenders
+        # style that is intentional.
+        - '#on left side of \?\? always exists and is not nullable#'
+
+        # The container is typed as array<string,mixed> in the PHPStan stub,
+        # but at runtime it is a Pimple\Container (implements ArrayAccess).
+        # The resolveContainerService() methods defensively check both cases.
+        - '#Instanceof between array<string, mixed> and ArrayAccess will always evaluate to false#'
+        - '#Offset string on \*NEVER\* in isset\(\) always exists and is not nullable#'
+        - '#Result of && is always false#'

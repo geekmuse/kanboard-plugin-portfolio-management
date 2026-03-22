@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+         stopOnFailure="false">
+    <testsuites>
+        <testsuite name="Portfolio Plugin Tests">
+            <directory>Test/</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>Controller/</directory>
+            <directory>Model/</directory>
+            <directory>Helper/</directory>
+            <directory>Validator/</directory>
+            <directory>Action/</directory>
+            <directory>Filter/</directory>
+            <directory>Formatter/</directory>
+            <directory>Notification/</directory>
+        </include>
+    </source>
+</phpunit>

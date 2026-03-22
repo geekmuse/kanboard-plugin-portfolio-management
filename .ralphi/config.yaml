@@ -8,10 +8,10 @@ project:
   framework: "Kanboard Plugin"
 
 commands:
-  test: "if [ -x ./vendor/bin/phpunit ] && [ -d Test ]; then ./vendor/bin/phpunit Test/; else echo 'skip test: phpunit or Test directory not available in this environment'; fi"
-  lint: "find . -name '*.php' -not -path './.git/*' -print0 | xargs -0 -r -n1 php -l"
-  phpcs: "if [ -x ./vendor/bin/phpcs ]; then ./vendor/bin/phpcs --standard=PSR12 .; else echo 'skip phpcs: tool not installed'; fi"
-  phpstan: "if [ -x ./vendor/bin/phpstan ]; then ./vendor/bin/phpstan analyse . --level=5; else echo 'skip phpstan: tool not installed'; fi"
+  lint:    "bash scripts/docker-lint.sh"
+  test:    "bash scripts/docker-test.sh"
+  phpcs:   "bash scripts/docker-phpcs.sh"
+  phpstan: "bash scripts/docker-phpstan.sh"
   # build: n/a — PHP templates render directly
   # typecheck: n/a — covered by phpstan
 

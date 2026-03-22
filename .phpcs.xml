@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<ruleset name="Portfolio Plugin">
+    <description>PSR-12 for production code; relaxed rules for test stubs and view templates.</description>
+
+    <!-- Scan these paths -->
+    <file>Controller</file>
+    <file>Model</file>
+    <file>Helper</file>
+    <file>Validator</file>
+    <file>Action</file>
+    <file>Filter</file>
+    <file>Formatter</file>
+    <file>Notification</file>
+    <file>Plugin.php</file>
+    <file>Schema</file>
+    <file>Test</file>
+
+    <!-- Always exclude vendor and template dirs -->
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <!-- Templates are view files (mixed HTML/PHP); exempt from class-structure rules -->
+    <exclude-pattern>*/Template/*</exclude-pattern>
+
+    <!-- Warnings do not block CI — only errors do -->
+    <config name="ignore_warnings_on_exit" value="1"/>
+
+    <!-- Base standard -->
+    <rule ref="PSR12"/>
+
+    <!--
+        Test files intentionally declare multiple lightweight stub/fake classes
+        in a single file to keep each test self-contained and readable.
+        PSR1.Classes.ClassDeclaration (one class per file) is relaxed for Test/.
+    -->
+    <rule ref="PSR1.Classes.ClassDeclaration">
+        <exclude-pattern>*/Test/*</exclude-pattern>
+    </rule>
+
+    <!--
+        Test files use `require_once` at the top AND declare classes.
+        PSR1.Files.SideEffects is relaxed for Test/ for the same reason.
+    -->
+    <rule ref="PSR1.Files.SideEffects">
+        <exclude-pattern>*/Test/*</exclude-pattern>
+    </rule>
+
+    <!-- Line length: warn at 120, hard-error only at 200 (allows long URLs/strings in callbacks) -->
+    <rule ref="Generic.Files.LineLength">
+        <properties>
+            <property name="lineLimit" value="120"/>
+            <property name="absoluteLineLimit" value="200"/>
+        </properties>
+    </rule>
+</ruleset>

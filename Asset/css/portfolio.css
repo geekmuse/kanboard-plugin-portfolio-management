@@ -1,0 +1,341 @@
+.portfolio-board {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.portfolio-board-column {
+    min-width: 260px;
+    flex: 1 1 280px;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    padding: 0.75rem;
+    background: #fff;
+}
+
+.portfolio-board-column-title {
+    margin-top: 0;
+}
+
+.portfolio-board-column-meta {
+    color: #666;
+    font-size: 0.875rem;
+}
+
+.portfolio-board-card {
+    border: 1px solid #ececec;
+    border-radius: 4px;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    background: #fafafa;
+}
+
+.portfolio-board-card-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.portfolio-board-card-title {
+    margin: 0.4rem 0;
+    font-size: 1rem;
+}
+
+.portfolio-board-card-meta {
+    margin: 0.2rem 0;
+    font-size: 0.85rem;
+}
+
+.portfolio-timeline-chart {
+    margin: 1rem 0;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    padding: 0.75rem;
+    background: #fff;
+}
+
+.portfolio-timeline-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.portfolio-timeline-label {
+    width: 260px;
+    font-size: 0.85rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.portfolio-timeline-track {
+    position: relative;
+    flex: 1;
+    height: 8px;
+    border-radius: 8px;
+    background: #efefef;
+}
+
+.portfolio-timeline-marker {
+    position: absolute;
+    top: -4px;
+    width: 14px;
+    height: 14px;
+    border-radius: 14px;
+    transform: translateX(-50%);
+    background: #4d7cfe;
+}
+
+.portfolio-timeline-marker--milestone {
+    background: #d97706;
+}
+
+.portfolio-timeline-marker--task {
+    background: #0f766e;
+}
+
+/* Dependency graph */
+.portfolio-dependency-graph {
+    margin: 1rem 0;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    background: #fafafa;
+    min-height: 400px;
+    overflow: hidden;
+}
+
+.portfolio-dependency-graph-svg {
+    display: block;
+}
+
+.portfolio-dependency-node {
+    fill: #4d7cfe;
+    stroke: #2d5cbf;
+    stroke-width: 1.5px;
+    cursor: pointer;
+}
+
+.portfolio-dependency-node--closed {
+    fill: #9ca3af;
+    stroke: #6b7280;
+}
+
+.portfolio-dependency-node--critical {
+    fill: #ef4444;
+    stroke: #b91c1c;
+}
+
+.portfolio-dependency-edge {
+    stroke: #374151;
+    stroke-width: 1.5px;
+    fill: none;
+}
+
+.portfolio-dependency-edge--resolved {
+    stroke: #9ca3af;
+    stroke-dasharray: 4 3;
+}
+
+.portfolio-dependency-edge--blocks {
+    stroke: #ef4444;
+}
+
+.portfolio-dependency-arrow {
+    fill: #374151;
+}
+
+.portfolio-graph-node-label {
+    font-size: 0.7rem;
+    fill: #fff;
+    pointer-events: none;
+}
+
+/* Dependency summary / filter bar */
+.portfolio-dependency-filter-bar {
+    margin: 0.5rem 0 1rem;
+    font-size: 0.875rem;
+}
+
+.portfolio-dependency-filter-label {
+    font-weight: bold;
+    margin-right: 0.25rem;
+}
+
+.portfolio-dependency-summary {
+    margin: 0.5rem 0 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.portfolio-dependency-count {
+    margin: 0.5rem 0 1rem;
+    font-size: 0.875rem;
+    color: #374151;
+}
+
+/* Dependency legend */
+.portfolio-dependency-legend {
+    margin-top: 1.5rem;
+}
+
+.portfolio-dependency-legend-title {
+    font-size: 0.9rem;
+    margin-bottom: 0.4rem;
+}
+
+.portfolio-dependency-legend-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.5rem;
+    font-size: 0.85rem;
+}
+
+.portfolio-dependency-legend-list li {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+/* Blocked tasks */
+.portfolio-blocked-task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.portfolio-blocked-task-item {
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    padding: 0.75rem 1rem;
+    background: #fff;
+}
+
+.portfolio-blocked-task-header {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 0.4rem;
+}
+
+.portfolio-blocked-task-title {
+    font-size: 1rem;
+}
+
+.portfolio-blocked-task-project {
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+.portfolio-blocker-list {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.portfolio-blocker-label {
+    font-weight: bold;
+    margin-right: 0.25rem;
+}
+
+.portfolio-blocker-items {
+    margin: 0.25rem 0 0 1rem;
+    padding: 0;
+}
+
+.portfolio-blocker-item {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin-bottom: 0.2rem;
+}
+
+.portfolio-blocker-project {
+    color: #6b7280;
+}
+
+/* Critical path */
+.portfolio-critical-path-summary {
+    margin: 0.5rem 0 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.portfolio-critical-path-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.portfolio-critical-path-item {
+    border: 1px solid #fca5a5;
+    border-left: 4px solid #ef4444;
+    border-radius: 4px;
+    padding: 0.75rem 1rem;
+    background: #fff5f5;
+    margin-bottom: 0;
+}
+
+.portfolio-critical-path-item--closed {
+    border-left-color: #9ca3af;
+    background: #f9fafb;
+    opacity: 0.8;
+}
+
+.portfolio-critical-path-item-header {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 0.25rem;
+}
+
+.portfolio-critical-path-position {
+    color: #6b7280;
+    font-size: 0.875rem;
+    min-width: 1.5rem;
+}
+
+.portfolio-critical-path-task-title {
+    font-size: 1rem;
+}
+
+.portfolio-critical-path-item-meta {
+    font-size: 0.85rem;
+    color: #374151;
+    margin-left: 1.75rem;
+}
+
+.portfolio-critical-path-connector {
+    text-align: center;
+    padding: 0.25rem 0;
+    color: #ef4444;
+    font-size: 1.2rem;
+    line-height: 1;
+}
+
+.portfolio-task-closed {
+    background: #9ca3af;
+    color: #fff;
+}
+
+/* Shared badge */
+.portfolio-badge {
+    display: inline-block;
+    padding: 0.15rem 0.45rem;
+    border-radius: 3px;
+    font-size: 0.8rem;
+    background: #e5e7eb;
+    color: #1f2937;
+}
+
+.portfolio-task-blocked {
+    background: #fca5a5;
+    color: #7f1d1d;
+}

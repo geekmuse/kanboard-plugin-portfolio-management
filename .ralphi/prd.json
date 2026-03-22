@@ -1,0 +1,417 @@
+{
+  "project": "Kanboard Portfolio Plugin",
+  "branchName": "ralph/kanboard-portfolio-plugin",
+  "description": "Add cross-project portfolio management to Kanboard with portfolios, milestones, unified task views, dependency visualization, and supporting API/controllers/hooks.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Bootstrap the Portfolio plugin entry point and package structure",
+      "description": "Create the initial plugin shell so Kanboard can discover the plugin, load translations, and expose the expected top-level directories for subsequent implementation work.",
+      "acceptanceCriteria": [
+        "Plugin.php defines plugin metadata including name, description, version, homepage, author, and compatible Kanboard version.",
+        "onStartup() loads translations from Locale/ for the current Kanboard language.",
+        "The repository contains the planned top-level plugin directories needed by the implementation spec (Schema, Model, Controller, Template, Asset, Locale, Test, and related support folders).",
+        "PHP syntax checks pass for the new bootstrap files and no existing project guidance files are broken by the scaffold."
+      ],
+      "priority": 1,
+      "status": "done",
+      "dependsOn": [],
+      "notes": "Spec refs: sections 2.1, 9.1, 13.2, Appendix A.",
+      "startedAt": "2026-03-22T18:34:37.417Z",
+      "updatedAt": "2026-03-22T18:38:17.515Z",
+      "completedAt": "2026-03-22T18:38:17.515Z"
+    },
+    {
+      "id": "US-002",
+      "title": "Add version 1 schema migrations for all supported databases",
+      "description": "Implement append-only migration files for SQLite, MySQL/MariaDB, and PostgreSQL that create the four plugin tables and their indexes exactly as defined in the spec.",
+      "acceptanceCriteria": [
+        "Schema/Sqlite.php, Schema/Mysql.php, and Schema/Postgres.php each define VERSION = 1 and a version_1(PDO $pdo) function.",
+        "The migrations create portfolios, portfolio_has_projects, milestones, and milestone_has_tasks with the required columns, primary keys, foreign keys, and indexes from the spec.",
+        "The migration code is append-only and does not modify prior version_N() functions after creation.",
+        "Relevant migration tests or verification steps are added and PHP linting remains clean."
+      ],
+      "priority": 2,
+      "status": "done",
+      "dependsOn": [
+        "US-001"
+      ],
+      "notes": "Spec refs: section 3 and 3.7.",
+      "startedAt": "2026-03-22T18:38:17.590Z",
+      "updatedAt": "2026-03-22T18:43:54.230Z",
+      "completedAt": "2026-03-22T18:43:54.230Z"
+    },
+    {
+      "id": "US-003",
+      "title": "Register core services in the plugin container",
+      "description": "Wire the plugin's DI container entries so models, helper, and validator can be resolved consistently by controllers, hooks, and API callbacks.",
+      "acceptanceCriteria": [
+        "Plugin.php registers container services for portfolioModel, portfolioProjectModel, milestoneModel, milestoneTaskModel, dependencyModel, portfolioTaskModel, portfolioHelper, and portfolioValidator.",
+        "Each service resolves to the expected namespaced class under Kanboard\\Plugin\\Portfolio.",
+        "The service registration does not introduce unused or conflicting container keys.",
+        "PHP linting passes and any bootstrap coverage needed for service construction is added."
+      ],
+      "priority": 3,
+      "status": "done",
+      "dependsOn": [
+        "US-001"
+      ],
+      "notes": "Spec refs: Appendix A DI registration block.",
+      "startedAt": "2026-03-22T18:43:54.287Z",
+      "updatedAt": "2026-03-22T18:48:28.685Z",
+      "completedAt": "2026-03-22T18:48:28.685Z"
+    },
+    {
+      "id": "US-004",
+      "title": "Implement PortfolioModel CRUD and validation behavior",
+      "description": "Build the model responsible for creating, retrieving, updating, and deleting portfolios with the exact return conventions and name uniqueness rules defined in the spec.",
+      "acceptanceCriteria": [
+        "PortfolioModel supports create, getById, getByName, getAll, update, and remove using PicoDb queries only.",
+        "Portfolio creation trims and validates names, enforces uniqueness, and stores created_at and updated_at timestamps.",
+        "Update and remove operations follow Kanboard-style return values (true/false or null) without writing to Kanboard core tables.",
+        "Unit tests cover successful CRUD, duplicate-name rejection, empty-name rejection, not-found behavior, and cascade effects expected from schema constraints."
+      ],
+      "priority": 4,
+      "status": "done",
+      "dependsOn": [
+        "US-002",
+        "US-003"
+      ],
+      "notes": "Spec refs: sections 3.2, 4.1, 10.1, 12.2.",
+      "startedAt": "2026-03-22T18:48:28.752Z",
+      "updatedAt": "2026-03-22T18:54:41.318Z",
+      "completedAt": "2026-03-22T18:54:41.318Z"
+    },
+    {
+      "id": "US-005",
+      "title": "Implement PortfolioProjectModel membership management",
+      "description": "Add model logic for adding and removing projects from portfolios and listing memberships with ordering metadata.",
+      "acceptanceCriteria": [
+        "PortfolioProjectModel implements add, remove, getProjects, getPortfolios, and any helper methods needed to resolve project IDs for a portfolio.",
+        "Adding a project verifies that both the portfolio and project exist and prevents duplicate membership rows.",
+        "Removing a project from a portfolio also removes that project's tasks from milestones in the same portfolio in the model layer.",
+        "Unit tests cover add/remove success, duplicate rejection, ordering, reverse lookup, and milestone cleanup behavior."
+      ],
+      "priority": 5,
+      "status": "done",
+      "dependsOn": [
+        "US-004"
+      ],
+      "notes": "Spec refs: sections 3.3, 4.2, 10.2, 12.2.",
+      "startedAt": "2026-03-22T18:54:41.394Z",
+      "updatedAt": "2026-03-22T19:01:09.040Z",
+      "completedAt": "2026-03-22T19:01:09.040Z"
+    },
+    {
+      "id": "US-006",
+      "title": "Implement MilestoneModel CRUD and progress calculation",
+      "description": "Create milestone persistence and progress computation including target-date parsing, at-risk detection, and overdue detection.",
+      "acceptanceCriteria": [
+        "MilestoneModel implements create, getById, getByPortfolioId, update, remove, and getProgress using PicoDb-compatible queries.",
+        "Milestone names are unique within a portfolio, target dates accept YYYY-MM-DD or timestamp input, and milestone status values match the spec.",
+        "Progress calculation returns total, completed, percent, blocked_count, is_at_risk, is_overdue, and target_date with the documented semantics.",
+        "Unit tests cover CRUD, portfolio-scoped name uniqueness, date parsing, zero-task progress, partial progress, completed progress, at-risk, and overdue cases."
+      ],
+      "priority": 6,
+      "status": "done",
+      "dependsOn": [
+        "US-004",
+        "US-005"
+      ],
+      "notes": "Spec refs: sections 3.4, 4.3, 4.4 getMilestoneProgress, 8.1, 12.2.",
+      "startedAt": "2026-03-22T19:01:09.135Z",
+      "updatedAt": "2026-03-22T19:08:31.478Z",
+      "completedAt": "2026-03-22T19:08:31.478Z"
+    },
+    {
+      "id": "US-007",
+      "title": "Implement MilestoneTaskModel milestone-to-task membership",
+      "description": "Add the model that links tasks to milestones, validates portfolio membership, and supports both forward and reverse lookups.",
+      "acceptanceCriteria": [
+        "MilestoneTaskModel implements add, remove, getTasks, and getMilestones using PicoDb queries and Kanboard task/project lookups.",
+        "add() rejects tasks whose project is not part of the milestone's portfolio and prevents duplicate milestone-task membership rows.",
+        "getTasks() returns enriched task data including project, column, assignee, membership metadata, and critical-path flag fields described in the spec.",
+        "Unit tests cover valid add/remove flows, duplicate rejection, invalid portfolio-project membership, enriched retrieval, and reverse milestone lookup."
+      ],
+      "priority": 7,
+      "status": "done",
+      "dependsOn": [
+        "US-005",
+        "US-006"
+      ],
+      "notes": "Spec refs: sections 3.5, 4.4, 12.2.",
+      "startedAt": "2026-03-22T19:08:31.567Z",
+      "updatedAt": "2026-03-22T19:13:40.689Z",
+      "completedAt": "2026-03-22T19:13:40.689Z"
+    },
+    {
+      "id": "US-008",
+      "title": "Implement DependencyModel queries for dependencies, blocked tasks, and blocking tasks",
+      "description": "Build the read-side dependency model over Kanboard's existing task_has_links table so the plugin can expose portfolio-scoped dependency information.",
+      "acceptanceCriteria": [
+        "DependencyModel can resolve the configured dependency link types dynamically from the links table and scope queries to a portfolio's projects.",
+        "getDependencies(), getBlockedTasks(), and getBlockingTasks() return the documented payload fields including project names, resolution flags, and blocker lists.",
+        "The implementation handles cross-project-only filtering and does not write any dependency data to plugin or core tables.",
+        "Unit tests cover no-dependency cases, cross-project filtering, resolved-vs-unresolved dependencies, and blocker/blocking task discovery."
+      ],
+      "priority": 8,
+      "status": "done",
+      "dependsOn": [
+        "US-005"
+      ],
+      "notes": "Spec refs: sections 1.1, 2.3 AD-1, 4.5, 10.2, 12.2.",
+      "startedAt": "2026-03-22T19:13:40.822Z",
+      "updatedAt": "2026-03-22T19:21:20.915Z",
+      "completedAt": "2026-03-22T19:21:20.915Z"
+    },
+    {
+      "id": "US-009",
+      "title": "Implement dependency graph, critical path, and task event reactions",
+      "description": "Extend the dependency model with graph-ready output, longest-chain critical path calculation, and event-driven unblock detection.",
+      "acceptanceCriteria": [
+        "DependencyModel implements getCriticalPath(), getGraph(), onTaskClosed(), onTaskOpened(), and onLinkChanged() with behavior matching the spec.",
+        "Critical-path logic builds a directed graph from unresolved active dependency edges, performs topological processing, and handles cycles defensively.",
+        "Closing a blocking task can fire portfolio.dependency.resolved with the documented event payload when cross-project dependent tasks become unblocked.",
+        "Unit tests cover linear and branching critical paths, empty graph behavior, graph payload shape, event firing when dependencies resolve, and no-op cases."
+      ],
+      "priority": 9,
+      "status": "done",
+      "dependsOn": [
+        "US-008"
+      ],
+      "notes": "Spec refs: sections 4.5, 7.1, 7.2, 12.2.",
+      "startedAt": "2026-03-22T19:21:21.005Z",
+      "updatedAt": "2026-03-22T19:31:36.254Z",
+      "completedAt": "2026-03-22T19:31:36.254Z"
+    },
+    {
+      "id": "US-010",
+      "title": "Implement PortfolioTaskModel unified task queries and overview metrics",
+      "description": "Create the portfolio-wide task query model that supports filtering, sorting, pagination, blocked status calculation, aggregate counts, and dashboard summaries.",
+      "acceptanceCriteria": [
+        "PortfolioTaskModel implements getTasks(), getCounts(), and getOverview() with the filters, sorting options, and pagination rules documented in the spec.",
+        "Returned task records include computed blocked fields and enriched project/column/assignee metadata needed by list and dashboard views.",
+        "Overview responses include project_count, task_counts, milestone health summaries, and critical_path_length consistent with the spec.",
+        "Unit tests cover filtering by status, assignee, project, milestone, dependency presence, count aggregation, sorting, pagination, and overview composition."
+      ],
+      "priority": 10,
+      "status": "done",
+      "dependsOn": [
+        "US-005",
+        "US-006",
+        "US-007",
+        "US-009"
+      ],
+      "notes": "Spec refs: sections 4.6, 12.2.",
+      "startedAt": "2026-03-22T19:31:36.353Z",
+      "updatedAt": "2026-03-22T19:42:26.434Z",
+      "completedAt": "2026-03-22T19:42:26.434Z"
+    },
+    {
+      "id": "US-011",
+      "title": "Register the full JSON-RPC API surface and API access map",
+      "description": "Expose all model capabilities through Kanboard's JSON-RPC procedure handler with the exact method names, parameters, and access rules from the spec.",
+      "acceptanceCriteria": [
+        "Plugin.php registers all 28 JSON-RPC procedures with the method names and callback wiring defined in the spec.",
+        "Write procedures are protected by the API access map at Role::APP_MANAGER while read procedures remain available to APP_USER by default.",
+        "API callbacks delegate to the implemented models without introducing incompatible return types or custom error semantics.",
+        "Integration coverage or targeted API tests verify representative read and write methods and PHP linting remains clean."
+      ],
+      "priority": 11,
+      "status": "done",
+      "dependsOn": [
+        "US-004",
+        "US-005",
+        "US-006",
+        "US-007",
+        "US-008",
+        "US-009",
+        "US-010"
+      ],
+      "notes": "Spec refs: section 4, section 5.2, Appendix A, Appendix B.",
+      "startedAt": "2026-03-22T19:42:26.545Z",
+      "updatedAt": "2026-03-22T19:47:42.438Z",
+      "completedAt": "2026-03-22T19:47:42.438Z"
+    },
+    {
+      "id": "US-012",
+      "title": "Implement portfolio list and portfolio CRUD web flows",
+      "description": "Create the initial portfolio web UI for listing, creating, editing, and removing portfolios using standard Kanboard controller and template patterns.",
+      "acceptanceCriteria": [
+        "PortfolioListController::index() and PortfolioModificationController create/edit/remove flows are implemented with the documented routes and role restrictions.",
+        "Templates under Template/portfolio/ render list, create, edit, and remove screens with escaped output, translated strings, and CSRF protection on POST forms.",
+        "Successful create and update actions redirect to the expected portfolio pages and failure cases surface translated error messages.",
+        "Integration tests cover list rendering, create form display, successful create submit, access denial for APP_USER, and remove confirmation flow."
+      ],
+      "priority": 12,
+      "status": "done",
+      "dependsOn": [
+        "US-004",
+        "US-011"
+      ],
+      "notes": "Spec refs: sections 5.1, 5.3, 6, 11.3, 12.4.",
+      "startedAt": "2026-03-22T19:47:42.592Z",
+      "updatedAt": "2026-03-22T19:57:10.558Z",
+      "completedAt": "2026-03-22T19:57:10.558Z"
+    },
+    {
+      "id": "US-013",
+      "title": "Implement portfolio project membership settings UI",
+      "description": "Add the settings screen and controller actions that let managers add or remove projects from a portfolio and review current membership ordering.",
+      "acceptanceCriteria": [
+        "PortfolioModificationController::settings(), addProject(), and removeProject() are implemented with the documented routes, CSRF checks, and role rules.",
+        "Template/portfolio/settings.php shows current member projects and supports adding and removing projects using translated labels and escaped output.",
+        "Removing a project through the UI triggers the same membership and milestone cleanup behavior as the model layer contract.",
+        "Integration tests cover viewing the settings page, adding a project, removing a project, and unauthorized access rejection."
+      ],
+      "priority": 13,
+      "status": "done",
+      "dependsOn": [
+        "US-005",
+        "US-012"
+      ],
+      "notes": "Spec refs: sections 4.2, 5.1, 5.3, 12.4.",
+      "startedAt": "2026-03-22T19:57:10.690Z",
+      "updatedAt": "2026-03-22T20:05:16.552Z",
+      "completedAt": "2026-03-22T20:05:16.552Z"
+    },
+    {
+      "id": "US-014",
+      "title": "Implement portfolio dashboard and unified task list views",
+      "description": "Build the core portfolio viewing experience including the dashboard summary and the filterable task list across portfolio projects.",
+      "acceptanceCriteria": [
+        "PortfolioViewController::show() and tasks() are implemented and registered to the documented routes.",
+        "Template/portfolio/show.php and Template/portfolio/tasks.php render overview metrics, project summaries, milestone health data, and filtered task results from PortfolioTaskModel.",
+        "The task list supports the documented filters, sorting, pagination, and blocked indicators using escaped output and translated labels.",
+        "Integration tests cover the portfolio dashboard and unified task list pages with representative data."
+      ],
+      "priority": 14,
+      "status": "done",
+      "dependsOn": [
+        "US-010",
+        "US-012"
+      ],
+      "notes": "Spec refs: sections 4.6, 5.1, 5.3, 6.1, 12.4.",
+      "startedAt": "2026-03-22T20:05:16.649Z",
+      "updatedAt": "2026-03-22T20:15:45.069Z",
+      "completedAt": "2026-03-22T20:15:45.069Z"
+    },
+    {
+      "id": "US-015",
+      "title": "Implement aggregate board and timeline views",
+      "description": "Add the remaining portfolio overview pages that present active work in a board-style aggregate layout and timeline/Gantt-style format.",
+      "acceptanceCriteria": [
+        "PortfolioViewController::board() and timeline() are implemented with the documented routes and data loading behavior.",
+        "Template/portfolio/board.php and the timeline view render aggregate project data without using template overrides or cross-project writes.",
+        "Required formatter or asset support is added for board/timeline rendering, including bundled JS usage where the spec expects it.",
+        "Integration coverage verifies the board and timeline routes render successfully with representative portfolio data."
+      ],
+      "priority": 15,
+      "status": "done",
+      "dependsOn": [
+        "US-010",
+        "US-014"
+      ],
+      "notes": "Spec refs: sections 2.1 Formatter, 5.1, 5.3, 6.1, 14.2 Q1.",
+      "startedAt": "2026-03-22T20:15:45.193Z",
+      "updatedAt": "2026-03-22T20:25:49.560Z",
+      "completedAt": "2026-03-22T20:25:49.560Z"
+    },
+    {
+      "id": "US-016",
+      "title": "Implement milestone web controllers and milestone templates",
+      "description": "Create the milestone UI for listing, viewing, creating, editing, deleting, and assigning tasks to cross-project milestones.",
+      "acceptanceCriteria": [
+        "MilestoneController implements index, show, create, save, edit, update, remove, delete, addTask, and removeTask with the documented routes and role restrictions.",
+        "Templates under Template/milestone/ render milestone lists, detail views, forms, and delete confirmation using escaped output and translated strings.",
+        "AJAX or form flows for adding and removing tasks from milestones call the model validation that ensures task projects belong to the portfolio.",
+        "Integration tests cover the milestone CRUD lifecycle and representative task membership actions."
+      ],
+      "priority": 16,
+      "status": "done",
+      "dependsOn": [
+        "US-006",
+        "US-007",
+        "US-012"
+      ],
+      "notes": "Spec refs: sections 4.3, 4.4, 5.1, 5.3, 12.4.",
+      "startedAt": "2026-03-22T20:25:49.705Z",
+      "updatedAt": "2026-03-22T20:39:30.027Z",
+      "completedAt": "2026-03-22T20:39:30.027Z"
+    },
+    {
+      "id": "US-017",
+      "title": "Implement dependency web controllers, templates, and graph endpoint",
+      "description": "Create the dependency-focused pages for graph visualization, blocked task review, and critical path display.",
+      "acceptanceCriteria": [
+        "DependencyController implements graph(), graphData(), blocked(), and criticalPath() for the documented routes and AJAX use cases.",
+        "Templates under Template/dependency/ render graph, blocked, and critical path pages with safe output and translated text.",
+        "The graph data endpoint returns the structured nodes/edges payload expected by the bundled D3.js graph component.",
+        "Integration tests cover dependency graph page rendering, graph JSON access, blocked tasks view, and critical path view."
+      ],
+      "priority": 17,
+      "status": "in_progress",
+      "dependsOn": [
+        "US-009",
+        "US-012"
+      ],
+      "notes": "Spec refs: sections 4.5, 5.1, 5.3, 6, 12.4.",
+      "startedAt": "2026-03-22T20:39:30.173Z",
+      "updatedAt": "2026-03-22T20:39:30.173Z",
+      "completedAt": null
+    },
+    {
+      "id": "US-018",
+      "title": "Add template hooks, widgets, helper utilities, and board blocked-status preloading",
+      "description": "Integrate portfolio information into existing Kanboard pages through hooks and add helper logic needed to render widgets efficiently.",
+      "acceptanceCriteria": [
+        "Plugin.php registers the dashboard, board, task detail, project sidebar, header dropdown, config sidebar, CSS, and JS hooks listed in the spec.",
+        "Widget templates under Template/widget/ render dashboard portfolio links, at-risk milestones, board blocked indicators, task milestone info, dependency snippets, project sidebar data, and creation dropdown links.",
+        "Dependency blocked-status data for board cards is preloaded or cached to avoid an obvious N+1 query pattern during board rendering.",
+        "Integration tests verify representative hook output such as the board blocker indicator and task sidebar milestone widget."
+      ],
+      "priority": 18,
+      "status": "open",
+      "dependsOn": [
+        "US-014",
+        "US-016",
+        "US-017"
+      ],
+      "notes": "Spec refs: sections 2.1 Helper, 6.1, 6.2, 6.3, Appendix A."
+    },
+    {
+      "id": "US-019",
+      "title": "Add dependency-resolved notifications, automatic actions, and custom notification type",
+      "description": "Implement the event-driven automation pieces that notify users or comment on tasks when cross-project blockers are resolved.",
+      "acceptanceCriteria": [
+        "Plugin.php registers the portfolio.dependency.resolved custom event and wires task.close/task.open/task_internal_link events to DependencyModel handlers.",
+        "Action/NotifyDependencyResolved.php and Action/CommentDependencyResolved.php implement the documented behavior for notifying assignees and adding task comments.",
+        "Notification/DependencyResolvedType.php and its template register and render the custom notification payload correctly.",
+        "Tests cover event dispatch and the expected side effects of the automatic actions at the model or integration level."
+      ],
+      "priority": 19,
+      "status": "open",
+      "dependsOn": [
+        "US-009"
+      ],
+      "notes": "Spec refs: section 7, section 12.2, Appendix A."
+    },
+    {
+      "id": "US-020",
+      "title": "Implement configuration UI, task search filter, localization, and asset polish",
+      "description": "Complete the user-facing polish work by adding plugin settings, the portfolio task search filter, translation coverage, and final CSS/JS asset wiring.",
+      "acceptanceCriteria": [
+        "The plugin exposes the documented portfolio_* configuration settings through Kanboard config storage and a settings UI entry in the config sidebar.",
+        "Filter/TaskPortfolioFilter.php enables portfolio-based task search behavior consistent with the spec.",
+        "Locale/en_US/translations.php includes the required user-visible strings and all templates/controllers use t('...') consistently.",
+        "portfolio.css and any remaining JS files are wired in with portfolio-prefixed CSS classes, and relevant tests plus project quality checks remain green."
+      ],
+      "priority": 20,
+      "status": "open",
+      "dependsOn": [
+        "US-018"
+      ],
+      "notes": "Spec refs: sections 2.1 Filter/Asset/Locale, 8, 13, Appendix C."
+    }
+  ]
+}
