@@ -1,9 +1,32 @@
 ## Codebase Patterns
 - **REQUIRED READING**: Before writing any code each iteration, read `docs/references/kanboard-plugin-development-guidelines.md`. It contains authoritative agent feedback, known pitfalls, and hard-won patterns from previous work on this project. Do NOT commit or modify this file.
+- **POST forms — always use `getValues()` once**: `Request::getValue()` internally calls `getValues()` which validates and strips the CSRF token. Calling it multiple times means only the first call returns real data. Pattern: `$values = $this->request->getValues(); $field = (int)($values['field'] ?? 0);`
+- **PHPStan stubs** — `phpstan-kanboard-stubs.php` must declare `Kanboard\Controller\BaseController`, `Kanboard\Filter\BaseFilter`, and `Kanboard\Core\Filter\FilterInterface` for PHPStan to resolve the full type graph. Without them, every controller and filter file emits "unknown class" errors.
+- **Filter private properties** — never name a property `$container` in a class that extends `Kanboard\Core\Base`; it shadows the protected `$container` property. Use a distinct name like `$serviceContainer`.
+- **PHPCBF + manual** — PHPCBF auto-fixes multi-line-call indentation issues but cannot fix one-liner anonymous classes. Expand them to PSR-12 multi-line format manually before committing.
 - Add reusable, project-wide implementation patterns here.
 ---
 
 ## PRD Run Context
 PRD Branch: ralph/post-release-remediation
 Started: 2026-03-23T22:20:35.323Z
+---
+
+## 2026-03-23 — US-001
+Session: iter-4be9155b / loop-9e860edc iteration 1
+Review Outcome: PASS
+Trajectory: ON_TRACK
+Trajectory Notes: N/A
+Corrective Plan: N/A
+- Fixed `MilestoneController::addTask()` to call `$this->request->getValues()` once and read `task_id`, `is_critical`, `position` from the returned array instead of calling `getValue()` three times (each call consumed the CSRF token, returning null after the first).
+- Fixed `MilestoneController::removeTask()` to use the same `getValues()` pattern for consistency.
+- Added missing Kanboard stubs to `phpstan-kanboard-stubs.php` (`BaseController`, `FilterInterface`, `BaseFilter`) — baseline had 9 pre-existing PHPStan "unknown class" errors; now 0.
+- Renamed `TaskPortfolioFilter::$container` → `$serviceContainer` to avoid shadowing `Core\Base::$container`; added PHP return type hints to `setContainer()`, `getAttributes()`, `apply()`.
+- PHPCBF auto-fixed pre-existing multi-line indentation errors in `MilestoneController.php` and `PortfolioModificationController.php`; manually expanded one-liner anonymous classes in two test files to PSR-12 format.
+- Files changed: `Controller/MilestoneController.php`, `Controller/PortfolioModificationController.php`, `Filter/TaskPortfolioFilter.php`, `phpstan-kanboard-stubs.php`, `Test/Controller/MilestoneControllerTest.php`, `Test/Controller/PortfolioViewControllerTest.php`, `.ralphi/config.yaml`, `.ralphi/prd.json`, `.ralphi/progress.txt`
+- **Learnings for future iterations:**
+  - `Request::getValue()` calls `getValues()` internally on each invocation — always consolidate into one `getValues()` call per handler.
+  - PHPStan stubs need `BaseController`, `BaseFilter`, and `FilterInterface` declared to avoid false "unknown class" errors across all controllers and filters.
+  - One-liner anonymous classes in test `buildServices()` helpers trigger PSR-12 brace errors that PHPCBF cannot fix automatically — expand them manually.
+  - Never name a property `$container` in a subclass of `Kanboard\Core\Base`; it conflicts with the base class's protected property.
 ---

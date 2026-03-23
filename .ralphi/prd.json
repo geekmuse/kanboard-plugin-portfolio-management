@@ -15,12 +15,12 @@
         "PHP lint passes and all existing tests pass"
       ],
       "priority": 1,
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": [],
       "notes": "Root cause: Kanboard Request::getValues() validates+consumes CSRF token on first call. Files: Controller/MilestoneController.php lines 231-233, 252.",
       "startedAt": "2026-03-23T22:20:35.963Z",
-      "updatedAt": "2026-03-23T22:20:35.963Z",
-      "completedAt": null
+      "updatedAt": "2026-03-23T22:28:00.000Z",
+      "completedAt": "2026-03-23T22:28:00.000Z"
     },
     {
       "id": "US-002",
