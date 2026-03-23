@@ -5,6 +5,9 @@
 }
 
 .portfolio-board-column {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
     min-width: 260px;
     flex: 1 1 280px;
     border: 1px solid #d9d9d9;
@@ -26,7 +29,6 @@
     border: 1px solid #ececec;
     border-radius: 4px;
     padding: 0.5rem;
-    margin-bottom: 0.5rem;
     background: #fafafa;
 }
 
