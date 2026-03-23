@@ -348,7 +348,7 @@ class Plugin extends Base
 
     public function getPluginName()
     {
-        return 'Portfolio';
+        return '1.17.0';
     }
 
     public function getPluginDescription()

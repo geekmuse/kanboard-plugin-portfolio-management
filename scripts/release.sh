@@ -60,26 +60,33 @@ PLUGIN_FILE="$ROOT_DIR/Plugin.php"
 CHANGELOG_FILE="$ROOT_DIR/CHANGELOG.md"
 
 # --- 1. Update Plugin.php ---
-CURRENT=$(grep -oP "return '\K[^']+" "$PLUGIN_FILE" | head -1 2>/dev/null || true)
-if [[ -z "$CURRENT" ]]; then
-    # macOS grep fallback (no -P)
-    CURRENT=$(sed -n "s/.*return '\([^']*\)'.*/\1/p" "$PLUGIN_FILE" | head -1)
-fi
+# Extract the current version from the getPluginVersion() method specifically.
+# Looks for:  function getPluginVersion() { ... return 'X.Y.Z'; ... }
+CURRENT=$(awk '/function getPluginVersion/,/\}/' "$PLUGIN_FILE" \
+    | sed -n "s/.*return '\([^']*\)'.*/\1/p" | head -1)
 
 if [[ -z "$CURRENT" ]]; then
-    echo "Error: could not find current version in Plugin.php"
+    echo "Error: could not find current version in getPluginVersion() in Plugin.php"
+    exit 1
+fi
+
+if [[ "$CURRENT" == "$VERSION" ]]; then
+    echo "Error: version is already $VERSION"
     exit 1
 fi
 
 echo "Bumping version: $CURRENT → $VERSION"
 
-# Replace the version string in getPluginVersion()
-sed -i.bak "s/return '${CURRENT}'/return '${VERSION}'/" "$PLUGIN_FILE"
+# Replace only within getPluginVersion() — match the exact return line
+sed -i.bak "/function getPluginVersion/,/\}/ s/return '${CURRENT}'/return '${VERSION}'/" "$PLUGIN_FILE"
 rm -f "$PLUGIN_FILE.bak"
 
 # Verify the replacement worked
-if ! grep -q "return '${VERSION}'" "$PLUGIN_FILE"; then
-    echo "Error: failed to update Plugin.php"
+VERIFY=$(awk '/function getPluginVersion/,/\}/' "$PLUGIN_FILE" \
+    | sed -n "s/.*return '\([^']*\)'.*/\1/p" | head -1)
+
+if [[ "$VERIFY" != "$VERSION" ]]; then
+    echo "Error: failed to update Plugin.php (found '$VERIFY' instead of '$VERSION')"
     exit 1
 fi
 
