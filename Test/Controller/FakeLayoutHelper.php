@@ -131,10 +131,12 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
     final class FakeHelper
     {
         public FakeLayout $layout;
+        public FakeLayoutUrlHelper $url;
 
         public function __construct()
         {
             $this->layout = new FakeLayout();
+            $this->url = new FakeLayoutUrlHelper();
         }
     }
 }
