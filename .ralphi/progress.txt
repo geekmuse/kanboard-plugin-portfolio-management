@@ -84,6 +84,29 @@ Corrective Plan: N/A
   - BEM modifier pattern for closed/inactive items: `portfolio-xxx--closed` on the node, then target the title with `.portfolio-xxx--closed .portfolio-xxx-title { text-decoration: line-through; }` — keeps the modifier and sub-element rules cleanly separated.
 ---
 
+## 2026-03-23 — US-008
+Session: iter-bbff2e52 / loop-9e860edc iteration 8
+Review Outcome: PASS
+Trajectory: ON_TRACK
+Trajectory Notes: N/A
+Corrective Plan: N/A
+- Added `moveTask()` AJAX endpoint to `PortfolioViewController` that reads `task_id`+`column_id` from `getValues()`, validates portfolio existence, and calls `taskModificationModel->update()` to persist the column change through Kanboard's core API.
+- Registered `/portfolio/:portfolio_id/board/move-task` route in `Plugin.php`.
+- Updated `Template/portfolio/board.php`: added `draggable="true"` + `data-task-id` on cards; `data-column-id` on columns; `data-move-task-url` + `data-move-error-label` on the board container; hidden `portfolio-board-csrf` div with `$this->form->csrf()` for AJAX; `.portfolio-board-column-count` span for JS count updates; per-page `$this->asset->js(...)` loading of `portfolio-board.js`.
+- Created `Asset/js/portfolio-board.js`: pure HTML5 drag-and-drop (ES5-compatible), optimistic DOM move on drop, XHR POST with CSRF token + FormData, revert to source column on failure, 5-second error banner injected above the board.
+- Added CSS for drag-and-drop visual states: `.portfolio-board-card--dragging` (opacity+shadow), `.portfolio-board-column--drop-target` (blue dashed border + tinted background), `.portfolio-board-error` margin.
+- Updated `ApiRegistrationTest.php` to add the new route to expected array and bump slice count from 16→17.
+- Added 5 new tests to `PortfolioViewControllerTest.php`: `testMoveTaskSuccessfullyUpdatesColumnViaTaskModificationModel`, `testMoveTaskReturnsErrorForInvalidTaskId`, `testMoveTaskReturnsErrorWhenPortfolioNotFound`, `testMoveTaskReturnsErrorWhenModelUpdateFails`, `testBoardTemplateRendersWithDragAndDropAttributes`.
+- Files changed: `Controller/PortfolioViewController.php`, `Plugin.php`, `Template/portfolio/board.php`, `Asset/js/portfolio-board.js` (new), `Asset/css/portfolio.css`, `Test/Controller/PortfolioViewControllerTest.php`, `Test/Plugin/ApiRegistrationTest.php`, `.ralphi/prd.json`, `.ralphi/progress.txt`
+- **Learnings for future iterations:**
+  - `$this->response->json(array $data)` is valid on Kanboard's Response object — used in `DependencyController::graphData()` — safe to use in other AJAX endpoints.
+  - For AJAX CSRF: `$this->request->getValues()` validates CSRF internally; if the CSRF token is missing or invalid, `getValues()` returns an empty array. The `task_id`/`column_id` validation then catches the empty array, so no explicit CSRF check is needed in AJAX handlers.
+  - HTML5 DnD + XHR + FormData is the cleanest ES5-compatible AJAX approach — no jQuery AJAX, no fetch(), no build step required.
+  - To expose a translated PHP error string to JS without a build step, put it as a `data-*` attribute on the container element in the template (e.g., `data-move-error-label="<?= $this->text->e(t('...')) ?>"`).
+  - `NodeList.forEach()` is NOT ES5 — use indexed for-loop over querySelectorAll results.
+  - Route registration tests (`ApiRegistrationTest::testRegistersPortfolioCrudRoutes`) assert the exact ordered route list with `array_slice()`; adding a route requires updating both the expected array AND the slice count.
+---
+
 ## Codebase Patterns
 - **REQUIRED READING**: Before writing any code each iteration, read `docs/references/kanboard-plugin-development-guidelines.md`. It contains authoritative agent feedback, known pitfalls, and hard-won patterns from previous work on this project. Do NOT commit or modify this file.
 - **POST forms — always use `getValues()` once**: `Request::getValue()` internally calls `getValues()` which validates and strips the CSRF token. Calling it multiple times means only the first call returns real data. Pattern: `$values = $this->request->getValues(); $field = (int)($values['field'] ?? 0);`

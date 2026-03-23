@@ -149,14 +149,14 @@
         "PHP lint passes and all existing tests pass"
       ],
       "priority": 8,
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": [
         "US-006"
       ],
       "notes": "Uses Kanboard's taskModificationModel->update() which writes to core tasks table through the proper API. Requires JS for drag-and-drop + PHP AJAX endpoint. Files: Controller/PortfolioViewController.php (new moveTask action), Template/portfolio/board.php, Asset/js/ (new or updated board JS), Plugin.php (new route).",
       "startedAt": "2026-03-23T23:11:41.877Z",
-      "updatedAt": "2026-03-23T23:11:41.877Z",
-      "completedAt": null
+      "updatedAt": "2026-03-23T23:17:00.000Z",
+      "completedAt": "2026-03-23T23:17:00.000Z"
     },
     {
       "id": "US-009",
