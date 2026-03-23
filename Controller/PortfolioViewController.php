@@ -104,6 +104,40 @@ class PortfolioViewController extends BaseController
         ]));
     }
 
+    public function moveTask(): mixed
+    {
+        $portfolioId = $this->request->getIntegerParam('portfolio_id');
+        $values = $this->request->getValues();
+
+        $taskId = (int) ($values['task_id'] ?? 0);
+        $columnId = (int) ($values['column_id'] ?? 0);
+
+        if ($taskId <= 0 || $columnId <= 0) {
+            return $this->response->json(['success' => false, 'error' => t('Invalid task or column.')]);
+        }
+
+        $portfolio = $this->portfolioModel->getById($portfolioId);
+
+        if (! is_array($portfolio)) {
+            return $this->response->json(['success' => false, 'error' => t('Portfolio not found.')]);
+        }
+
+        if (
+            ! is_object($this->taskModificationModel)
+            || ! method_exists($this->taskModificationModel, 'update')
+        ) {
+            return $this->response->json(['success' => false, 'error' => t('Task modification service unavailable.')]);
+        }
+
+        $result = $this->taskModificationModel->update(['id' => $taskId, 'column_id' => $columnId]);
+
+        if (! $result) {
+            return $this->response->json(['success' => false, 'error' => t('Failed to move task.')]);
+        }
+
+        return $this->response->json(['success' => true]);
+    }
+
     public function timeline()
     {
         $portfolioId = $this->request->getIntegerParam('portfolio_id');

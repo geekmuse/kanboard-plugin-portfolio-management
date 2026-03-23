@@ -90,6 +90,12 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
         {
             return $this->values[$name] ?? $default;
         }
+
+        /** @return array<string, mixed> */
+        public function getValues(): array
+        {
+            return $this->values;
+        }
     }
 
     final class PortfolioViewFakeResponse
@@ -97,6 +103,9 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
         public ?string $htmlContent = null;
 
         public ?string $redirectUrl = null;
+
+        /** @var array<string, mixed>|null */
+        public ?array $jsonContent = null;
 
         public function html(string $content): string
         {
@@ -110,6 +119,33 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $this->redirectUrl = $url;
 
             return $url;
+        }
+
+        /** @param array<string, mixed> $data */
+        public function json(array $data): string
+        {
+            $this->jsonContent = $data;
+            $encoded = json_encode($data);
+
+            return $encoded !== false ? $encoded : '{}';
+        }
+    }
+
+    final class PortfolioViewFakeTaskModificationModel
+    {
+        /** @var array<int, array<string, mixed>> */
+        public array $updateCalls = [];
+
+        public function __construct(private bool $updateResult = true)
+        {
+        }
+
+        /** @param array<string, mixed> $fields */
+        public function update(array $fields): bool
+        {
+            $this->updateCalls[] = $fields;
+
+            return $this->updateResult;
         }
     }
 
@@ -645,7 +681,8 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             ?PortfolioViewFakeRequest $request = null,
             ?PortfolioViewFakePortfolioProjectModel $portfolioProjectModel = null,
             ?PortfolioViewFakeMilestoneModel $milestoneModel = null,
-            ?PortfolioViewFakeConfigModel $configModel = null
+            ?PortfolioViewFakeConfigModel $configModel = null,
+            ?PortfolioViewFakeTaskModificationModel $taskModificationModel = null
         ): array {
             return [
                 'request' => $request ?? new PortfolioViewFakeRequest(),
@@ -659,6 +696,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
                 'portfolioProjectModel' => $portfolioProjectModel ?? new PortfolioViewFakePortfolioProjectModel(),
                 'milestoneModel' => $milestoneModel ?? new PortfolioViewFakeMilestoneModel(),
                 'configModel' => $configModel ?? new PortfolioViewFakeConfigModel(),
+                'taskModificationModel' => $taskModificationModel ?? new PortfolioViewFakeTaskModificationModel(),
                 'userModel' => new class
                 {
                     /** @return array<int,string> */
@@ -668,6 +706,164 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
                     }
                 },
             ];
+        }
+
+        public function testMoveTaskSuccessfullyUpdatesColumnViaTaskModificationModel(): void
+        {
+            $request = new PortfolioViewFakeRequest(
+                ['task_id' => '700', 'column_id' => '12', 'csrf_token' => 'test'],
+                ['portfolio_id' => 4]
+            );
+            $portfolioModel = new PortfolioViewFakePortfolioModel([
+                ['id' => 4, 'name' => 'Launch Q2', 'description' => '', 'is_active' => 1],
+            ]);
+            $taskModificationModel = new PortfolioViewFakeTaskModificationModel(true);
+
+            $services = $this->buildServices(
+                $portfolioModel,
+                new PortfolioViewFakePortfolioTaskModel(),
+                $request,
+                null,
+                null,
+                null,
+                $taskModificationModel
+            );
+            $controller = new PortfolioViewController($services);
+            $controller->moveTask();
+
+            /** @var PortfolioViewFakeResponse $response */
+            $response = $services['response'];
+            $this->assertNotNull($response->jsonContent);
+            $this->assertTrue((bool) ($response->jsonContent['success'] ?? false));
+            $this->assertCount(1, $taskModificationModel->updateCalls);
+            $this->assertSame(700, (int) ($taskModificationModel->updateCalls[0]['id'] ?? 0));
+            $this->assertSame(12, (int) ($taskModificationModel->updateCalls[0]['column_id'] ?? 0));
+        }
+
+        public function testMoveTaskReturnsErrorForInvalidTaskId(): void
+        {
+            $request = new PortfolioViewFakeRequest(
+                ['task_id' => '0', 'column_id' => '5', 'csrf_token' => 'test'],
+                ['portfolio_id' => 4]
+            );
+            $portfolioModel = new PortfolioViewFakePortfolioModel([
+                ['id' => 4, 'name' => 'Launch Q2', 'description' => '', 'is_active' => 1],
+            ]);
+            $taskModificationModel = new PortfolioViewFakeTaskModificationModel(true);
+
+            $services = $this->buildServices(
+                $portfolioModel,
+                new PortfolioViewFakePortfolioTaskModel(),
+                $request,
+                null,
+                null,
+                null,
+                $taskModificationModel
+            );
+            $controller = new PortfolioViewController($services);
+            $controller->moveTask();
+
+            /** @var PortfolioViewFakeResponse $response */
+            $response = $services['response'];
+            $this->assertNotNull($response->jsonContent);
+            $this->assertFalse((bool) ($response->jsonContent['success'] ?? true));
+            $this->assertEmpty($taskModificationModel->updateCalls);
+        }
+
+        public function testMoveTaskReturnsErrorWhenPortfolioNotFound(): void
+        {
+            $request = new PortfolioViewFakeRequest(
+                ['task_id' => '700', 'column_id' => '12', 'csrf_token' => 'test'],
+                ['portfolio_id' => 99]
+            );
+            $portfolioModel = new PortfolioViewFakePortfolioModel();
+            $taskModificationModel = new PortfolioViewFakeTaskModificationModel(true);
+
+            $services = $this->buildServices(
+                $portfolioModel,
+                new PortfolioViewFakePortfolioTaskModel(),
+                $request,
+                null,
+                null,
+                null,
+                $taskModificationModel
+            );
+            $controller = new PortfolioViewController($services);
+            $controller->moveTask();
+
+            /** @var PortfolioViewFakeResponse $response */
+            $response = $services['response'];
+            $this->assertNotNull($response->jsonContent);
+            $this->assertFalse((bool) ($response->jsonContent['success'] ?? true));
+            $this->assertStringContainsString('not found', strtolower((string) ($response->jsonContent['error'] ?? '')));
+            $this->assertEmpty($taskModificationModel->updateCalls);
+        }
+
+        public function testMoveTaskReturnsErrorWhenModelUpdateFails(): void
+        {
+            $request = new PortfolioViewFakeRequest(
+                ['task_id' => '700', 'column_id' => '12', 'csrf_token' => 'test'],
+                ['portfolio_id' => 4]
+            );
+            $portfolioModel = new PortfolioViewFakePortfolioModel([
+                ['id' => 4, 'name' => 'Launch Q2', 'description' => '', 'is_active' => 1],
+            ]);
+            $taskModificationModel = new PortfolioViewFakeTaskModificationModel(false);
+
+            $services = $this->buildServices(
+                $portfolioModel,
+                new PortfolioViewFakePortfolioTaskModel(),
+                $request,
+                null,
+                null,
+                null,
+                $taskModificationModel
+            );
+            $controller = new PortfolioViewController($services);
+            $controller->moveTask();
+
+            /** @var PortfolioViewFakeResponse $response */
+            $response = $services['response'];
+            $this->assertNotNull($response->jsonContent);
+            $this->assertFalse((bool) ($response->jsonContent['success'] ?? true));
+            $this->assertCount(1, $taskModificationModel->updateCalls);
+        }
+
+        public function testBoardTemplateRendersWithDragAndDropAttributes(): void
+        {
+            $request = new PortfolioViewFakeRequest([], ['portfolio_id' => 4]);
+            $portfolioModel = new PortfolioViewFakePortfolioModel([
+                ['id' => 4, 'name' => 'Launch Q2', 'description' => '', 'is_active' => 1],
+            ]);
+            $portfolioTaskModel = new PortfolioViewFakePortfolioTaskModel(
+                [],
+                [
+                    [
+                        'id' => 800,
+                        'title' => 'Drag me',
+                        'project_name' => 'WebApp',
+                        'column_id' => 9,
+                        'column_title' => 'In Progress',
+                        'assignee_name' => 'Bob',
+                        'assignee_username' => 'bob',
+                        'date_due' => 0,
+                        'is_blocked' => false,
+                        'blocked_by_count' => 0,
+                    ],
+                ],
+                ['total' => 1, 'active' => 1, 'closed' => 0, 'blocked' => 0]
+            );
+
+            $services = $this->buildServices($portfolioModel, $portfolioTaskModel, $request);
+            $controller = new PortfolioViewController($services);
+            $html = $controller->board();
+
+            $this->assertStringContainsString('draggable="true"', $html);
+            $this->assertStringContainsString('data-task-id="800"', $html);
+            $this->assertStringContainsString('data-column-id="9"', $html);
+            $this->assertStringContainsString('data-move-task-url=', $html);
+            $this->assertStringContainsString('portfolio-board-column-count', $html);
+            $this->assertStringContainsString('plugins/Portfolio/Asset/js/portfolio-board.js', $html);
         }
     }
 }

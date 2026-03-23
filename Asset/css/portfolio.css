@@ -48,6 +48,26 @@
     font-size: 0.85rem;
 }
 
+/* Drag-and-drop states */
+.portfolio-board-card[draggable="true"] {
+    cursor: grab;
+}
+
+.portfolio-board-card--dragging {
+    opacity: 0.4;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.portfolio-board-column--drop-target {
+    background: #f0f7ff;
+    border-color: #3b82f6;
+    border-style: dashed;
+}
+
+.portfolio-board-error {
+    margin-bottom: 0.75rem;
+}
+
 .portfolio-timeline-chart {
     margin: 1rem 0;
     border: 1px solid #d9d9d9;

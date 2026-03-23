@@ -53,6 +53,7 @@ class Plugin extends Base
         $this->route->addRoute('/portfolio/:portfolio_id', 'PortfolioViewController', 'show', 'Portfolio');
         $this->route->addRoute('/portfolio/:portfolio_id/tasks', 'PortfolioViewController', 'tasks', 'Portfolio');
         $this->route->addRoute('/portfolio/:portfolio_id/board', 'PortfolioViewController', 'board', 'Portfolio');
+        $this->route->addRoute('/portfolio/:portfolio_id/board/move-task', 'PortfolioViewController', 'moveTask', 'Portfolio');
         $this->route->addRoute('/portfolio/:portfolio_id/timeline', 'PortfolioViewController', 'timeline', 'Portfolio');
         $this->route->addRoute('/portfolio/:portfolio_id/milestones', 'MilestoneController', 'index', 'Portfolio');
         $this->route->addRoute('/portfolio/:portfolio_id/settings', 'PortfolioModificationController', 'settings', 'Portfolio');
