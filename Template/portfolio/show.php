@@ -76,7 +76,7 @@
                                 </a>
                             </td>
                             <td><?= $this->text->e($targetDate > 0 ? date('Y-m-d', $targetDate) : t('No target date')) ?></td>
-                            <td><?= $this->text->e((string) ((float) ($milestone['percent'] ?? 0))) ?>%%</td>
+                            <td><?= $this->text->e((string) ((float) ($milestone['percent'] ?? 0))) ?>%</td>
                             <td><?= $this->text->e($healthLabel) ?></td>
                         </tr>
                     <?php endforeach ?>
