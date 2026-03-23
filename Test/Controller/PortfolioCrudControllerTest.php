@@ -103,9 +103,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             return $this->values[$name] ?? $default;
         }
 
-        /**
-         * @return array<string, mixed>
-         */
+        /** @return array<string, mixed> */
         public function getValues(): array
         {
             return $this->values;
@@ -452,6 +450,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
         {
             $request = new PortfolioCrudFakeRequest([
                 'csrf_token' => self::CSRF_TOKEN,
+                'token' => new FakeToken(self::CSRF_TOKEN),
                 'name' => 'Q2 Launch',
                 'description' => 'Cross-project release',
                 'owner_id' => 3,
@@ -477,6 +476,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $request = new PortfolioCrudFakeRequest(
                 [
                     'csrf_token' => self::CSRF_TOKEN,
+                'token' => new FakeToken(self::CSRF_TOKEN),
                     'name' => 'Updated Name',
                     'description' => 'Updated Description',
                     'owner_id' => 7,
@@ -504,6 +504,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $request = new PortfolioCrudFakeRequest(
                 [
                     'csrf_token' => self::CSRF_TOKEN,
+                'token' => new FakeToken(self::CSRF_TOKEN),
                     'name' => 'Duplicate Name',
                     'description' => 'Description',
                     'owner_id' => 7,
@@ -579,6 +580,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $request = new PortfolioCrudFakeRequest(
                 [
                     'csrf_token' => self::CSRF_TOKEN,
+                'token' => new FakeToken(self::CSRF_TOKEN),
                     'project_id' => 42,
                     'position' => 7,
                 ],
@@ -616,6 +618,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $request = new PortfolioCrudFakeRequest(
                 [
                     'csrf_token' => self::CSRF_TOKEN,
+                'token' => new FakeToken(self::CSRF_TOKEN),
                     'project_id' => 9,
                 ],
                 ['portfolio_id' => 5]
@@ -659,7 +662,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $services = $this->buildServices(new PortfolioCrudFakeModel(), $request);
             $controller = new PortfolioModificationController($services);
 
-            $this->expectException(\RuntimeException::class);
+            $this->expectException(\Kanboard\Core\Controller\AccessForbiddenException::class);
             $controller->addProject();
         }
 
@@ -688,6 +691,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
                 'projectModel' => $projectModel ?? new PortfolioCrudFakeProjectModel(),
                 'portfolioProjectModel' => $portfolioProjectModel ?? new PortfolioCrudFakePortfolioProjectModel(),
                 'csrf_token' => self::CSRF_TOKEN,
+                'token' => new FakeToken(self::CSRF_TOKEN),
             ];
         }
     }

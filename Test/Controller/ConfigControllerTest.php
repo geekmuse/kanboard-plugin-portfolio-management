@@ -94,6 +94,12 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
         {
             return $this->values[$name] ?? $default;
         }
+
+        /** @return array<string, mixed> */
+        public function getValues(): array
+        {
+            return $this->values;
+        }
     }
 
     final class ConfigControllerFakeResponse
@@ -324,8 +330,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
 
             $controller = $this->buildController($request, new ConfigControllerFakeConfigModel());
 
-            $this->expectException(\RuntimeException::class);
-            $this->expectExceptionMessage('Invalid CSRF token');
+            $this->expectException(\Kanboard\Core\Controller\AccessForbiddenException::class);
 
             $controller->save();
         }
@@ -359,6 +364,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
                 'flash' => new ConfigControllerFakeFlash(),
                 'url' => new ConfigControllerFakeUrlHelper(),
                 'configModel' => $configModel,
+                'token' => new FakeToken(self::CSRF_TOKEN),
                 'session' => new ConfigControllerFakeSession(self::CSRF_TOKEN),
             ];
 

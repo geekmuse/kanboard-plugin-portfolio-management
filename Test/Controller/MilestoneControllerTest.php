@@ -101,9 +101,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             return $this->values[$name] ?? $default;
         }
 
-        /**
-         * @return array<string, mixed>
-         */
+        /** @return array<string, mixed> */
         public function getValues(): array
         {
             return $this->values;
@@ -602,6 +600,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $request = new MilestoneControllerFakeRequest(
                 [
                     'csrf_token' => self::CSRF_TOKEN,
+                'token' => new FakeToken(self::CSRF_TOKEN),
                     'name' => 'Release Candidate',
                     'description' => 'Cross-project hardening',
                     'target_date' => '2026-08-01',
@@ -669,6 +668,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $request = new MilestoneControllerFakeRequest(
                 [
                     'csrf_token' => self::CSRF_TOKEN,
+                'token' => new FakeToken(self::CSRF_TOKEN),
                     'name' => 'RC Final',
                     'description' => 'Final prep',
                     'target_date' => '2026-08-10',
@@ -757,6 +757,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $request = new MilestoneControllerFakeRequest(
                 [
                     'csrf_token' => self::CSRF_TOKEN,
+                'token' => new FakeToken(self::CSRF_TOKEN),
                     'task_id' => 707,
                     'is_critical' => 1,
                     'position' => 8,
@@ -793,6 +794,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $request = new MilestoneControllerFakeRequest(
                 [
                     'csrf_token' => self::CSRF_TOKEN,
+                'token' => new FakeToken(self::CSRF_TOKEN),
                     'task_id' => 808,
                 ],
                 ['milestone_id' => 42]
@@ -839,7 +841,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
 
             $controller = new MilestoneController($services);
 
-            $this->expectException(\RuntimeException::class);
+            $this->expectException(\Kanboard\Core\Controller\AccessForbiddenException::class);
             $controller->addTask();
         }
 
@@ -863,6 +865,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
                 'milestoneModel' => $milestoneModel,
                 'milestoneTaskModel' => $milestoneTaskModel,
                 'csrf_token' => self::CSRF_TOKEN,
+                'token' => new FakeToken(self::CSRF_TOKEN),
             ];
         }
     }
