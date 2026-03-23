@@ -134,9 +134,12 @@
                 $assignee = (string) ($task['assignee_username'] ?? '');
             }
             ?>
+            <?php
+            $taskUrl = $this->url->href('TaskViewController', 'show', ['task_id' => (int) ($task['id'] ?? 0)]);
+            ?>
             <tr>
-                <td>#<?= $this->text->e((string) ((int) ($task['id'] ?? 0))) ?></td>
-                <td><?= $this->text->e((string) ($task['title'] ?? '')) ?></td>
+                <td><a href="<?= $taskUrl ?>" class="js-modal-large">#<?= $this->text->e((string) ((int) ($task['id'] ?? 0))) ?></a></td>
+                <td><a href="<?= $taskUrl ?>" class="js-modal-large"><?= $this->text->e((string) ($task['title'] ?? '')) ?></a></td>
                 <td><?= $this->text->e((string) ($task['project_name'] ?? '')) ?></td>
                 <td><?= $this->text->e((string) ($task['column_title'] ?? '')) ?></td>
                 <td><?= $this->text->e($assignee) ?></td>
