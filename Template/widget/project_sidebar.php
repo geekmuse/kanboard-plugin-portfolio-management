@@ -2,10 +2,9 @@
 /**
  * Project sidebar — portfolio membership for this project.
  *
- * @var array<string, mixed> $project
+ * Variables pre-fetched by Plugin::attachCallable():
+ * @var array<int, array<string, mixed>> $portfolios
  */
-$projectId = (int) ($project['id'] ?? 0);
-$portfolios = ($projectId > 0) ? $this->portfolioHelper->getPortfoliosForProject($projectId) : [];
 ?>
 <?php if (! empty($portfolios)): ?>
 <div class="portfolio-widget-project-sidebar">

@@ -90,17 +90,85 @@ class Plugin extends Base
         $this->hook->on('template:layout:js', ['template' => 'plugins/Portfolio/Asset/js/portfolio-gantt.js']);
 
         // Dashboard — portfolio links + at-risk milestone summary
-        $this->template->hook->attach('template:dashboard:show:before-task-list', 'Portfolio:widget/dashboard_portfolios');
+        // attachCallable pre-fetches data so templates don't need to access
+        // plugin-registered container entries via $this->xxx (unsupported in
+        // Kanboard's template context for non-core services).
+        $this->template->hook->attachCallable(
+            'template:dashboard:show:before-task-list',
+            'Portfolio:widget/dashboard_portfolios',
+            function () {
+                $enabled = (int) $this->container['configModel']->get('portfolio_dashboard_widget_enabled', 1) === 1;
+                return [
+                    'widgetEnabled'    => $enabled,
+                    'portfolios'       => $enabled ? $this->container['portfolioHelper']->getAllPortfolios() : [],
+                    'atRiskMilestones' => $enabled ? $this->container['portfolioHelper']->getGlobalAtRiskMilestones() : [],
+                ];
+            }
+        );
 
         // Board card — blocked indicator (uses per-project lazy cache in PortfolioHelper)
-        $this->template->hook->attach('template:board:task:footer', 'Portfolio:widget/board_blocked_indicator');
+        $this->template->hook->attachCallable(
+            'template:board:task:footer',
+            'Portfolio:widget/board_blocked_indicator',
+            function (array $params) {
+                $task      = $params['task'] ?? $params;
+                $taskId    = (int) ($task['id'] ?? 0);
+                $projectId = (int) ($task['project_id'] ?? 0);
+                $enabled   = (int) $this->container['configModel']->get('portfolio_board_show_blockers', 1) === 1;
+                return [
+                    'isBlocked' => $enabled && $taskId > 0 && $projectId > 0
+                        && $this->container['portfolioHelper']->isTaskBlocked($taskId, $projectId),
+                ];
+            }
+        );
 
-        // Task detail sidebar — milestone membership + dependency snippet
-        $this->template->hook->attach('template:task:details:second-column', 'Portfolio:widget/task_milestone_info');
-        $this->template->hook->attach('template:task:details:second-column', 'Portfolio:widget/task_dependency_snippet');
+        // Task detail sidebar — milestone membership
+        $this->template->hook->attachCallable(
+            'template:task:details:second-column',
+            'Portfolio:widget/task_milestone_info',
+            function (array $params) {
+                $task    = $params['task'] ?? $params;
+                $taskId  = (int) ($task['id'] ?? 0);
+                return [
+                    'milestones' => $taskId > 0
+                        ? $this->container['milestoneTaskModel']->getMilestones($taskId)
+                        : [],
+                ];
+            }
+        );
+
+        // Task detail sidebar — cross-project dependency snippet
+        $this->template->hook->attachCallable(
+            'template:task:details:second-column',
+            'Portfolio:widget/task_dependency_snippet',
+            function (array $params) {
+                $task      = $params['task'] ?? $params;
+                $taskId    = (int) ($task['id'] ?? 0);
+                $projectId = (int) ($task['project_id'] ?? 0);
+                return [
+                    'isBlocked'  => $taskId > 0 && $projectId > 0
+                        && $this->container['portfolioHelper']->isTaskBlocked($taskId, $projectId),
+                    'portfolios' => $projectId > 0
+                        ? $this->container['portfolioProjectModel']->getPortfolios($projectId)
+                        : [],
+                ];
+            }
+        );
 
         // Project sidebar — portfolio membership for the project
-        $this->template->hook->attach('template:project:sidebar', 'Portfolio:widget/project_sidebar');
+        $this->template->hook->attachCallable(
+            'template:project:sidebar',
+            'Portfolio:widget/project_sidebar',
+            function (array $params) {
+                $project   = $params['project'] ?? $params;
+                $projectId = (int) ($project['id'] ?? 0);
+                return [
+                    'portfolios' => $projectId > 0
+                        ? $this->container['portfolioProjectModel']->getPortfolios($projectId)
+                        : [],
+                ];
+            }
+        );
 
         // Header dropdown — quick links to portfolio list and create form
         $this->template->hook->attach('template:header:dropdown:menu', 'Portfolio:widget/header_dropdown');

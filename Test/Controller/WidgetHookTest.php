@@ -341,16 +341,15 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
         // board_blocked_indicator template
         // -------------------------------------------------------------------
 
+        // board_blocked_indicator now receives $isBlocked pre-fetched by the
+        // Plugin::attachCallable() callable — templates no longer call services.
+
         public function testBoardBlockedIndicatorShowsBadgeForBlockedTask(): void
         {
             $context = new WidgetFakeContext();
-            $context->addService('portfolioHelper', new WidgetFakePortfolioHelper(
-                blockedTaskIds: [42]
-            ));
-
-            $html = $context->renderWidget(
+            $html    = $context->renderWidget(
                 $this->templateDir . '/board_blocked_indicator.php',
-                ['task' => ['id' => 42, 'project_id' => 1]]
+                ['isBlocked' => true]
             );
 
             $this->assertStringContainsString('portfolio-task-blocked', $html);
@@ -361,13 +360,9 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
         public function testBoardBlockedIndicatorRendersNothingForUnblockedTask(): void
         {
             $context = new WidgetFakeContext();
-            $context->addService('portfolioHelper', new WidgetFakePortfolioHelper(
-                blockedTaskIds: []
-            ));
-
-            $html = $context->renderWidget(
+            $html    = $context->renderWidget(
                 $this->templateDir . '/board_blocked_indicator.php',
-                ['task' => ['id' => 99, 'project_id' => 1]]
+                ['isBlocked' => false]
             );
 
             $this->assertStringNotContainsString('portfolio-task-blocked', $html);
@@ -376,17 +371,11 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
 
         public function testBoardBlockedIndicatorRespectsDisabledSetting(): void
         {
+            // The callable sets isBlocked=false when the setting is disabled.
             $context = new WidgetFakeContext();
-            $context->addService('portfolioHelper', new WidgetFakePortfolioHelper(
-                blockedTaskIds: [42]
-            ));
-            $context->addService('configModel', new WidgetFakeConfigModel([
-                'portfolio_board_show_blockers' => 0,
-            ]));
-
-            $html = $context->renderWidget(
+            $html    = $context->renderWidget(
                 $this->templateDir . '/board_blocked_indicator.php',
-                ['task' => ['id' => 42, 'project_id' => 1]]
+                ['isBlocked' => false]
             );
 
             $this->assertStringNotContainsString('portfolio-task-blocked', $html);
@@ -395,14 +384,9 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
         public function testBoardBlockedIndicatorEscapesTranslationOutput(): void
         {
             $context = new WidgetFakeContext();
-            $context->addService('portfolioHelper', new WidgetFakePortfolioHelper(
-                blockedTaskIds: [5]
-            ));
-
-            // Template output should only contain the safe label
-            $html = $context->renderWidget(
+            $html    = $context->renderWidget(
                 $this->templateDir . '/board_blocked_indicator.php',
-                ['task' => ['id' => 5, 'project_id' => 2]]
+                ['isBlocked' => true]
             );
 
             $this->assertStringContainsString('portfolio-task-blocked', $html);
@@ -411,15 +395,11 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
 
         public function testBoardBlockedIndicatorHandlesMissingTaskGracefully(): void
         {
+            // Callable sets isBlocked=false when task ID is 0 — template shows nothing.
             $context = new WidgetFakeContext();
-            $context->addService('portfolioHelper', new WidgetFakePortfolioHelper(
-                blockedTaskIds: [1]
-            ));
-
-            // Missing $task should produce no output (task IDs default to 0)
-            $html = $context->renderWidget(
+            $html    = $context->renderWidget(
                 $this->templateDir . '/board_blocked_indicator.php',
-                ['task' => []]
+                ['isBlocked' => false]
             );
 
             $this->assertStringNotContainsString('portfolio-task-blocked', $html);
@@ -429,6 +409,8 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
         // task_milestone_info template
         // -------------------------------------------------------------------
 
+        // task_milestone_info now receives $milestones pre-fetched by the callable.
+
         public function testTaskMilestoneInfoRendersMilestoneNames(): void
         {
             $milestones = [
@@ -437,11 +419,9 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             ];
 
             $context = new WidgetFakeContext();
-            $context->addService('milestoneTaskModel', new WidgetFakeMilestoneTaskModel($milestones));
-
-            $html = $context->renderWidget(
+            $html    = $context->renderWidget(
                 $this->templateDir . '/task_milestone_info.php',
-                ['task' => ['id' => 7, 'project_id' => 1]]
+                ['milestones' => $milestones]
             );
 
             $this->assertStringContainsString('Q3 Milestone', $html);
@@ -455,34 +435,31 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
         public function testTaskMilestoneInfoRendersNothingWhenNoMilestones(): void
         {
             $context = new WidgetFakeContext();
-            $context->addService('milestoneTaskModel', new WidgetFakeMilestoneTaskModel([]));
-
-            $html = $context->renderWidget(
+            $html    = $context->renderWidget(
                 $this->templateDir . '/task_milestone_info.php',
-                ['task' => ['id' => 7, 'project_id' => 1]]
+                ['milestones' => []]
             );
 
-            $trimmed = trim($html);
-            $this->assertSame('', $trimmed);
+            $this->assertSame('', trim($html));
         }
 
         public function testTaskMilestoneInfoHandlesNullModelGracefully(): void
         {
+            // Callable sets milestones=[] when task ID is 0 — template shows nothing.
             $context = new WidgetFakeContext();
-            // No milestoneTaskModel service registered
-
-            $html = $context->renderWidget(
+            $html    = $context->renderWidget(
                 $this->templateDir . '/task_milestone_info.php',
-                ['task' => ['id' => 7, 'project_id' => 1]]
+                ['milestones' => []]
             );
 
-            $trimmed = trim($html);
-            $this->assertSame('', $trimmed);
+            $this->assertSame('', trim($html));
         }
 
         // -------------------------------------------------------------------
         // dashboard_portfolios template
         // -------------------------------------------------------------------
+
+        // dashboard_portfolios now receives $portfolios / $atRiskMilestones pre-fetched.
 
         public function testDashboardPortfoliosWidgetRendersPortfolioLinks(): void
         {
@@ -492,12 +469,9 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             ];
 
             $context = new WidgetFakeContext();
-            $context->addService('portfolioHelper', new WidgetFakePortfolioHelper(
-                allPortfolios: $portfolios
-            ));
-
-            $html = $context->renderWidget(
-                $this->templateDir . '/dashboard_portfolios.php'
+            $html    = $context->renderWidget(
+                $this->templateDir . '/dashboard_portfolios.php',
+                ['portfolios' => $portfolios, 'atRiskMilestones' => [], 'widgetEnabled' => true]
             );
 
             $this->assertStringContainsString('Alpha Portfolio', $html);
@@ -511,10 +485,8 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
 
         public function testDashboardPortfoliosWidgetRendersAtRiskMilestones(): void
         {
-            $portfolios = [
-                ['id' => 1, 'name' => 'My Portfolio'],
-            ];
-            $atRisk = [
+            $portfolios = [['id' => 1, 'name' => 'My Portfolio']];
+            $atRisk     = [
                 [
                     'id'             => 5,
                     'name'           => 'At Risk MS',
@@ -525,13 +497,9 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             ];
 
             $context = new WidgetFakeContext();
-            $context->addService('portfolioHelper', new WidgetFakePortfolioHelper(
-                allPortfolios:    $portfolios,
-                atRiskMilestones: $atRisk
-            ));
-
-            $html = $context->renderWidget(
-                $this->templateDir . '/dashboard_portfolios.php'
+            $html    = $context->renderWidget(
+                $this->templateDir . '/dashboard_portfolios.php',
+                ['portfolios' => $portfolios, 'atRiskMilestones' => $atRisk, 'widgetEnabled' => true]
             );
 
             $this->assertStringContainsString('At-Risk Milestones', $html);
@@ -544,30 +512,21 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
         public function testDashboardPortfoliosWidgetRendersNothingWhenNoPortfolios(): void
         {
             $context = new WidgetFakeContext();
-            $context->addService('portfolioHelper', new WidgetFakePortfolioHelper());
-
-            $html = $context->renderWidget(
-                $this->templateDir . '/dashboard_portfolios.php'
+            $html    = $context->renderWidget(
+                $this->templateDir . '/dashboard_portfolios.php',
+                ['portfolios' => [], 'atRiskMilestones' => [], 'widgetEnabled' => true]
             );
 
-            $trimmed = trim($html);
-            $this->assertSame('', $trimmed);
+            $this->assertSame('', trim($html));
         }
 
         public function testDashboardPortfoliosWidgetRespectsDisabledSetting(): void
         {
+            // Callable passes empty portfolios when setting is disabled.
             $context = new WidgetFakeContext();
-            $context->addService('portfolioHelper', new WidgetFakePortfolioHelper(
-                allPortfolios: [
-                    ['id' => 1, 'name' => 'Portfolio A'],
-                ]
-            ));
-            $context->addService('configModel', new WidgetFakeConfigModel([
-                'portfolio_dashboard_widget_enabled' => 0,
-            ]));
-
-            $html = $context->renderWidget(
-                $this->templateDir . '/dashboard_portfolios.php'
+            $html    = $context->renderWidget(
+                $this->templateDir . '/dashboard_portfolios.php',
+                ['portfolios' => [], 'atRiskMilestones' => [], 'widgetEnabled' => false]
             );
 
             $this->assertSame('', trim($html));
@@ -577,20 +536,16 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
         // project_sidebar template
         // -------------------------------------------------------------------
 
+        // project_sidebar now receives $portfolios pre-fetched by the callable.
+
         public function testProjectSidebarRendersPortfolioLinks(): void
         {
-            $portfolios = [
-                ['id' => 3, 'name' => 'Side Portfolio'],
-            ];
+            $portfolios = [['id' => 3, 'name' => 'Side Portfolio']];
 
             $context = new WidgetFakeContext();
-            $context->addService('portfolioHelper', new WidgetFakePortfolioHelper(
-                portfolios: $portfolios
-            ));
-
-            $html = $context->renderWidget(
+            $html    = $context->renderWidget(
                 $this->templateDir . '/project_sidebar.php',
-                ['project' => ['id' => 10]]
+                ['portfolios' => $portfolios]
             );
 
             $this->assertStringContainsString('Side Portfolio', $html);
@@ -602,13 +557,9 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
         public function testProjectSidebarRendersNothingWhenNotInPortfolio(): void
         {
             $context = new WidgetFakeContext();
-            $context->addService('portfolioHelper', new WidgetFakePortfolioHelper(
-                portfolios: []
-            ));
-
-            $html = $context->renderWidget(
+            $html    = $context->renderWidget(
                 $this->templateDir . '/project_sidebar.php',
-                ['project' => ['id' => 10]]
+                ['portfolios' => []]
             );
 
             $trimmed = trim($html);

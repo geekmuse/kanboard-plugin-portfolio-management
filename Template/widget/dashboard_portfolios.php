@@ -1,12 +1,12 @@
 <?php
-$widgetEnabled = true;
-
-if (is_object($this->configModel) && method_exists($this->configModel, 'get')) {
-    $widgetEnabled = (int) $this->configModel->get('portfolio_dashboard_widget_enabled', 1) === 1;
-}
-
-$portfolios = $widgetEnabled ? $this->portfolioHelper->getAllPortfolios() : [];
-$atRiskMilestones = $widgetEnabled ? $this->portfolioHelper->getGlobalAtRiskMilestones() : [];
+/**
+ * Dashboard widget — portfolio links and at-risk milestones.
+ *
+ * Variables pre-fetched by Plugin::attachCallable():
+ * @var bool                             $widgetEnabled
+ * @var array<int, array<string, mixed>> $portfolios
+ * @var array<int, array<string, mixed>> $atRiskMilestones
+ */
 ?>
 <?php if (! empty($portfolios)): ?>
 <div class="portfolio-widget-dashboard">

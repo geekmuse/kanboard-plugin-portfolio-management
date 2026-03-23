@@ -2,15 +2,9 @@
 /**
  * Task detail sidebar — portfolio milestone membership.
  *
- * @var array<string, mixed> $task
+ * Variables pre-fetched by Plugin::attachCallable():
+ * @var array<int, array<string, mixed>> $milestones
  */
-$taskId    = (int) ($task['id'] ?? 0);
-$milestones = [];
-
-if ($taskId > 0 && is_object($this->milestoneTaskModel) && method_exists($this->milestoneTaskModel, 'getMilestones')) {
-    $result     = $this->milestoneTaskModel->getMilestones($taskId);
-    $milestones = is_array($result) ? $result : [];
-}
 ?>
 <?php if (! empty($milestones)): ?>
 <div class="portfolio-widget-task-milestones">

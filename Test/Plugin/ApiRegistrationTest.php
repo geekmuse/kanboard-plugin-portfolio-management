@@ -210,17 +210,23 @@ final class FakeApplicationAccessMap
 final class FakeTemplateHook
 {
     /**
-     * @var array<int, array{hook: string, template: string}>
+     * @var array<int, array{hook: string, template: string, callable: bool}>
      */
     private array $attachments = [];
 
     public function attach(string $hook, string $template): void
     {
-        $this->attachments[] = ['hook' => $hook, 'template' => $template];
+        $this->attachments[] = ['hook' => $hook, 'template' => $template, 'callable' => false];
+    }
+
+    /** @param callable $callable */
+    public function attachCallable(string $hook, string $template, $callable): void
+    {
+        $this->attachments[] = ['hook' => $hook, 'template' => $template, 'callable' => true];
     }
 
     /**
-     * @return array<int, array{hook: string, template: string}>
+     * @return array<int, array{hook: string, template: string, callable: bool}>
      */
     public function getAttachments(): array
     {

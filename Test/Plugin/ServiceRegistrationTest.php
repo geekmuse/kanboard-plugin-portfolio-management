@@ -31,7 +31,8 @@ class ServiceRegistrationTest extends TestCase
         $this->assertNotFalse($content, 'Unable to read Plugin.php');
 
         foreach ($this->getExpectedServiceMap() as $serviceKey => $className) {
-            $assignment = sprintf("\$this->container['%s']", $serviceKey);
+            // Match only the DI registration line, not usages inside callables.
+            $assignment = sprintf("\$this->container['%s'] = function", $serviceKey);
             $resolution = sprintf('return new %s($c);', $className);
 
             $this->assertSame(
