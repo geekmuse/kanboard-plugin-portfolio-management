@@ -107,6 +107,33 @@ Corrective Plan: N/A
   - Route registration tests (`ApiRegistrationTest::testRegistersPortfolioCrudRoutes`) assert the exact ordered route list with `array_slice()`; adding a route requires updating both the expected array AND the slice count.
 ---
 
+## 2026-03-23 — US-009
+Session: iter-67c4bccb / loop-9e860edc iteration 9
+Review Outcome: PASS
+Trajectory: ON_TRACK
+Trajectory Notes: N/A
+Corrective Plan: N/A
+- Added `gantt()` controller action to `PortfolioViewController` that fetches tasks (all statuses), milestones, and dependency edges, builds a structured JSON payload, and renders a new `Portfolio:portfolio/gantt` template.
+- Added private `buildGanttData()` method: processes tasks (using `date_started` → `date_creation` → `date_due` fallback for start date), milestones (with portfolio_name populated), dependency edges (from `dependencyModel->getDependencies()`), and unique sorted project names.
+- Added private `getPortfolioDependencies()` helper with defensive `is_object`/`method_exists` guards and `Throwable` catch.
+- Created `Template/portfolio/gantt.php`: shows empty-state message when `has_items` is false; otherwise renders `<div data-gantt="...">` and loads D3 + portfolio-gantt.js per-page via `$this->asset->js()`, then calls `window.PortfolioGantt.renderGantt(...)`.
+- Added "Gantt Chart" sidebar link (`$active === 'gantt'`) to `Template/portfolio/_sidebar.php` immediately after Timeline.
+- Rewrote `Asset/js/portfolio-gantt.js`: kept existing `render()` dot-marker function intact (used by timeline.php); added new `renderGantt(container, data)` D3 v7 function that renders horizontal task bars, diamond milestone markers, cubic Bézier dependency arrows with arrowhead markers, per-row labels, and a bottom time axis. Colors assigned per project using a 10-color fixed palette.
+- Added Gantt CSS to `Asset/css/portfolio.css`: `.portfolio-gantt-chart`, `.portfolio-gantt-svg`, `.portfolio-gantt-grid-line`, `.portfolio-gantt-axis`, `.portfolio-gantt-row-label`, `.portfolio-gantt-bar`, `.portfolio-gantt-milestone-diamond`, `.portfolio-gantt-milestone-marker`, `.portfolio-gantt-dep-edge`, `.portfolio-gantt-arrow-head`.
+- Added route `/portfolio/:portfolio_id/gantt` → `PortfolioViewController::gantt()` in `Plugin.php`.
+- Updated `ApiRegistrationTest::testRegistersPortfolioCrudRoutes` to include the new gantt route and bump `array_slice(..., 0, 18)`.
+- Added `PortfolioViewFakeDependencyModel` stub to test harness; updated `buildServices()` with an optional `$dependencyModel` parameter.
+- Added 4 new controller tests: `testPortfolioGanttRendersChartWithD3Assets`, `testPortfolioGanttBuildsJsonWithTasksAndMilestonesAndEdges`, `testPortfolioGanttRedirectsWhenPortfolioNotFound`, `testPortfolioGanttShowsEmptyStateWhenNoItemsHaveDueDates`.
+- Files changed: `Controller/PortfolioViewController.php`, `Template/portfolio/gantt.php` (new), `Template/portfolio/_sidebar.php`, `Asset/js/portfolio-gantt.js`, `Asset/css/portfolio.css`, `Plugin.php`, `Test/Controller/PortfolioViewControllerTest.php`, `Test/Plugin/ApiRegistrationTest.php`, `.ralphi/prd.json`, `.ralphi/progress.txt`
+- **Learnings for future iterations:**
+  - JSON_HEX_TAG encodes `<` as `\u003C` and `>` as `\u003E` in the JSON string. When that JSON string is then HTML-attribute-escaped by `$this->text->e()`, the backslash and `u003C` are not HTML special chars — they remain as-is. So XSS tests should check for `\u003C` NOT for `&lt;` inside data attributes.
+  - D3 is loaded as a global `d3` object from the bundled `d3.v7.min.js` — no import/require needed; just load the script before the consuming script.
+  - Load D3 per-page via `$this->asset->js()` in the specific template (not globally via `hook->on`) to avoid double-execution on every Kanboard page.
+  - The `dependencyModel->getDependencies($portfolioId, false)` call with `$crossProjectOnly = false` returns all dependency edges including same-project ones — better for Gantt arrows.
+  - For start-date fallback logic (date_started → date_creation → date_due), always clamp `$startDate = min($startDate, $dueDate)` to avoid reversed bars.
+  - When reusing a JS module's public API, add new methods to the IIFE's `window.X = { ... }` export object rather than duplicating the IIFE — keeps the dot-marker legacy `render()` intact while adding `renderGantt()`.
+---
+
 ## Codebase Patterns
 - **REQUIRED READING**: Before writing any code each iteration, read `docs/references/kanboard-plugin-development-guidelines.md`. It contains authoritative agent feedback, known pitfalls, and hard-won patterns from previous work on this project. Do NOT commit or modify this file.
 - **POST forms — always use `getValues()` once**: `Request::getValue()` internally calls `getValues()` which validates and strips the CSRF token. Calling it multiple times means only the first call returns real data. Pattern: `$values = $this->request->getValues(); $field = (int)($values['field'] ?? 0);`

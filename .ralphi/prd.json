@@ -174,12 +174,12 @@
         "PHP lint passes and all existing tests pass"
       ],
       "priority": 9,
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": [],
       "notes": "Large feature. Controller needs to supply start dates (date_started or date_creation) and dependency edges alongside existing timeline data. New JS file for Gantt rendering. Files: Controller/PortfolioViewController.php (new gantt action or extended timeline), Template/portfolio/gantt.php (new), Asset/js/portfolio-gantt.js (rewrite), Asset/css/portfolio.css, Plugin.php (new route + sidebar).",
       "startedAt": "2026-03-23T23:25:03.168Z",
-      "updatedAt": "2026-03-23T23:25:03.168Z",
-      "completedAt": null
+      "updatedAt": "2026-03-23T23:48:00.000Z",
+      "completedAt": "2026-03-23T23:48:00.000Z"
     }
   ]
 }
