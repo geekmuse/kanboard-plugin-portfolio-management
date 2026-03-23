@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Kanboard\Plugin\Portfolio\Controller;
 
-use Kanboard\Controller\Base;
+use Kanboard\Controller\BaseController;
 
-class PortfolioModificationController extends Base
+class PortfolioModificationController extends BaseController
 {
     /**
      * @param array<string, mixed> $values

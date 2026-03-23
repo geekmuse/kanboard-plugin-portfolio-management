@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Kanboard\Plugin\Portfolio\Controller;
 
-use Kanboard\Controller\Base;
+use Kanboard\Controller\BaseController;
 use Throwable;
 
-class ConfigController extends Base
+class ConfigController extends BaseController
 {
     /**
      * @return array<string, int|string>

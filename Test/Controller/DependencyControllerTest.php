@@ -64,8 +64,8 @@ namespace Kanboard\Core {
 }
 
 namespace Kanboard\Controller {
-    if (! class_exists(__NAMESPACE__ . '\\Base')) {
-        class Base extends \Kanboard\Core\Base
+    if (! class_exists(__NAMESPACE__ . '\\BaseController')) {
+        class BaseController extends \Kanboard\Core\Base
         {
         }
     }

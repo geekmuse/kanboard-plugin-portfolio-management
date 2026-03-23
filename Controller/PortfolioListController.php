@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Kanboard\Plugin\Portfolio\Controller;
 
-use Kanboard\Controller\Base;
+use Kanboard\Controller\BaseController;
 
-class PortfolioListController extends Base
+class PortfolioListController extends BaseController
 {
     public function index()
     {
