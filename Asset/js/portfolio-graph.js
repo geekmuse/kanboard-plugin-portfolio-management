@@ -150,8 +150,9 @@
                 })
                 .attr('marker-end', 'url(#portfolio-graph-arrow)');
 
-            // Track drag distance to distinguish click from drag
-            var dragStartX, dragStartY, wasDragged;
+            // Track drag via real DOM mouse position (not simulation coords,
+            // which jitter from the running force simulation).
+            var dragStartClientX, dragStartClientY, wasDragged;
 
             var node = svg.append('g')
                 .attr('class', 'portfolio-graph-nodes')
@@ -164,17 +165,19 @@
                 .call(
                     d3.drag()
                         .on('start', function (event, d) {
-                            dragStartX = event.x;
-                            dragStartY = event.y;
+                            var se = event.sourceEvent || {};
+                            dragStartClientX = se.clientX || 0;
+                            dragStartClientY = se.clientY || 0;
                             wasDragged = false;
                             if (!event.active) { simulation.alphaTarget(0.3).restart(); }
                             d.fx = d.x;
                             d.fy = d.y;
                         })
                         .on('drag', function (event, d) {
-                            var dx = event.x - dragStartX;
-                            var dy = event.y - dragStartY;
-                            if (dx * dx + dy * dy > 9) { wasDragged = true; }
+                            var se = event.sourceEvent || {};
+                            var dx = (se.clientX || 0) - dragStartClientX;
+                            var dy = (se.clientY || 0) - dragStartClientY;
+                            if (dx * dx + dy * dy > 25) { wasDragged = true; }
                             d.fx = event.x;
                             d.fy = event.y;
                         })

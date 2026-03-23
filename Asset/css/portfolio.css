@@ -201,6 +201,51 @@
     gap: 0.4rem;
 }
 
+.portfolio-dependency-legend-list .portfolio-dependency-node,
+.portfolio-dependency-legend-list .portfolio-dependency-edge {
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.portfolio-dependency-legend-list .portfolio-dependency-node {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #4d7cfe;
+    border: 1.5px solid #2d5cbf;
+}
+
+.portfolio-dependency-legend-list .portfolio-dependency-node--active {
+    background: #4d7cfe;
+    border-color: #2d5cbf;
+}
+
+.portfolio-dependency-legend-list .portfolio-dependency-node--closed {
+    background: #9ca3af;
+    border-color: #6b7280;
+}
+
+.portfolio-dependency-legend-list .portfolio-dependency-node--critical {
+    background: #ef4444;
+    border-color: #b91c1c;
+}
+
+.portfolio-dependency-legend-list .portfolio-dependency-edge {
+    width: 24px;
+    height: 0;
+    border-top: 2.5px solid #374151;
+}
+
+.portfolio-dependency-legend-list .portfolio-dependency-edge--blocks {
+    border-top-color: #ef4444;
+    border-top-style: solid;
+}
+
+.portfolio-dependency-legend-list .portfolio-dependency-edge--resolved {
+    border-top-color: #9ca3af;
+    border-top-style: dashed;
+}
+
 /* Blocked tasks */
 .portfolio-blocked-task-list {
     display: flex;
