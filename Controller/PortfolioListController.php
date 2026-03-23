@@ -10,7 +10,7 @@ class PortfolioListController extends Base
 {
     public function index()
     {
-        return $this->response->html($this->template->render('portfolio/index', [
+        return $this->response->html($this->template->render('Portfolio:portfolio/index', [
             'title' => t('Portfolios'),
             'portfolios' => $this->portfolioModel->getAll(),
         ]));

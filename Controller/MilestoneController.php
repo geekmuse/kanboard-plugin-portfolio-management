@@ -21,7 +21,7 @@ class MilestoneController extends Base
 
         $milestones = $this->getMilestones($portfolioId);
 
-        return $this->response->html($this->template->render('milestone/index', [
+        return $this->response->html($this->template->render('Portfolio:milestone/index', [
             'title' => t('Portfolio Milestones'),
             'portfolio' => $portfolio,
             'milestones' => $milestones,
@@ -42,7 +42,7 @@ class MilestoneController extends Base
 
         $portfolioId = (int) ($milestone['portfolio_id'] ?? 0);
 
-        return $this->response->html($this->template->render('milestone/show', [
+        return $this->response->html($this->template->render('Portfolio:milestone/show', [
             'title' => t('Milestone Details'),
             'milestone' => $milestone,
             'portfolio' => $this->getPortfolio($portfolioId) ?? [],
@@ -77,7 +77,7 @@ class MilestoneController extends Base
             ];
         }
 
-        return $this->response->html($this->template->render('milestone/create', [
+        return $this->response->html($this->template->render('Portfolio:milestone/create', [
             'title' => t('Create Milestone'),
             'portfolio' => $portfolio,
             'values' => $values,
@@ -134,7 +134,7 @@ class MilestoneController extends Base
             ];
         }
 
-        return $this->response->html($this->template->render('milestone/edit', [
+        return $this->response->html($this->template->render('Portfolio:milestone/edit', [
             'title' => t('Edit Milestone'),
             'milestone' => $milestone,
             'portfolio' => $this->getPortfolio((int) ($milestone['portfolio_id'] ?? 0)) ?? [],
@@ -176,7 +176,7 @@ class MilestoneController extends Base
             return $this->redirectToPortfolioList();
         }
 
-        return $this->response->html($this->template->render('milestone/remove', [
+        return $this->response->html($this->template->render('Portfolio:milestone/remove', [
             'title' => t('Remove Milestone'),
             'milestone' => $milestone,
             'portfolio' => $this->getPortfolio((int) ($milestone['portfolio_id'] ?? 0)) ?? [],

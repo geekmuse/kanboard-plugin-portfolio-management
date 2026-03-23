@@ -22,7 +22,7 @@ class DependencyController extends Base
         $crossProjectOnly = (bool) $this->request->getIntegerParam('cross_project_only', 1);
         $graph = $this->resolveDependencyGraph($portfolioId, $crossProjectOnly);
 
-        return $this->response->html($this->template->render('dependency/graph', [
+        return $this->response->html($this->template->render('Portfolio:dependency/graph', [
             'title' => t('Dependency Graph'),
             'portfolio' => $portfolio,
             'cross_project_only' => $crossProjectOnly,
@@ -59,7 +59,7 @@ class DependencyController extends Base
 
         $blockedTasks = $this->resolveBlockedTasks($portfolioId);
 
-        return $this->response->html($this->template->render('dependency/blocked', [
+        return $this->response->html($this->template->render('Portfolio:dependency/blocked', [
             'title' => t('Blocked Tasks'),
             'portfolio' => $portfolio,
             'blocked_tasks' => $blockedTasks,
@@ -79,7 +79,7 @@ class DependencyController extends Base
 
         $criticalPath = $this->resolveCriticalPath($portfolioId);
 
-        return $this->response->html($this->template->render('dependency/critical_path', [
+        return $this->response->html($this->template->render('Portfolio:dependency/critical_path', [
             'title' => t('Critical Path'),
             'portfolio' => $portfolio,
             'critical_path' => $criticalPath,

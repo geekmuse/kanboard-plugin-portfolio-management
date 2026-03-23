@@ -191,7 +191,8 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $this->lastTemplate = $template;
             $this->lastParams = $params;
 
-            $templateFile = __DIR__ . '/../../Template/' . $template . '.php';
+            $resolved = str_replace('Portfolio:', '', $template);
+            $templateFile = __DIR__ . '/../../Template/' . $resolved . '.php';
             if (! file_exists($templateFile)) {
                 return '';
             }
@@ -420,7 +421,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
 
             $html = $controller->index();
 
-            $this->assertSame('portfolio/index', $services['template']->lastTemplate);
+            $this->assertSame('Portfolio:portfolio/index', $services['template']->lastTemplate);
             $this->assertStringContainsString('Roadmap', $html);
             $this->assertStringContainsString('&lt;script&gt;alert(1)&lt;/script&gt;', $html);
             $this->assertStringNotContainsString('<script>alert(1)</script>', $html);
@@ -433,7 +434,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
 
             $html = $controller->create();
 
-            $this->assertSame('portfolio/create', $services['template']->lastTemplate);
+            $this->assertSame('Portfolio:portfolio/create', $services['template']->lastTemplate);
             $this->assertStringContainsString('Create Portfolio', $html);
             $this->assertStringContainsString('name="csrf_token"', $html);
         }
@@ -513,7 +514,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $this->assertSame([
                 'Unable to update portfolio.',
             ], $services['flash']->failureMessages);
-            $this->assertSame('portfolio/edit', $services['template']->lastTemplate);
+            $this->assertSame('Portfolio:portfolio/edit', $services['template']->lastTemplate);
             $this->assertStringContainsString('Unable to update portfolio.', $html);
         }
 
@@ -528,7 +529,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
 
             $html = $controller->remove();
 
-            $this->assertSame('portfolio/remove', $services['template']->lastTemplate);
+            $this->assertSame('Portfolio:portfolio/remove', $services['template']->lastTemplate);
             $this->assertStringContainsString('Release Governance', $html);
             $this->assertStringContainsString('Do you really want to remove this portfolio?', $html);
             $this->assertStringContainsString('name="csrf_token"', $html);
@@ -555,7 +556,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
 
             $html = $controller->settings();
 
-            $this->assertSame('portfolio/settings', $services['template']->lastTemplate);
+            $this->assertSame('Portfolio:portfolio/settings', $services['template']->lastTemplate);
             $this->assertStringContainsString('Portfolio Settings', $html);
             $this->assertStringContainsString('&lt;script&gt;alert(1)&lt;/script&gt;', $html);
             $this->assertStringNotContainsString('<script>alert(1)</script>', $html);

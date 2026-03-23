@@ -189,7 +189,8 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $this->lastTemplate = $template;
             $this->lastParams = $params;
 
-            $templateFile = __DIR__ . '/../../Template/' . $template . '.php';
+            $resolved = str_replace('Portfolio:', '', $template);
+            $templateFile = __DIR__ . '/../../Template/' . $resolved . '.php';
             if (! file_exists($templateFile)) {
                 return '';
             }
@@ -498,7 +499,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
 
             $html = $controller->index();
 
-            $this->assertSame('milestone/index', $services['template']->lastTemplate);
+            $this->assertSame('Portfolio:milestone/index', $services['template']->lastTemplate);
             $this->assertStringContainsString('Portfolio Milestones', $html);
             $this->assertStringContainsString('&lt;script&gt;alert(1)&lt;/script&gt;', $html);
             $this->assertStringNotContainsString('<script>alert(1)</script>', $html);
@@ -556,7 +557,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
 
             $html = $controller->show();
 
-            $this->assertSame('milestone/show', $services['template']->lastTemplate);
+            $this->assertSame('Portfolio:milestone/show', $services['template']->lastTemplate);
             $this->assertStringContainsString('Milestone Details', $html);
             $this->assertStringContainsString('&lt;script&gt;alert(2)&lt;/script&gt;', $html);
             $this->assertStringContainsString('&lt;img src=x onerror=alert(1)&gt;', $html);
@@ -581,7 +582,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $controller = new MilestoneController($services);
             $html = $controller->create();
 
-            $this->assertSame('milestone/create', $services['template']->lastTemplate);
+            $this->assertSame('Portfolio:milestone/create', $services['template']->lastTemplate);
             $this->assertStringContainsString('Create Milestone', $html);
             $this->assertStringContainsString('name="csrf_token"', $html);
             $this->assertStringContainsString('Q2 Release', $html);
@@ -648,7 +649,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $controller = new MilestoneController($services);
             $html = $controller->edit();
 
-            $this->assertSame('milestone/edit', $services['template']->lastTemplate);
+            $this->assertSame('Portfolio:milestone/edit', $services['template']->lastTemplate);
             $this->assertStringContainsString('Edit Milestone', $html);
             $this->assertStringContainsString('2026-09-19', $html);
             $this->assertStringContainsString('value="yellow"', $html);
@@ -708,7 +709,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $controller = new MilestoneController($services);
             $html = $controller->remove();
 
-            $this->assertSame('milestone/remove', $services['template']->lastTemplate);
+            $this->assertSame('Portfolio:milestone/remove', $services['template']->lastTemplate);
             $this->assertStringContainsString('Do you really want to remove this milestone?', $html);
             $this->assertStringContainsString('Release Candidate', $html);
             $this->assertStringContainsString('name="csrf_token"', $html);

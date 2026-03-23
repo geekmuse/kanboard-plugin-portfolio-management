@@ -194,7 +194,8 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $this->lastTemplate = $template;
             $this->lastParams = $params;
 
-            $templateFile = __DIR__ . '/../../Template/' . $template . '.php';
+            $resolved = str_replace('Portfolio:', '', $template);
+            $templateFile = __DIR__ . '/../../Template/' . $resolved . '.php';
             if (! file_exists($templateFile)) {
                 return '';
             }
@@ -331,7 +332,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $controller = new DependencyController($services);
             $html = $controller->graph();
 
-            $this->assertSame('dependency/graph', $services['template']->lastTemplate);
+            $this->assertSame('Portfolio:dependency/graph', $services['template']->lastTemplate);
             $this->assertStringContainsString('Dependency Graph', $html);
             $this->assertStringContainsString('Q3 Portfolio', $html);
             $this->assertStringContainsString('data-graph=', $html);
@@ -461,7 +462,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $controller = new DependencyController($services);
             $html = $controller->blocked();
 
-            $this->assertSame('dependency/blocked', $services['template']->lastTemplate);
+            $this->assertSame('Portfolio:dependency/blocked', $services['template']->lastTemplate);
             $this->assertStringContainsString('Blocked Tasks', $html);
             $this->assertStringContainsString('Q4 Plan', $html);
             $this->assertStringContainsString('&lt;b&gt;inject&lt;/b&gt;', $html);
@@ -547,7 +548,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $controller = new DependencyController($services);
             $html = $controller->criticalPath();
 
-            $this->assertSame('dependency/critical_path', $services['template']->lastTemplate);
+            $this->assertSame('Portfolio:dependency/critical_path', $services['template']->lastTemplate);
             $this->assertStringContainsString('Critical Path', $html);
             $this->assertStringContainsString('Flagship', $html);
             $this->assertStringContainsString('&lt;em&gt;task&lt;/em&gt;', $html);

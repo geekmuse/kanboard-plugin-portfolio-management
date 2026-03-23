@@ -156,7 +156,8 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $this->lastTemplate = $template;
             $this->lastParams = $params;
 
-            $templateFile = __DIR__ . '/../../Template/' . $template . '.php';
+            $resolved = str_replace('Portfolio:', '', $template);
+            $templateFile = __DIR__ . '/../../Template/' . $resolved . '.php';
             if (! file_exists($templateFile)) {
                 return '';
             }
@@ -342,7 +343,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
 
             $html = $controller->show();
 
-            $this->assertSame('portfolio/show', $services['template']->lastTemplate);
+            $this->assertSame('Portfolio:portfolio/show', $services['template']->lastTemplate);
             $this->assertStringContainsString('Portfolio Dashboard', $html);
             $this->assertStringContainsString('&lt;script&gt;alert(1)&lt;/script&gt;', $html);
             $this->assertStringNotContainsString('<script>alert(1)</script>', $html);
@@ -411,7 +412,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $controller = new PortfolioViewController($services);
             $html = $controller->tasks();
 
-            $this->assertSame('portfolio/tasks', $services['template']->lastTemplate);
+            $this->assertSame('Portfolio:portfolio/tasks', $services['template']->lastTemplate);
             $this->assertStringContainsString('Portfolio Tasks', $html);
             $this->assertStringContainsString('&lt;script&gt;alert(5)&lt;/script&gt;', $html);
             $this->assertStringNotContainsString('<script>alert(5)</script>', $html);
@@ -514,7 +515,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
 
             $html = $controller->board();
 
-            $this->assertSame('portfolio/board', $services['template']->lastTemplate);
+            $this->assertSame('Portfolio:portfolio/board', $services['template']->lastTemplate);
             $this->assertStringContainsString('Portfolio Board', $html);
             $this->assertStringContainsString('&lt;script&gt;alert(7)&lt;/script&gt;', $html);
             $this->assertStringNotContainsString('<script>alert(7)</script>', $html);
@@ -583,7 +584,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $controller = new PortfolioViewController($services);
             $html = $controller->timeline();
 
-            $this->assertSame('portfolio/timeline', $services['template']->lastTemplate);
+            $this->assertSame('Portfolio:portfolio/timeline', $services['template']->lastTemplate);
             $this->assertStringContainsString('Portfolio Timeline', $html);
             $this->assertStringContainsString('plugins/Portfolio/Asset/js/portfolio-gantt.js', $html);
             $this->assertStringContainsString('portfolio-timeline-chart', $html);

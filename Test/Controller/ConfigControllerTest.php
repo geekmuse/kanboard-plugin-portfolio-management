@@ -173,7 +173,8 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $this->lastTemplate = $template;
             $this->lastParams = $params;
 
-            $templateFile = __DIR__ . '/../../Template/' . $template . '.php';
+            $resolved = str_replace('Portfolio:', '', $template);
+            $templateFile = __DIR__ . '/../../Template/' . $resolved . '.php';
             if (! file_exists($templateFile)) {
                 return '';
             }
@@ -264,7 +265,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $html = $controller->show();
 
             $template = $this->getService($controller, 'template');
-            $this->assertSame('config/settings', $template->lastTemplate);
+            $this->assertSame('Portfolio:config/settings', $template->lastTemplate);
             $this->assertStringContainsString('Portfolio Settings', $html);
             $this->assertStringContainsString('blocks, &lt;script&gt;alert(1)&lt;/script&gt;', $html);
             $this->assertStringContainsString('value="75"', $html);

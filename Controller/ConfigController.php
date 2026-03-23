@@ -26,7 +26,7 @@ class ConfigController extends Base
 
     public function show()
     {
-        return $this->response->html($this->template->render('config/settings', [
+        return $this->response->html($this->template->render('Portfolio:config/settings', [
             'title' => t('Portfolio Settings'),
             'settings' => $this->getCurrentSettings(),
         ]));
