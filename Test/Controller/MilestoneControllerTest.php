@@ -62,6 +62,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
     use PHPUnit\Framework\TestCase;
 
     require_once __DIR__ . '/../../Controller/MilestoneController.php';
+    require_once __DIR__ . '/FakeLayoutHelper.php';
 
     final class MilestoneControllerFakeRequest
     {
@@ -499,7 +500,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
 
             $html = $controller->index();
 
-            $this->assertSame('Portfolio:milestone/index', $services['template']->lastTemplate);
+            $this->assertSame('Portfolio:milestone/index', $services['helper']->layout->lastTemplate);
             $this->assertStringContainsString('Portfolio Milestones', $html);
             $this->assertStringContainsString('&lt;script&gt;alert(1)&lt;/script&gt;', $html);
             $this->assertStringNotContainsString('<script>alert(1)</script>', $html);
@@ -557,7 +558,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
 
             $html = $controller->show();
 
-            $this->assertSame('Portfolio:milestone/show', $services['template']->lastTemplate);
+            $this->assertSame('Portfolio:milestone/show', $services['helper']->layout->lastTemplate);
             $this->assertStringContainsString('Milestone Details', $html);
             $this->assertStringContainsString('&lt;script&gt;alert(2)&lt;/script&gt;', $html);
             $this->assertStringContainsString('&lt;img src=x onerror=alert(1)&gt;', $html);
@@ -582,7 +583,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $controller = new MilestoneController($services);
             $html = $controller->create();
 
-            $this->assertSame('Portfolio:milestone/create', $services['template']->lastTemplate);
+            $this->assertSame('Portfolio:milestone/create', $services['helper']->layout->lastTemplate);
             $this->assertStringContainsString('Create Milestone', $html);
             $this->assertStringContainsString('name="csrf_token"', $html);
             $this->assertStringContainsString('Q2 Release', $html);
@@ -649,7 +650,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $controller = new MilestoneController($services);
             $html = $controller->edit();
 
-            $this->assertSame('Portfolio:milestone/edit', $services['template']->lastTemplate);
+            $this->assertSame('Portfolio:milestone/edit', $services['helper']->layout->lastTemplate);
             $this->assertStringContainsString('Edit Milestone', $html);
             $this->assertStringContainsString('2026-09-19', $html);
             $this->assertStringContainsString('value="yellow"', $html);
@@ -709,7 +710,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $controller = new MilestoneController($services);
             $html = $controller->remove();
 
-            $this->assertSame('Portfolio:milestone/remove', $services['template']->lastTemplate);
+            $this->assertSame('Portfolio:milestone/remove', $services['helper']->layout->lastTemplate);
             $this->assertStringContainsString('Do you really want to remove this milestone?', $html);
             $this->assertStringContainsString('Release Candidate', $html);
             $this->assertStringContainsString('name="csrf_token"', $html);
@@ -847,6 +848,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
                 'request' => $request ?? new MilestoneControllerFakeRequest(),
                 'response' => new MilestoneControllerFakeResponse(),
                 'template' => new MilestoneControllerFakeTemplate(self::CSRF_TOKEN),
+                'helper' => new FakeHelper(),
                 'flash' => new MilestoneControllerFakeFlash(),
                 'url' => new MilestoneControllerFakeUrlHelper(),
                 'portfolioModel' => $portfolioModel,

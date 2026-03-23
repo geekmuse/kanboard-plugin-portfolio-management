@@ -69,6 +69,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
     use PHPUnit\Framework\TestCase;
 
     require_once __DIR__ . '/../../Controller/DependencyController.php';
+    require_once __DIR__ . '/FakeLayoutHelper.php';
 
     final class DependencyControllerFakeRequest
     {
@@ -332,7 +333,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $controller = new DependencyController($services);
             $html = $controller->graph();
 
-            $this->assertSame('Portfolio:dependency/graph', $services['template']->lastTemplate);
+            $this->assertSame('Portfolio:dependency/graph', $services['helper']->layout->lastTemplate);
             $this->assertStringContainsString('Dependency Graph', $html);
             $this->assertStringContainsString('Q3 Portfolio', $html);
             $this->assertStringContainsString('data-graph=', $html);
@@ -462,7 +463,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $controller = new DependencyController($services);
             $html = $controller->blocked();
 
-            $this->assertSame('Portfolio:dependency/blocked', $services['template']->lastTemplate);
+            $this->assertSame('Portfolio:dependency/blocked', $services['helper']->layout->lastTemplate);
             $this->assertStringContainsString('Blocked Tasks', $html);
             $this->assertStringContainsString('Q4 Plan', $html);
             $this->assertStringContainsString('&lt;b&gt;inject&lt;/b&gt;', $html);
@@ -548,7 +549,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $controller = new DependencyController($services);
             $html = $controller->criticalPath();
 
-            $this->assertSame('Portfolio:dependency/critical_path', $services['template']->lastTemplate);
+            $this->assertSame('Portfolio:dependency/critical_path', $services['helper']->layout->lastTemplate);
             $this->assertStringContainsString('Critical Path', $html);
             $this->assertStringContainsString('Flagship', $html);
             $this->assertStringContainsString('&lt;em&gt;task&lt;/em&gt;', $html);
@@ -605,6 +606,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
                 'request' => $request ?? new DependencyControllerFakeRequest(),
                 'response' => new DependencyControllerFakeResponse(),
                 'template' => $template,
+                'helper' => new FakeHelper(),
                 'flash' => new DependencyControllerFakeFlash(),
                 'url' => new DependencyControllerFakeUrlHelper(),
                 'text' => $template->text,

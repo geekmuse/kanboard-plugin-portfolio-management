@@ -70,6 +70,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
     use PHPUnit\Framework\TestCase;
 
     require_once __DIR__ . '/../../Controller/ConfigController.php';
+    require_once __DIR__ . '/FakeLayoutHelper.php';
 
     final class ConfigControllerFakeRequest
     {
@@ -264,8 +265,8 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
 
             $html = $controller->show();
 
-            $template = $this->getService($controller, 'template');
-            $this->assertSame('Portfolio:config/settings', $template->lastTemplate);
+            $layout = $this->getService($controller, 'helper')->layout;
+            $this->assertSame('Portfolio:config/settings', $layout->lastTemplate);
             $this->assertStringContainsString('Portfolio Settings', $html);
             $this->assertStringContainsString('blocks, &lt;script&gt;alert(1)&lt;/script&gt;', $html);
             $this->assertStringContainsString('value="75"', $html);
@@ -346,6 +347,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
                 'request' => $request,
                 'response' => new ConfigControllerFakeResponse(),
                 'template' => new ConfigControllerFakeTemplate(self::CSRF_TOKEN),
+                'helper' => new FakeHelper(),
                 'flash' => new ConfigControllerFakeFlash(),
                 'url' => new ConfigControllerFakeUrlHelper(),
                 'configModel' => $configModel,

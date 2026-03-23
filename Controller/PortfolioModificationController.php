@@ -14,7 +14,7 @@ class PortfolioModificationController extends Base
      */
     public function create(array $values = [], array $errors = [])
     {
-        return $this->response->html($this->template->render('Portfolio:portfolio/create', [
+        return $this->response->html($this->helper->layout->app('Portfolio:portfolio/create', [
             'title' => t('Create Portfolio'),
             'values' => $values,
             'errors' => $errors,
@@ -63,7 +63,7 @@ class PortfolioModificationController extends Base
             ];
         }
 
-        return $this->response->html($this->template->render('Portfolio:portfolio/edit', [
+        return $this->response->html($this->helper->layout->app('Portfolio:portfolio/edit', [
             'title' => t('Edit Portfolio'),
             'portfolio' => $portfolio,
             'values' => $values,
@@ -106,7 +106,7 @@ class PortfolioModificationController extends Base
 
         $projects = $this->portfolioProjectModel->getProjects($portfolioId);
 
-        return $this->response->html($this->template->render('Portfolio:portfolio/settings', [
+        return $this->response->html($this->helper->layout->app('Portfolio:portfolio/settings', [
             'title' => t('Portfolio Settings'),
             'portfolio' => $portfolio,
             'projects' => $projects,
@@ -166,7 +166,7 @@ class PortfolioModificationController extends Base
             return $this->response->redirect($this->url->href('PortfolioListController', 'index', ['plugin' => 'Portfolio']));
         }
 
-        return $this->response->html($this->template->render('Portfolio:portfolio/remove', [
+        return $this->response->html($this->helper->layout->app('Portfolio:portfolio/remove', [
             'title' => t('Remove Portfolio'),
             'portfolio' => $portfolio,
         ]));

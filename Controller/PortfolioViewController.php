@@ -20,7 +20,7 @@ class PortfolioViewController extends Base
             return $this->response->redirect($this->url->href('PortfolioListController', 'index', ['plugin' => 'Portfolio']));
         }
 
-        return $this->response->html($this->template->render('Portfolio:portfolio/show', [
+        return $this->response->html($this->helper->layout->app('Portfolio:portfolio/show', [
             'title' => t('Portfolio Dashboard'),
             'portfolio' => $portfolio,
             'overview' => $this->getOverview($portfolioId, $portfolio),
@@ -62,7 +62,7 @@ class PortfolioViewController extends Base
             }
         }
 
-        return $this->response->html($this->template->render('Portfolio:portfolio/tasks', [
+        return $this->response->html($this->helper->layout->app('Portfolio:portfolio/tasks', [
             'title' => t('Portfolio Tasks'),
             'portfolio' => $portfolio,
             'tasks' => $tasks,
@@ -95,7 +95,7 @@ class PortfolioViewController extends Base
             'offset' => 0,
         ]);
 
-        return $this->response->html($this->template->render('Portfolio:portfolio/board', [
+        return $this->response->html($this->helper->layout->app('Portfolio:portfolio/board', [
             'title' => t('Portfolio Board'),
             'portfolio' => $portfolio,
             'counts' => $this->getPortfolioTaskCounts($portfolioId),
@@ -130,7 +130,7 @@ class PortfolioViewController extends Base
             $timelineJson = '[]';
         }
 
-        return $this->response->html($this->template->render('Portfolio:portfolio/timeline', [
+        return $this->response->html($this->helper->layout->app('Portfolio:portfolio/timeline', [
             'title' => t('Portfolio Timeline'),
             'portfolio' => $portfolio,
             'timeline_data' => $timelineData,
