@@ -9,7 +9,7 @@ return [
     'Portfolio settings saved successfully.' => 'Portfolio settings saved successfully.',
     'Unable to save portfolio settings.' => 'Unable to save portfolio settings.',
     'Milestone At-Risk Window (days)' => 'Milestone At-Risk Window (days)',
-    'Milestone At-Risk Threshold (%)' => 'Milestone At-Risk Threshold (%)',
+    'Milestone At-Risk Threshold (%%)' => 'Milestone At-Risk Threshold (%%)',
     'Show board blocked indicators' => 'Show board blocked indicators',
     'Show dashboard portfolio widget' => 'Show dashboard portfolio widget',
     'Dependency link labels' => 'Dependency link labels',

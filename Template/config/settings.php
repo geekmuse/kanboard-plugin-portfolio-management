@@ -19,7 +19,7 @@
         </div>
 
         <div class="portfolio-config-field">
-            <label for="portfolio_milestone_at_risk_threshold"><?= $this->text->e(t('Milestone At-Risk Threshold (%)')) ?></label>
+            <label for="portfolio_milestone_at_risk_threshold"><?= $this->text->e(t('Milestone At-Risk Threshold (%%)')) ?></label>
             <input
                 type="number"
                 min="1"
