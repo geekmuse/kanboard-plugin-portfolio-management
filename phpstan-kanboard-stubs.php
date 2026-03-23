@@ -115,6 +115,62 @@ namespace Kanboard\Action {
 }
 
 // ---------------------------------------------------------------------------
+// Kanboard\Controller — BaseController (extends Core\Base, adds controller infra)
+// ---------------------------------------------------------------------------
+namespace Kanboard\Controller {
+    if (! class_exists(\Kanboard\Controller\BaseController::class)) {
+        abstract class BaseController extends \Kanboard\Core\Base
+        {
+            protected function checkCSRFForm(): void
+            {
+            }
+
+            /** @return mixed */
+            protected function redirectResponse(string $url): mixed
+            {
+                return null;
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Kanboard\Core\Filter — FilterInterface
+// ---------------------------------------------------------------------------
+namespace Kanboard\Core\Filter {
+    if (! interface_exists(\Kanboard\Core\Filter\FilterInterface::class)) {
+        interface FilterInterface
+        {
+            /** @return array<int, string> */
+            public function getAttributes(): array;
+
+            public function apply(): static;
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Kanboard\Filter — BaseFilter (base class for task filters)
+// ---------------------------------------------------------------------------
+namespace Kanboard\Filter {
+    if (! class_exists(\Kanboard\Filter\BaseFilter::class)) {
+        abstract class BaseFilter extends \Kanboard\Core\Base
+        {
+            /** @param mixed $value */
+            public function __construct(mixed $value = null)
+            {
+            }
+
+            /** @param mixed $container */
+            public function setContainer($container): static
+            {
+                return $this;
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Kanboard\Core\Security — Role constants
 // ---------------------------------------------------------------------------
 namespace Kanboard\Core\Security {

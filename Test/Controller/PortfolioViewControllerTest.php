@@ -655,7 +655,14 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
                 'portfolioProjectModel' => $portfolioProjectModel ?? new PortfolioViewFakePortfolioProjectModel(),
                 'milestoneModel' => $milestoneModel ?? new PortfolioViewFakeMilestoneModel(),
                 'configModel' => $configModel ?? new PortfolioViewFakeConfigModel(),
-                'userModel' => new class { /** @return array<int,string> */ public function getActiveUsersList(): array { return [1 => 'admin']; } },
+                'userModel' => new class
+                {
+                    /** @return array<int,string> */
+                    public function getActiveUsersList(): array
+                    {
+                        return [1 => 'admin'];
+                    }
+                },
             ];
         }
     }

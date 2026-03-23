@@ -17,7 +17,7 @@ class TaskPortfolioFilter extends BaseFilter implements FilterInterface
     /**
      * @var ArrayAccess|null
      */
-    private $container;
+    private $serviceContainer;
 
     /**
      * @param mixed $value
@@ -29,26 +29,22 @@ class TaskPortfolioFilter extends BaseFilter implements FilterInterface
 
     /**
      * @param ArrayAccess $container
-     * @return $this
      */
-    public function setContainer($container)
+    public function setContainer($container): static
     {
-        $this->container = $container;
+        $this->serviceContainer = $container;
         return $this;
     }
 
     /**
      * @return string[]
      */
-    public function getAttributes()
+    public function getAttributes(): array
     {
         return ['portfolio'];
     }
 
-    /**
-     * @return $this
-     */
-    public function apply()
+    public function apply(): static
     {
         $portfolioId = $this->resolvePortfolioId((string) $this->value);
         $projectIds = $portfolioId > 0 ? $this->getProjectIdsForPortfolio($portfolioId) : [];
@@ -71,12 +67,12 @@ class TaskPortfolioFilter extends BaseFilter implements FilterInterface
             return (int) $value;
         }
 
-        if ($value === '' || $this->container === null) {
+        if ($value === '' || $this->serviceContainer === null) {
             return 0;
         }
 
         try {
-            $portfolioModel = $this->container['portfolioModel'];
+            $portfolioModel = $this->serviceContainer['portfolioModel'];
             if (is_object($portfolioModel) && method_exists($portfolioModel, 'getByName')) {
                 $portfolio = $portfolioModel->getByName($value);
                 return is_array($portfolio) ? (int) ($portfolio['id'] ?? 0) : 0;
@@ -93,12 +89,12 @@ class TaskPortfolioFilter extends BaseFilter implements FilterInterface
      */
     private function getProjectIdsForPortfolio(int $portfolioId)
     {
-        if ($portfolioId <= 0 || $this->container === null) {
+        if ($portfolioId <= 0 || $this->serviceContainer === null) {
             return [];
         }
 
         try {
-            $db = $this->container['db'];
+            $db = $this->serviceContainer['db'];
             $memberships = $db->table('portfolio_has_projects')
                 ->eq('portfolio_id', $portfolioId)
                 ->findAll();

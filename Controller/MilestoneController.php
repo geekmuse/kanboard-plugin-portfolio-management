@@ -218,19 +218,20 @@ class MilestoneController extends BaseController
         $this->flash->failure(t('Unable to remove milestone.'));
 
         return $this->response->redirect($this->helper->url->href(
-                'MilestoneController',
-                'remove',
-                ['milestone_id' => $milestoneId, 'plugin' => 'Portfolio']
-            ));
+            'MilestoneController',
+            'remove',
+            ['milestone_id' => $milestoneId, 'plugin' => 'Portfolio']
+        ));
     }
 
     public function addTask()
     {
 
         $milestoneId = $this->request->getIntegerParam('milestone_id');
-        $taskId = (int) $this->request->getValue('task_id', 0);
-        $isCritical = (int) $this->request->getValue('is_critical', 0);
-        $position = (int) $this->request->getValue('position', 0);
+        $values = $this->request->getValues();
+        $taskId = (int) ($values['task_id'] ?? 0);
+        $isCritical = (int) ($values['is_critical'] ?? 0);
+        $position = (int) ($values['position'] ?? 0);
 
         $added = is_object($this->milestoneTaskModel) && method_exists($this->milestoneTaskModel, 'add')
             ? (bool) $this->milestoneTaskModel->add($milestoneId, $taskId, $isCritical, $position)
@@ -249,7 +250,8 @@ class MilestoneController extends BaseController
     {
 
         $milestoneId = $this->request->getIntegerParam('milestone_id');
-        $taskId = (int) $this->request->getValue('task_id', 0);
+        $values = $this->request->getValues();
+        $taskId = (int) ($values['task_id'] ?? 0);
 
         $removed = is_object($this->milestoneTaskModel) && method_exists($this->milestoneTaskModel, 'remove')
             ? (bool) $this->milestoneTaskModel->remove($milestoneId, $taskId)
@@ -397,19 +399,19 @@ class MilestoneController extends BaseController
     private function redirectToPortfolioMilestones(int $portfolioId)
     {
         return $this->response->redirect($this->helper->url->href(
-                'MilestoneController',
-                'index',
-                ['portfolio_id' => $portfolioId, 'plugin' => 'Portfolio']
-            ));
+            'MilestoneController',
+            'index',
+            ['portfolio_id' => $portfolioId, 'plugin' => 'Portfolio']
+        ));
     }
 
     private function redirectToMilestone(int $milestoneId)
     {
         return $this->response->redirect($this->helper->url->href(
-                'MilestoneController',
-                'show',
-                ['milestone_id' => $milestoneId, 'plugin' => 'Portfolio']
-            ));
+            'MilestoneController',
+            'show',
+            ['milestone_id' => $milestoneId, 'plugin' => 'Portfolio']
+        ));
     }
 
     private function formatTargetDate(mixed $targetDate): string

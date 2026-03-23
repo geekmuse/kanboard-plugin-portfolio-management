@@ -16,6 +16,7 @@ commands:
   # typecheck: n/a — covered by phpstan
 
 rules:
+  - "BEFORE ANY CODING WORK each iteration: read docs/references/kanboard-plugin-development-guidelines.md — it contains critical agent feedback and known pitfalls from previous iterations of this project"
   - "use PicoDb query builder for all database queries — no raw SQL string interpolation"
   - "all templates escape output with $this->text->e() — never echo raw user input"
   - "all user-visible strings wrapped in t('...') for localization"
@@ -33,6 +34,7 @@ boundaries:
     - "*.lock"
     - ".env*"
     - "Asset/js/d3.v7.min.js"
+    - "docs/references/kanboard-plugin-development-guidelines.md"
 
 engine: "pi"
 max_retries: 3

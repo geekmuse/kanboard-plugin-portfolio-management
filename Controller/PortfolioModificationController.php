@@ -126,10 +126,10 @@ class PortfolioModificationController extends BaseController
         }
 
         return $this->response->redirect($this->helper->url->href(
-                'PortfolioModificationController',
-                'settings',
-                ['portfolio_id' => $portfolioId, 'plugin' => 'Portfolio']
-            ));
+            'PortfolioModificationController',
+            'settings',
+            ['portfolio_id' => $portfolioId, 'plugin' => 'Portfolio']
+        ));
     }
 
     public function removeProject()
@@ -145,10 +145,10 @@ class PortfolioModificationController extends BaseController
         }
 
         return $this->response->redirect($this->helper->url->href(
-                'PortfolioModificationController',
-                'settings',
-                ['portfolio_id' => $portfolioId, 'plugin' => 'Portfolio']
-            ));
+            'PortfolioModificationController',
+            'settings',
+            ['portfolio_id' => $portfolioId, 'plugin' => 'Portfolio']
+        ));
     }
 
     public function remove()
@@ -182,10 +182,10 @@ class PortfolioModificationController extends BaseController
         $this->flash->failure(t('Unable to remove portfolio.'));
 
         return $this->response->redirect($this->helper->url->href(
-                'PortfolioModificationController',
-                'remove',
-                ['portfolio_id' => $portfolioId, 'plugin' => 'Portfolio']
-            ));
+            'PortfolioModificationController',
+            'remove',
+            ['portfolio_id' => $portfolioId, 'plugin' => 'Portfolio']
+        ));
     }
 
     /**
