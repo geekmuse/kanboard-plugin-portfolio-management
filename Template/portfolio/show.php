@@ -8,16 +8,40 @@
 
         <div class="listing">
             <h3><?= $this->text->e(t('Overview Metrics')) ?></h3>
-            <ul>
-                <li><?= $this->text->e(t('Projects')) ?>: <strong><?= $this->text->e((string) ((int) ($overview['project_count'] ?? 0))) ?></strong></li>
-                <li><?= $this->text->e(t('Total Tasks')) ?>: <strong><?= $this->text->e((string) ((int) ($overview['task_counts']['total'] ?? 0))) ?></strong></li>
-                <li><?= $this->text->e(t('Active Tasks')) ?>: <strong><?= $this->text->e((string) ((int) ($overview['task_counts']['active'] ?? 0))) ?></strong></li>
-                <li><?= $this->text->e(t('Closed Tasks')) ?>: <strong><?= $this->text->e((string) ((int) ($overview['task_counts']['closed'] ?? 0))) ?></strong></li>
-                <li><?= $this->text->e(t('Blocked Tasks')) ?>: <strong><?= $this->text->e((string) ((int) ($overview['task_counts']['blocked'] ?? 0))) ?></strong></li>
-                <li><?= $this->text->e(t('At-Risk Milestones')) ?>: <strong><?= $this->text->e((string) ((int) ($overview['at_risk_milestones'] ?? 0))) ?></strong></li>
-                <li><?= $this->text->e(t('Overdue Milestones')) ?>: <strong><?= $this->text->e((string) ((int) ($overview['overdue_milestones'] ?? 0))) ?></strong></li>
-                <li><?= $this->text->e(t('Critical Path Length')) ?>: <strong><?= $this->text->e((string) ((int) ($overview['critical_path_length'] ?? 0))) ?></strong></li>
-            </ul>
+            <div class="portfolio-metrics-grid">
+                <div class="portfolio-metric-card">
+                    <span class="portfolio-metric-label"><?= $this->text->e(t('Projects')) ?></span>
+                    <strong class="portfolio-metric-value"><?= $this->text->e((string) ((int) ($overview['project_count'] ?? 0))) ?></strong>
+                </div>
+                <div class="portfolio-metric-card">
+                    <span class="portfolio-metric-label"><?= $this->text->e(t('Total Tasks')) ?></span>
+                    <strong class="portfolio-metric-value"><?= $this->text->e((string) ((int) ($overview['task_counts']['total'] ?? 0))) ?></strong>
+                </div>
+                <div class="portfolio-metric-card">
+                    <span class="portfolio-metric-label"><?= $this->text->e(t('Active Tasks')) ?></span>
+                    <strong class="portfolio-metric-value"><?= $this->text->e((string) ((int) ($overview['task_counts']['active'] ?? 0))) ?></strong>
+                </div>
+                <div class="portfolio-metric-card">
+                    <span class="portfolio-metric-label"><?= $this->text->e(t('Closed Tasks')) ?></span>
+                    <strong class="portfolio-metric-value"><?= $this->text->e((string) ((int) ($overview['task_counts']['closed'] ?? 0))) ?></strong>
+                </div>
+                <div class="portfolio-metric-card">
+                    <span class="portfolio-metric-label"><?= $this->text->e(t('Blocked Tasks')) ?></span>
+                    <strong class="portfolio-metric-value"><?= $this->text->e((string) ((int) ($overview['task_counts']['blocked'] ?? 0))) ?></strong>
+                </div>
+                <div class="portfolio-metric-card">
+                    <span class="portfolio-metric-label"><?= $this->text->e(t('At-Risk Milestones')) ?></span>
+                    <strong class="portfolio-metric-value"><?= $this->text->e((string) ((int) ($overview['at_risk_milestones'] ?? 0))) ?></strong>
+                </div>
+                <div class="portfolio-metric-card">
+                    <span class="portfolio-metric-label"><?= $this->text->e(t('Overdue Milestones')) ?></span>
+                    <strong class="portfolio-metric-value"><?= $this->text->e((string) ((int) ($overview['overdue_milestones'] ?? 0))) ?></strong>
+                </div>
+                <div class="portfolio-metric-card">
+                    <span class="portfolio-metric-label"><?= $this->text->e(t('Critical Path Length')) ?></span>
+                    <strong class="portfolio-metric-value"><?= $this->text->e((string) ((int) ($overview['critical_path_length'] ?? 0))) ?></strong>
+                </div>
+            </div>
         </div>
 
         <div class="listing">
