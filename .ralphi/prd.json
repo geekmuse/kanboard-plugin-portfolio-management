@@ -112,8 +112,8 @@
       "dependsOn": [],
       "notes": "Files: Asset/css/portfolio.css (.portfolio-board, .portfolio-board-column, .portfolio-board-card), Template/portfolio/board.php.",
       "startedAt": "2026-03-23T22:59:46.145Z",
-      "updatedAt": "2026-03-23T23:30:00.000Z",
-      "completedAt": "2026-03-23T23:30:00.000Z"
+      "updatedAt": "2026-03-23T23:05:25.945Z",
+      "completedAt": "2026-03-23T23:05:25.945Z"
     },
     {
       "id": "US-007",
@@ -128,9 +128,12 @@
         "PHP lint passes and all existing tests pass"
       ],
       "priority": 7,
-      "status": "open",
+      "status": "done",
       "dependsOn": [],
-      "notes": "Files: Template/dependency/critical_path.php, Asset/css/portfolio.css."
+      "notes": "Files: Template/dependency/critical_path.php, Asset/css/portfolio.css.",
+      "startedAt": "2026-03-23T23:05:26.754Z",
+      "updatedAt": "2026-03-23T23:14:00.000Z",
+      "completedAt": "2026-03-23T23:14:00.000Z"
     },
     {
       "id": "US-008",

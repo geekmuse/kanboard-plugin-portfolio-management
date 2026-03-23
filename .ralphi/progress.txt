@@ -64,6 +64,26 @@ Corrective Plan: N/A
   - Replacing `margin-bottom` on cards with `gap` on the container is cleaner — it avoids trailing space after the last item and centralises spacing control in the column rule.
 ---
 
+## 2026-03-23 — US-007
+Session: iter-d9fae084 / loop-9e860edc iteration 7
+Review Outcome: PASS
+Trajectory: ON_TRACK
+Trajectory Notes: N/A
+Corrective Plan: N/A
+- Replaced the vertical `<ol>/<li>` critical-path layout with a horizontal `<div class="portfolio-critical-path-flow">` flex container (`display:flex; flex-wrap:wrap; align-items:center; gap:0.5rem`).
+- Each task is now a compact `<div class="portfolio-critical-path-node">` card showing: step position badge, `#id title` (bold, strikethrough when closed), and a meta line with project, assignee, and "Closed"/"N downstream" annotations.
+- `→` arrow spans are emitted between consecutive nodes in PHP (`$index < $lastIndex`), so the last node has no trailing arrow.
+- Closed nodes use `portfolio-critical-path-node--closed` modifier: `opacity:0.65` (dimmed) + `text-decoration:line-through; color:#6b7280` on title.
+- Old CSS classes removed: `.portfolio-critical-path-list`, `.portfolio-critical-path-item`, `.portfolio-critical-path-item--closed`, `.portfolio-critical-path-item-header`, `.portfolio-critical-path-position`, `.portfolio-critical-path-task-title`, `.portfolio-critical-path-item-meta`, `.portfolio-critical-path-connector`.
+- New CSS classes added: `.portfolio-critical-path-flow`, `.portfolio-critical-path-node`, `.portfolio-critical-path-node--closed`, `.portfolio-critical-path-pos`, `.portfolio-critical-path-node-body`, `.portfolio-critical-path-node-title`, `.portfolio-critical-path-node-meta`, `.portfolio-critical-path-arrow`.
+- No PHP behavior change; no new tests needed (CSS-only layout refactor, same pattern as US-003/004/006).
+- Files changed: `Template/dependency/critical_path.php`, `Asset/css/portfolio.css`, `.ralphi/prd.json`, `.ralphi/progress.txt`
+- **Learnings for future iterations:**
+  - Pure CSS flex-wrap cannot detect which flex item is last on a given wrapped row — hiding connectors "after the last item on each row" requires JS or accepting that trailing-row arrows show only on the last item overall (PHP-side guard: `$index < $lastIndex`).
+  - `t('%d downstream', $downstreamCount)` is the correct pattern for numeric interpolation in Kanboard's `t()` (passes through sprintf; `%d` is a valid format specifier).
+  - BEM modifier pattern for closed/inactive items: `portfolio-xxx--closed` on the node, then target the title with `.portfolio-xxx--closed .portfolio-xxx-title { text-decoration: line-through; }` — keeps the modifier and sub-element rules cleanly separated.
+---
+
 ## Codebase Patterns
 - **REQUIRED READING**: Before writing any code each iteration, read `docs/references/kanboard-plugin-development-guidelines.md`. It contains authoritative agent feedback, known pitfalls, and hard-won patterns from previous work on this project. Do NOT commit or modify this file.
 - **POST forms — always use `getValues()` once**: `Request::getValue()` internally calls `getValues()` which validates and strips the CSRF token. Calling it multiple times means only the first call returns real data. Pattern: `$values = $this->request->getValues(); $field = (int)($values['field'] ?? 0);`
