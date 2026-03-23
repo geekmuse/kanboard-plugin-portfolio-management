@@ -1017,6 +1017,7 @@ class DependencyModel extends Base
             'priority' => (int) ($task['priority'] ?? 0),
             'color_id' => (string) ($task['color_id'] ?? ''),
             'assignee' => $this->getTaskAssigneeUsername($ownerId),
+            'date_due' => (int) ($task['date_due'] ?? 0),
         ];
     }
 

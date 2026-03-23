@@ -7,7 +7,7 @@
  *
  * Expected data shape (from DependencyController::graphData()):
  * {
- *   nodes: [{ id, title, project_name, is_active, assignee, color_id, priority }],
+ *   nodes: [{ id, title, project_name, is_active, assignee, priority, date_due }],
  *   edges: [{ source, target, label, is_resolved }],
  *   critical_path: [<task_id>, ...]
  * }
@@ -21,13 +21,16 @@
         return div.innerHTML;
     }
 
+    function formatDate(timestamp) {
+        if (!timestamp || timestamp <= 0) { return ''; }
+        var d = new Date(timestamp * 1000);
+        var yyyy = d.getFullYear();
+        var mm = ('0' + (d.getMonth() + 1)).slice(-2);
+        var dd = ('0' + d.getDate()).slice(-2);
+        return yyyy + '-' + mm + '-' + dd;
+    }
+
     window.PortfolioGraph = {
-        /**
-         * Render the dependency graph inside the given container element.
-         *
-         * @param {HTMLElement} container
-         * @param {Object}      graphData  Parsed graph payload from the controller.
-         */
         render: function (container, graphData) {
             if (typeof d3 === 'undefined') {
                 container.innerHTML = '<p class="portfolio-empty-state">D3.js not loaded — cannot render graph.</p>';
@@ -48,17 +51,22 @@
             var width = container.clientWidth || 800;
             var height = Math.max(400, Math.min(600, nodes.length * 40));
 
-            // --- Popover element (shared, repositioned on each click) ---
+            // --- Popover element ---
             var popover = document.createElement('div');
             popover.className = 'portfolio-graph-popover';
             popover.style.display = 'none';
             container.style.position = 'relative';
             container.appendChild(popover);
 
-            function showPopover(d, event) {
-                var status = d.is_active === 0 ? 'Closed' : 'Active';
-                if (criticalSet[d.id]) { status += ' · Critical Path'; }
+            function hidePopover() {
+                popover.style.display = 'none';
+            }
 
+            function showPopover(d, sourceEvent) {
+                var status = d.is_active === 0 ? 'Closed' : 'Active';
+                if (criticalSet[d.id]) { status += ' \u00b7 Critical Path'; }
+
+                var dueDate = formatDate(d.date_due);
                 var taskUrl = '?controller=TaskViewController&action=show&task_id=' + d.id;
 
                 popover.innerHTML =
@@ -72,43 +80,39 @@
                         '<div><strong>Status:</strong> ' + escapeHtml(status) + '</div>' +
                         (d.assignee ? '<div><strong>Assignee:</strong> ' + escapeHtml(d.assignee) + '</div>' : '') +
                         (d.priority ? '<div><strong>Priority:</strong> ' + escapeHtml(String(d.priority)) + '</div>' : '') +
+                        (dueDate ? '<div><strong>Due:</strong> ' + escapeHtml(dueDate) + '</div>' : '') +
                     '</div>' +
                     '<div class="portfolio-graph-popover-footer">' +
                         '<a href="' + taskUrl + '" class="btn btn-blue js-modal-large">Open Task</a>' +
                     '</div>';
 
-                // Position relative to the container
                 var rect = container.getBoundingClientRect();
-                var x = event.clientX - rect.left + 12;
-                var y = event.clientY - rect.top - 10;
+                var x = sourceEvent.clientX - rect.left + 12;
+                var y = sourceEvent.clientY - rect.top - 10;
 
-                // Keep popover within container bounds
                 popover.style.display = 'block';
-                var pw = popover.offsetWidth || 240;
+                var pw = popover.offsetWidth || 260;
                 if (x + pw > container.clientWidth) { x = x - pw - 24; }
                 if (y < 0) { y = 0; }
 
                 popover.style.left = x + 'px';
                 popover.style.top = y + 'px';
 
-                // Close button
-                var closeBtn = popover.querySelector('.portfolio-graph-popover-close');
-                if (closeBtn) {
-                    closeBtn.addEventListener('click', function (e) {
+                popover.querySelector('.portfolio-graph-popover-close')
+                    .addEventListener('click', function (e) {
                         e.stopPropagation();
-                        popover.style.display = 'none';
+                        hidePopover();
                     });
-                }
             }
 
-            // Hide popover when clicking on empty SVG area
+            // Dismiss popover on SVG background click
             container.addEventListener('click', function (e) {
-                if (e.target === container || e.target.tagName === 'svg') {
-                    popover.style.display = 'none';
+                if (!popover.contains(e.target)) {
+                    hidePopover();
                 }
             });
 
-            // --- SVG setup ---
+            // --- SVG ---
             var svg = d3.select(container)
                 .append('svg')
                 .attr('width', '100%')
@@ -146,6 +150,9 @@
                 })
                 .attr('marker-end', 'url(#portfolio-graph-arrow)');
 
+            // Track drag distance to distinguish click from drag
+            var dragStartX, dragStartY, wasDragged;
+
             var node = svg.append('g')
                 .attr('class', 'portfolio-graph-nodes')
                 .selectAll('g')
@@ -157,18 +164,29 @@
                 .call(
                     d3.drag()
                         .on('start', function (event, d) {
-                            if (! event.active) { simulation.alphaTarget(0.3).restart(); }
+                            dragStartX = event.x;
+                            dragStartY = event.y;
+                            wasDragged = false;
+                            if (!event.active) { simulation.alphaTarget(0.3).restart(); }
                             d.fx = d.x;
                             d.fy = d.y;
                         })
                         .on('drag', function (event, d) {
+                            var dx = event.x - dragStartX;
+                            var dy = event.y - dragStartY;
+                            if (dx * dx + dy * dy > 9) { wasDragged = true; }
                             d.fx = event.x;
                             d.fy = event.y;
                         })
                         .on('end', function (event, d) {
-                            if (! event.active) { simulation.alphaTarget(0); }
+                            if (!event.active) { simulation.alphaTarget(0); }
                             d.fx = null;
                             d.fy = null;
+
+                            // Show popover if this was a click (not a drag)
+                            if (!wasDragged && event.sourceEvent) {
+                                showPopover(d, event.sourceEvent);
+                            }
                         })
                 );
 
@@ -189,17 +207,6 @@
                 .attr('class', 'portfolio-graph-node-label')
                 .text(function (d) { return '#' + d.id; });
 
-            // Click handler — show popover (only fires if not dragging)
-            var dragged = false;
-            node.on('mousedown', function () { dragged = false; })
-                .on('mousemove', function () { dragged = true; })
-                .on('click', function (event, d) {
-                    if (! dragged) {
-                        event.stopPropagation();
-                        showPopover(d, event);
-                    }
-                });
-
             simulation.on('tick', function () {
                 link
                     .attr('x1', function (d) { return d.source.x; })
@@ -216,14 +223,10 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         var container = document.getElementById('portfolio-dependency-graph');
-        if (! container) {
-            return;
-        }
+        if (!container) { return; }
 
         var rawData = container.getAttribute('data-graph');
-        if (! rawData) {
-            return;
-        }
+        if (!rawData) { return; }
 
         try {
             var graphData = JSON.parse(rawData);
