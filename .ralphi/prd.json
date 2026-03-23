@@ -55,8 +55,8 @@
       "dependsOn": [],
       "notes": "Files: Template/portfolio/tasks.php, Asset/css/portfolio.css.",
       "startedAt": "2026-03-23T22:42:25.226Z",
-      "updatedAt": "2026-03-23T22:52:00.000Z",
-      "completedAt": "2026-03-23T22:52:00.000Z"
+      "updatedAt": "2026-03-23T22:50:24.166Z",
+      "completedAt": "2026-03-23T22:50:24.166Z"
     },
     {
       "id": "US-004",
@@ -70,9 +70,12 @@
         "PHP lint passes and all existing tests pass"
       ],
       "priority": 4,
-      "status": "open",
+      "status": "done",
       "dependsOn": [],
-      "notes": "Files: Template/portfolio/show.php, Asset/css/portfolio.css."
+      "notes": "Files: Template/portfolio/show.php, Asset/css/portfolio.css.",
+      "startedAt": "2026-03-23T22:50:24.752Z",
+      "updatedAt": "2026-03-23T23:05:00.000Z",
+      "completedAt": "2026-03-23T23:05:00.000Z"
     },
     {
       "id": "US-005",

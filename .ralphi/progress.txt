@@ -14,6 +14,22 @@ Corrective Plan: N/A
   - Pre-existing PHPCS line-length warnings across many files do not block commits.
 ---
 
+## 2026-03-23 — US-004
+Session: iter-e0de97ae / loop-9e860edc iteration 4
+Review Outcome: PASS
+Trajectory: ON_TRACK
+Trajectory Notes: N/A
+Corrective Plan: N/A
+- Replaced the vertical `<ul>/<li>` metrics list in `Template/portfolio/show.php` with a `<div class="portfolio-metrics-grid">` containing 8 `<div class="portfolio-metric-card">` cards, each with a `portfolio-metric-label` span and `portfolio-metric-value` bold value.
+- Added `.portfolio-metrics-grid` (CSS grid, `repeat(auto-fill, minmax(150px, 1fr))`, 0.75rem gap) and `.portfolio-metric-card`, `.portfolio-metric-label`, `.portfolio-metric-value` rules to `Asset/css/portfolio.css`.
+- 8 cards fit in 1 row at 1280px (≥150px × 8 = 1200px); at worst 2 rows — satisfies "2 rows max" criterion.
+- No PHP behavior change; no new tests needed (CSS-only layout, same pattern as US-003).
+- Files changed: `Template/portfolio/show.php`, `Asset/css/portfolio.css`, `.ralphi/prd.json`, `.ralphi/progress.txt`
+- **Learnings for future iterations:**
+  - CSS-only layout refactors (no PHP logic change) need no new tests — confirmed again here.
+  - `repeat(auto-fill, minmax(150px, 1fr))` with 8 items fits comfortably in 1–2 rows on standard 1280px screens.
+---
+
 ## Codebase Patterns
 - **REQUIRED READING**: Before writing any code each iteration, read `docs/references/kanboard-plugin-development-guidelines.md`. It contains authoritative agent feedback, known pitfalls, and hard-won patterns from previous work on this project. Do NOT commit or modify this file.
 - **POST forms — always use `getValues()` once**: `Request::getValue()` internally calls `getValues()` which validates and strips the CSRF token. Calling it multiple times means only the first call returns real data. Pattern: `$values = $this->request->getValues(); $field = (int)($values['field'] ?? 0);`
