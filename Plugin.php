@@ -333,31 +333,13 @@ class Plugin extends Base
         if (is_object($container) && method_exists($container, 'extend')) {
             $container->extend('taskLexer', static function ($taskLexer, $c) {
                 if (is_object($taskLexer) && method_exists($taskLexer, 'withFilter')) {
-                    $taskLexer->withFilter(new TaskPortfolioFilter($c));
+                    $filter = new TaskPortfolioFilter();
+                    $filter->setContainer($c);
+                    $taskLexer->withFilter($filter);
                 }
 
                 return $taskLexer;
             });
-
-            return;
-        }
-
-        if (
-            is_array($container)
-            && array_key_exists('taskLexer', $container)
-            && $container['taskLexer'] instanceof \Closure
-        ) {
-            $factory = $container['taskLexer'];
-
-            $this->container['taskLexer'] = static function ($c) use ($factory) {
-                $taskLexer = $factory($c);
-
-                if (is_object($taskLexer) && method_exists($taskLexer, 'withFilter')) {
-                    $taskLexer->withFilter(new TaskPortfolioFilter($c));
-                }
-
-                return $taskLexer;
-            };
         }
     }
 

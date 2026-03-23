@@ -1,124 +1,108 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Kanboard\Plugin\Portfolio\Filter;
 
-use Kanboard\Core\Base;
+use Kanboard\Core\Filter\FilterInterface;
+use Kanboard\Filter\BaseFilter;
+use ArrayAccess;
 use Throwable;
 
-class TaskPortfolioFilter extends Base
+/**
+ * Filter tasks by portfolio membership.
+ *
+ * Usage in search: portfolio:"My Portfolio" or portfolio:3
+ */
+class TaskPortfolioFilter extends BaseFilter implements FilterInterface
 {
-    private mixed $query = null;
-
-    private string $value = '';
-
-    private string $operator = '=';
+    /**
+     * @var ArrayAccess|null
+     */
+    private $container;
 
     /**
-     * @return array<int, string>
+     * @param mixed $value
      */
-    public function getAttributes(): array
+    public function __construct($value = null)
+    {
+        parent::__construct($value);
+    }
+
+    /**
+     * @param ArrayAccess $container
+     * @return $this
+     */
+    public function setContainer($container)
+    {
+        $this->container = $container;
+        return $this;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getAttributes()
     {
         return ['portfolio'];
     }
 
-    public function setAttribute(string $attribute): self
+    /**
+     * @return $this
+     */
+    public function apply()
     {
-        return $this;
-    }
-
-    public function setValue(string $value): self
-    {
-        $this->value = trim($value);
-
-        return $this;
-    }
-
-    public function setOperator(string $operator): self
-    {
-        $normalized = trim($operator);
-        $this->operator = $normalized === '' ? '=' : $normalized;
-
-        return $this;
-    }
-
-    public function withQuery(mixed $query): self
-    {
-        $this->query = $query;
-
-        return $this;
-    }
-
-    public function apply(): mixed
-    {
-        if (! is_object($this->query)) {
-            return $this->query;
-        }
-
-        $portfolioId = $this->resolvePortfolioId($this->value);
+        $portfolioId = $this->resolvePortfolioId((string) $this->value);
         $projectIds = $portfolioId > 0 ? $this->getProjectIdsForPortfolio($portfolioId) : [];
 
-        if ($this->isNegatedOperator($this->operator)) {
-            if ($projectIds === [] || ! method_exists($this->query, 'notIn')) {
-                return $this->query;
-            }
-
-            $this->query->notIn('tasks.project_id', $projectIds);
-
-            return $this->query;
-        }
-
         if ($projectIds === []) {
-            if (method_exists($this->query, 'eq')) {
-                $this->query->eq('tasks.id', 0);
-            }
-
-            return $this->query;
-        }
-
-        if (method_exists($this->query, 'in')) {
+            $this->query->eq('tasks.id', 0);
+        } else {
             $this->query->in('tasks.project_id', $projectIds);
-
-            return $this->query;
         }
 
-        if (method_exists($this->query, 'eq') && count($projectIds) === 1) {
-            $this->query->eq('tasks.project_id', $projectIds[0]);
-        }
-
-        return $this->query;
+        return $this;
     }
 
-    private function resolvePortfolioId(string $value): int
+    /**
+     * @return int
+     */
+    private function resolvePortfolioId(string $value)
     {
         if ($value !== '' && ctype_digit($value)) {
             return (int) $value;
         }
 
-        if ($value === '' || ! is_object($this->portfolioModel) || ! method_exists($this->portfolioModel, 'getByName')) {
+        if ($value === '' || $this->container === null) {
             return 0;
         }
 
-        $portfolio = $this->portfolioModel->getByName($value);
+        try {
+            $portfolioModel = $this->container['portfolioModel'];
+            if (is_object($portfolioModel) && method_exists($portfolioModel, 'getByName')) {
+                $portfolio = $portfolioModel->getByName($value);
+                return is_array($portfolio) ? (int) ($portfolio['id'] ?? 0) : 0;
+            }
+        } catch (Throwable $e) {
+            // container key not found
+        }
 
-        return is_array($portfolio) ? (int) ($portfolio['id'] ?? 0) : 0;
+        return 0;
     }
 
     /**
-     * @return array<int, int>
+     * @return int[]
      */
-    private function getProjectIdsForPortfolio(int $portfolioId): array
+    private function getProjectIdsForPortfolio(int $portfolioId)
     {
-        if ($portfolioId <= 0) {
+        if ($portfolioId <= 0 || $this->container === null) {
             return [];
         }
 
         try {
-            $memberships = $this->db->table('portfolio_has_projects')
+            $db = $this->container['db'];
+            $memberships = $db->table('portfolio_has_projects')
                 ->eq('portfolio_id', $portfolioId)
                 ->findAll();
-        } catch (Throwable $exception) {
+        } catch (Throwable $e) {
             return [];
         }
 
@@ -127,25 +111,13 @@ class TaskPortfolioFilter extends Base
         }
 
         $projectIds = [];
-
         foreach ($memberships as $membership) {
-            if (! is_array($membership)) {
-                continue;
-            }
-
             $projectId = (int) ($membership['project_id'] ?? 0);
             if ($projectId > 0) {
-                $projectIds[$projectId] = true;
+                $projectIds[] = $projectId;
             }
         }
 
-        return array_map('intval', array_keys($projectIds));
-    }
-
-    private function isNegatedOperator(string $operator): bool
-    {
-        $normalized = strtolower(trim($operator));
-
-        return in_array($normalized, ['!=', '<>', '!', 'not'], true);
+        return array_values(array_unique($projectIds));
     }
 }
