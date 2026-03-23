@@ -42,7 +42,7 @@ class MilestoneTaskModel extends Base
             'added_at' => time(),
         ]);
 
-        return is_int($result) && $result > 0;
+        return (bool) $result;
     }
 
     public function remove(int $milestoneId, int $taskId): bool

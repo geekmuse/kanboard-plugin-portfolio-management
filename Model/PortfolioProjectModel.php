@@ -30,7 +30,7 @@ class PortfolioProjectModel extends Base
             'added_at' => time(),
         ]);
 
-        return is_int($result) && $result > 0;
+        return (bool) $result;
     }
 
     public function remove(int $portfolioId, int $projectId): bool
