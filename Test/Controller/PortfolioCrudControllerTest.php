@@ -56,6 +56,14 @@ namespace Kanboard\Core {
     }
 }
 
+namespace Kanboard\Controller {
+    if (! class_exists(__NAMESPACE__ . '\\Base')) {
+        class Base extends \Kanboard\Core\Base
+        {
+        }
+    }
+}
+
 namespace Kanboard\Plugin\Portfolio\Test\Controller {
 
     use Kanboard\Plugin\Portfolio\Controller\PortfolioListController;

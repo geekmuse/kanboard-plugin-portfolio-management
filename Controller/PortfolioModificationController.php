@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Kanboard\Plugin\Portfolio\Controller;
 
-use Kanboard\Core\Base;
+use Kanboard\Controller\Base;
 
 class PortfolioModificationController extends Base
 {
