@@ -88,8 +88,10 @@ ralphi check
 - When removing a project from a portfolio, also clean its tasks from the portfolio's milestones
 - `addTaskToMilestone` must verify the task's project is in the milestone's portfolio
 - Dependency queries must resolve dependency link IDs dynamically from `links` and normalize direction using `label`/`opposite_label` so `blocks` and `is blocked by` rows are interpreted consistently
+- Dependency link labels should be read from `configModel->get('portfolio_dependency_link_types', 'blocks')` with safe fallback behavior when config is missing
 - Critical-path calculations should run on unresolved active edges only, topologically sort the graph, and deterministically break cycles by removing the latest edge before longest-path evaluation
 - Unified portfolio task queries should precompute project/column/user/dependency lookup maps once, then apply filters/sort/pagination in-memory for deterministic cross-driver behavior without raw SQL joins
+- Default list pagination should use `portfolio_tasks_per_page` config when a caller omits/invalidates `limit`, while still clamping to supported bounds
 
 ---
 

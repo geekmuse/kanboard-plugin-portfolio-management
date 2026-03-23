@@ -1,6 +1,12 @@
 <?php
-$portfolios       = $this->portfolioHelper->getAllPortfolios();
-$atRiskMilestones = $this->portfolioHelper->getGlobalAtRiskMilestones();
+$widgetEnabled = true;
+
+if (is_object($this->configModel) && method_exists($this->configModel, 'get')) {
+    $widgetEnabled = (int) $this->configModel->get('portfolio_dashboard_widget_enabled', 1) === 1;
+}
+
+$portfolios = $widgetEnabled ? $this->portfolioHelper->getAllPortfolios() : [];
+$atRiskMilestones = $widgetEnabled ? $this->portfolioHelper->getGlobalAtRiskMilestones() : [];
 ?>
 <?php if (! empty($portfolios)): ?>
 <div class="portfolio-widget-dashboard">

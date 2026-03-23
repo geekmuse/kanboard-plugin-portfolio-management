@@ -223,6 +223,20 @@ final class DependencyTestQueryBuilder
     }
 }
 
+final class DependencyConfigModelStub
+{
+    /** @param array<string, mixed> $values */
+    public function __construct(private array $values = [])
+    {
+    }
+
+    /** @param mixed $default */
+    public function get(string $key, $default = null): mixed
+    {
+        return $this->values[$key] ?? $default;
+    }
+}
+
 class DependencyModelTest extends TestCase
 {
     private PDO $pdo;
@@ -356,6 +370,40 @@ class DependencyModelTest extends TestCase
         }
 
         $this->assertSame(1, $sameProjectCount);
+    }
+
+    public function testGetDependenciesHonorsConfiguredLinkLabels(): void
+    {
+        $this->insertPortfolio(1, 'Delivery');
+        $this->insertProject(10, 'Project Alpha');
+        $this->insertProject(20, 'Project Beta');
+        $this->insertPortfolioProject(1, 10, 1);
+        $this->insertPortfolioProject(1, 20, 2);
+
+        $this->insertTask(100, 'Alpha blocker', 10, 1);
+        $this->insertTask(200, 'Beta dependent', 20, 1);
+        $this->insertTask(300, 'Beta related', 20, 1);
+
+        $this->insertLink(77, 'blocks', 'is blocked by');
+        $this->insertLink(88, 'relates to', 'is related by');
+
+        $this->insertTaskLink(100, 200, 77);
+        $this->insertTaskLink(100, 300, 88);
+
+        $this->model = new DependencyModel([
+            'db' => new DependencyTestDatabase($this->pdo),
+            'dispatcher' => $this->dispatcher,
+            'configModel' => new DependencyConfigModelStub([
+                'portfolio_dependency_link_types' => 'relates to',
+            ]),
+        ]);
+
+        $dependencies = $this->model->getDependencies(1, false);
+
+        $this->assertCount(1, $dependencies);
+        $this->assertSame('relates to', strtolower((string) $dependencies[0]['link_label']));
+        $this->assertSame('100', (string) $dependencies[0]['task_id']);
+        $this->assertSame('300', (string) $dependencies[0]['opposite_task_id']);
     }
 
     public function testResolvedDependenciesAreExcludedFromBlockedAndBlockingLists(): void

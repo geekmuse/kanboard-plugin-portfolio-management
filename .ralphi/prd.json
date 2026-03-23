@@ -399,8 +399,8 @@
       ],
       "notes": "Spec refs: section 7, section 12.2, Appendix A.",
       "startedAt": "2026-03-23T01:32:48.120Z",
-      "updatedAt": "2026-03-23T01:43:35Z",
-      "completedAt": "2026-03-23T01:43:35Z"
+      "updatedAt": "2026-03-23T01:46:28.712Z",
+      "completedAt": "2026-03-23T01:46:28.712Z"
     },
     {
       "id": "US-020",
@@ -413,11 +413,14 @@
         "portfolio.css and any remaining JS files are wired in with portfolio-prefixed CSS classes, and relevant tests plus project quality checks remain green."
       ],
       "priority": 20,
-      "status": "open",
+      "status": "done",
       "dependsOn": [
         "US-018"
       ],
-      "notes": "Spec refs: sections 2.1 Filter/Asset/Locale, 8, 13, Appendix C."
+      "notes": "Spec refs: sections 2.1 Filter/Asset/Locale, 8, 13, Appendix C.",
+      "startedAt": "2026-03-23T01:46:28.901Z",
+      "updatedAt": "2026-03-23T02:18:14Z",
+      "completedAt": "2026-03-23T02:18:14Z"
     }
   ]
 }

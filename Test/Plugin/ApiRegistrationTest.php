@@ -454,6 +454,18 @@ final class ApiRegistrationTest extends TestCase
                     'plugin' => 'Portfolio',
                 ],
                 [
+                    'path' => '/portfolio/config',
+                    'controller' => 'ConfigController',
+                    'action' => 'show',
+                    'plugin' => 'Portfolio',
+                ],
+                [
+                    'path' => '/portfolio/config/save',
+                    'controller' => 'ConfigController',
+                    'action' => 'save',
+                    'plugin' => 'Portfolio',
+                ],
+                [
                     'path' => '/portfolio/:portfolio_id',
                     'controller' => 'PortfolioViewController',
                     'action' => 'show',
@@ -526,7 +538,7 @@ final class ApiRegistrationTest extends TestCase
                     'plugin' => 'Portfolio',
                 ],
             ],
-            array_slice($this->route->getRoutes(), 0, 14)
+            array_slice($this->route->getRoutes(), 0, 16)
         );
     }
 
@@ -560,12 +572,17 @@ final class ApiRegistrationTest extends TestCase
                     'role' => Role::APP_USER,
                 ],
                 [
+                    'controller' => 'ConfigController',
+                    'methods' => '*',
+                    'role' => Role::APP_MANAGER,
+                ],
+                [
                     'controller' => 'PortfolioModificationController',
                     'methods' => '*',
                     'role' => Role::APP_MANAGER,
                 ],
             ],
-            array_slice($this->applicationAccessMap->getEntries(), 0, 6)
+            array_slice($this->applicationAccessMap->getEntries(), 0, 7)
         );
     }
 

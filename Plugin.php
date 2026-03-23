@@ -7,6 +7,7 @@ use Kanboard\Core\Security\Role;
 use Kanboard\Core\Translator;
 use Kanboard\Plugin\Portfolio\Action\CommentDependencyResolved;
 use Kanboard\Plugin\Portfolio\Action\NotifyDependencyResolved;
+use Kanboard\Plugin\Portfolio\Filter\TaskPortfolioFilter;
 use Kanboard\Plugin\Portfolio\Notification\DependencyResolvedType;
 
 class Plugin extends Base
@@ -47,6 +48,8 @@ class Plugin extends Base
 
         $this->route->addRoute('/portfolios', 'PortfolioListController', 'index', 'Portfolio');
         $this->route->addRoute('/portfolio/create', 'PortfolioModificationController', 'create', 'Portfolio');
+        $this->route->addRoute('/portfolio/config', 'ConfigController', 'show', 'Portfolio');
+        $this->route->addRoute('/portfolio/config/save', 'ConfigController', 'save', 'Portfolio');
         $this->route->addRoute('/portfolio/:portfolio_id', 'PortfolioViewController', 'show', 'Portfolio');
         $this->route->addRoute('/portfolio/:portfolio_id/tasks', 'PortfolioViewController', 'tasks', 'Portfolio');
         $this->route->addRoute('/portfolio/:portfolio_id/board', 'PortfolioViewController', 'board', 'Portfolio');
@@ -73,6 +76,7 @@ class Plugin extends Base
             Role::APP_MANAGER
         );
         $this->applicationAccessMap->add('DependencyController', '*', Role::APP_USER);
+        $this->applicationAccessMap->add('ConfigController', '*', Role::APP_MANAGER);
         $this->applicationAccessMap->add('PortfolioModificationController', '*', Role::APP_MANAGER);
 
         // -----------------------------------------------------------------
@@ -101,6 +105,9 @@ class Plugin extends Base
 
         // Config sidebar — portfolio management link
         $this->template->hook->attach('template:config:sidebar', 'Portfolio:widget/config_sidebar');
+
+        // Task search filter: portfolio:<id|name>
+        $this->registerTaskSearchFilter();
 
         // Task/dependency lifecycle events
         $this->on('task.close', function ($event) {
@@ -246,6 +253,42 @@ class Plugin extends Base
         $this->apiAccessMap->add('PortfolioProcedure', ['addProjectToPortfolio', 'removeProjectFromPortfolio'], Role::APP_MANAGER);
         $this->apiAccessMap->add('MilestoneProcedure', ['createMilestone', 'updateMilestone', 'removeMilestone'], Role::APP_MANAGER);
         $this->apiAccessMap->add('MilestoneProcedure', ['addTaskToMilestone', 'removeTaskFromMilestone'], Role::APP_MANAGER);
+    }
+
+    private function registerTaskSearchFilter(): void
+    {
+        /** @var mixed $container */
+        $container = $this->container;
+
+        if (is_object($container) && method_exists($container, 'extend')) {
+            $container->extend('taskLexer', static function ($taskLexer, $c) {
+                if (is_object($taskLexer) && method_exists($taskLexer, 'withFilter')) {
+                    $taskLexer->withFilter(new TaskPortfolioFilter($c));
+                }
+
+                return $taskLexer;
+            });
+
+            return;
+        }
+
+        if (
+            is_array($container)
+            && array_key_exists('taskLexer', $container)
+            && $container['taskLexer'] instanceof \Closure
+        ) {
+            $factory = $container['taskLexer'];
+
+            $this->container['taskLexer'] = static function ($c) use ($factory) {
+                $taskLexer = $factory($c);
+
+                if (is_object($taskLexer) && method_exists($taskLexer, 'withFilter')) {
+                    $taskLexer->withFilter(new TaskPortfolioFilter($c));
+                }
+
+                return $taskLexer;
+            };
+        }
     }
 
     public function onStartup()

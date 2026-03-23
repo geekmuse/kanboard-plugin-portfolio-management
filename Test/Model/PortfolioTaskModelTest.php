@@ -222,6 +222,20 @@ final class PortfolioTaskCriticalPathStub
     }
 }
 
+final class PortfolioTaskConfigModelStub
+{
+    /** @param array<string, mixed> $values */
+    public function __construct(private array $values = [])
+    {
+    }
+
+    /** @param mixed $default */
+    public function get(string $key, $default = null): mixed
+    {
+        return $this->values[$key] ?? $default;
+    }
+}
+
 class PortfolioTaskModelTest extends TestCase
 {
     private PDO $pdo;
@@ -347,6 +361,26 @@ class PortfolioTaskModelTest extends TestCase
         ]);
 
         $this->assertSame([202, 201, 101, 102], $this->extractTaskIds($creationSorted));
+    }
+
+    public function testGetTasksUsesConfiguredDefaultLimitWhenLimitIsMissing(): void
+    {
+        $this->seedPortfolioTaskFixtures();
+
+        $this->model = $this->createModel([
+            'configModel' => new PortfolioTaskConfigModelStub([
+                'portfolio_tasks_per_page' => 2,
+            ]),
+        ]);
+
+        $tasks = $this->model->getTasks(1, [
+            'sort' => 'date_creation',
+            'direction' => 'DESC',
+            'offset' => 0,
+        ]);
+
+        $this->assertCount(2, $tasks);
+        $this->assertSame([202, 201], $this->extractTaskIds($tasks));
     }
 
     public function testGetCountsAggregatesTotalsAndStatusFilters(): void

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Kanboard\Plugin\Portfolio\Controller;
 
 use Kanboard\Core\Base;
+use Throwable;
 
 class PortfolioViewController extends Base
 {
@@ -374,9 +375,10 @@ class PortfolioViewController extends Base
             ? $direction
             : 'DESC';
 
-        $limit = (int) $this->request->getValue('limit', 50);
+        $defaultLimit = $this->getDefaultTaskLimit();
+        $limit = (int) $this->request->getValue('limit', $defaultLimit);
         if ($limit <= 0) {
-            $limit = 50;
+            $limit = $defaultLimit;
         }
         $filters['limit'] = min($limit, 500);
 
@@ -446,6 +448,30 @@ class PortfolioViewController extends Base
         }
 
         return null;
+    }
+
+    private function getDefaultTaskLimit(): int
+    {
+        $defaultLimit = $this->getConfigValueAsInt('portfolio_tasks_per_page', 50);
+
+        if ($defaultLimit <= 0) {
+            return 50;
+        }
+
+        return min($defaultLimit, 500);
+    }
+
+    private function getConfigValueAsInt(string $key, int $default): int
+    {
+        if (! is_object($this->configModel) || ! method_exists($this->configModel, 'get')) {
+            return $default;
+        }
+
+        try {
+            return (int) $this->configModel->get($key, $default);
+        } catch (Throwable $exception) {
+            return $default;
+        }
     }
 
     /**

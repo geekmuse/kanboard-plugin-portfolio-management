@@ -253,6 +253,20 @@ final class MilestoneTestQueryBuilder
     }
 }
 
+final class MilestoneConfigModelStub
+{
+    /** @param array<string, mixed> $values */
+    public function __construct(private array $values = [])
+    {
+    }
+
+    /** @param mixed $default */
+    public function get(string $key, $default = null): mixed
+    {
+        return $this->values[$key] ?? $default;
+    }
+}
+
 class MilestoneModelTest extends TestCase
 {
     private PDO $pdo;
@@ -536,6 +550,33 @@ class MilestoneModelTest extends TestCase
         $this->assertSame(1, $progress['blocked_count']);
         $this->assertTrue($progress['is_at_risk']);
         $this->assertFalse($progress['is_overdue']);
+    }
+
+    public function testGetProgressUsesConfiguredRiskWindowAndThreshold(): void
+    {
+        $this->insertPortfolio(1, 'Roadmap');
+        $this->insertProject(10, 'Site');
+
+        $milestoneId = $this->createMilestone(1, 'Custom Risk', time() + (2 * 86400));
+
+        $this->insertTask(1100, 10, 0);
+        $this->insertTask(1101, 10, 1);
+        $this->insertMilestoneTask($milestoneId, 1100, 1);
+        $this->insertMilestoneTask($milestoneId, 1101, 2);
+
+        $this->model = new MilestoneModel([
+            'db' => new MilestoneTestDatabase($this->pdo),
+            'configModel' => new MilestoneConfigModelStub([
+                'portfolio_milestone_at_risk_days' => 1,
+                'portfolio_milestone_at_risk_threshold' => 60,
+            ]),
+        ]);
+
+        $progress = $this->model->getProgress($milestoneId);
+
+        $this->assertNotNull($progress);
+        $this->assertSame(50.0, $progress['percent']);
+        $this->assertFalse($progress['is_at_risk']);
     }
 
     public function testGetProgressCompletedAndOverdueStates(): void

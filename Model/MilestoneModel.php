@@ -200,11 +200,14 @@ class MilestoneModel extends Base
         $targetDate = (int) ($milestone['target_date'] ?? 0);
         $now = time();
 
+        $atRiskDays = max(0, $this->getConfigValueAsInt('portfolio_milestone_at_risk_days', 7));
+        $atRiskThreshold = $this->getConfigValueAsInt('portfolio_milestone_at_risk_threshold', 80);
+
         $isOverdue = $targetDate > 0 && $targetDate < $now && $percent < 100;
         $isAtRisk = ! $isOverdue
             && $targetDate > 0
-            && $targetDate < ($now + (7 * 86400))
-            && $percent < 80;
+            && $targetDate < ($now + ($atRiskDays * 86400))
+            && $percent < $atRiskThreshold;
 
         return [
             'milestone_id' => $milestone['id'],
@@ -298,6 +301,33 @@ class MilestoneModel extends Base
     private function isValidStatus(int $status): bool
     {
         return in_array($status, [0, 1, 2], true);
+    }
+
+    private function getConfigValueAsInt(string $key, int $default): int
+    {
+        $configModel = $this->resolveContainerService('configModel');
+        if (! is_object($configModel) || ! method_exists($configModel, 'get')) {
+            return $default;
+        }
+
+        try {
+            return (int) $configModel->get($key, $default);
+        } catch (Throwable $exception) {
+            return $default;
+        }
+    }
+
+    private function resolveContainerService(string $serviceKey): mixed
+    {
+        if (is_array($this->container) && array_key_exists($serviceKey, $this->container)) {
+            return $this->container[$serviceKey];
+        }
+
+        if ($this->container instanceof \ArrayAccess && isset($this->container[$serviceKey])) {
+            return $this->container[$serviceKey];
+        }
+
+        return null;
     }
 
     /**

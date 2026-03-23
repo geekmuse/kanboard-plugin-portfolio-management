@@ -423,6 +423,41 @@
     display: block;
 }
 
+/* Config form */
+.portfolio-config-settings {
+    max-width: 760px;
+}
+
+.portfolio-config-form {
+    margin-top: 1rem;
+}
+
+.portfolio-config-field {
+    margin-bottom: 0.85rem;
+}
+
+.portfolio-config-field label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+}
+
+.portfolio-config-field input[type="number"],
+.portfolio-config-field input[type="text"] {
+    width: 100%;
+    max-width: 420px;
+}
+
+.portfolio-config-field--checkbox label {
+    font-weight: 400;
+}
+
+.portfolio-config-help {
+    margin: 0.35rem 0 0;
+    font-size: 0.8rem;
+    color: #6b7280;
+}
+
 /* Badge variants */
 .portfolio-badge--warning {
     background: #fef3c7;

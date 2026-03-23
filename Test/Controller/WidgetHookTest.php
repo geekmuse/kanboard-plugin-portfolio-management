@@ -156,6 +156,20 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
         }
     }
 
+    final class WidgetFakeConfigModel
+    {
+        /** @param array<string, mixed> $values */
+        public function __construct(private array $values = [])
+        {
+        }
+
+        /** @param mixed $default */
+        public function get(string $key, $default = null): mixed
+        {
+            return $this->values[$key] ?? $default;
+        }
+    }
+
     // -----------------------------------------------------------------------
     // Widget rendering context
     //
@@ -360,6 +374,24 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $this->assertStringNotContainsString('Blocked', $html);
         }
 
+        public function testBoardBlockedIndicatorRespectsDisabledSetting(): void
+        {
+            $context = new WidgetFakeContext();
+            $context->addService('portfolioHelper', new WidgetFakePortfolioHelper(
+                blockedTaskIds: [42]
+            ));
+            $context->addService('configModel', new WidgetFakeConfigModel([
+                'portfolio_board_show_blockers' => 0,
+            ]));
+
+            $html = $context->renderWidget(
+                $this->templateDir . '/board_blocked_indicator.php',
+                ['task' => ['id' => 42, 'project_id' => 1]]
+            );
+
+            $this->assertStringNotContainsString('portfolio-task-blocked', $html);
+        }
+
         public function testBoardBlockedIndicatorEscapesTranslationOutput(): void
         {
             $context = new WidgetFakeContext();
@@ -520,6 +552,25 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
 
             $trimmed = trim($html);
             $this->assertSame('', $trimmed);
+        }
+
+        public function testDashboardPortfoliosWidgetRespectsDisabledSetting(): void
+        {
+            $context = new WidgetFakeContext();
+            $context->addService('portfolioHelper', new WidgetFakePortfolioHelper(
+                allPortfolios: [
+                    ['id' => 1, 'name' => 'Portfolio A'],
+                ]
+            ));
+            $context->addService('configModel', new WidgetFakeConfigModel([
+                'portfolio_dashboard_widget_enabled' => 0,
+            ]));
+
+            $html = $context->renderWidget(
+                $this->templateDir . '/dashboard_portfolios.php'
+            );
+
+            $this->assertSame('', trim($html));
         }
 
         // -------------------------------------------------------------------

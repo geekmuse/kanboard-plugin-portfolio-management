@@ -573,6 +573,11 @@ class DependencyModel extends Base
      */
     private function getDependencyLinkDefinitions(): array
     {
+        $configuredLabels = $this->getConfiguredDependencyLabels();
+        if ($configuredLabels === []) {
+            return [];
+        }
+
         try {
             $links = $this->db->table('links')->findAll();
         } catch (Throwable $exception) {
@@ -598,11 +603,11 @@ class DependencyModel extends Base
             $label = $this->normalizeLinkLabel($link['label'] ?? '');
             $oppositeLabel = $this->normalizeLinkLabel($link['opposite_label'] ?? '');
 
-            if (! $this->isDependencyLinkLabelSet($label, $oppositeLabel)) {
+            if (! $this->isDependencyLinkLabelSet($label, $oppositeLabel, $configuredLabels)) {
                 continue;
             }
 
-            $taskBlocksOpposite = $this->resolveTaskBlocksOpposite($label, $oppositeLabel);
+            $taskBlocksOpposite = $this->resolveTaskBlocksOpposite($label, $oppositeLabel, $configuredLabels);
             if ($taskBlocksOpposite === null) {
                 continue;
             }
@@ -616,6 +621,53 @@ class DependencyModel extends Base
         }
 
         return $definitions;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function getConfiguredDependencyLabels(): array
+    {
+        $rawLabels = strtolower(trim($this->getConfigValueAsString('portfolio_dependency_link_types', self::BLOCKS_LABEL)));
+        $parts = explode(',', $rawLabels);
+        $labels = [];
+
+        foreach ($parts as $part) {
+            $label = $this->normalizeLinkLabel($part);
+            if ($label === '' || in_array($label, $labels, true)) {
+                continue;
+            }
+
+            $labels[] = $label;
+        }
+
+        if ($labels === []) {
+            $labels[] = self::BLOCKS_LABEL;
+        }
+
+        if (in_array(self::BLOCKS_LABEL, $labels, true) && ! in_array(self::BLOCKED_BY_LABEL, $labels, true)) {
+            $labels[] = self::BLOCKED_BY_LABEL;
+        }
+
+        if (in_array(self::BLOCKED_BY_LABEL, $labels, true) && ! in_array(self::BLOCKS_LABEL, $labels, true)) {
+            $labels[] = self::BLOCKS_LABEL;
+        }
+
+        return $labels;
+    }
+
+    private function getConfigValueAsString(string $key, string $default): string
+    {
+        $configModel = $this->resolveContainerService('configModel');
+        if (! is_object($configModel) || ! method_exists($configModel, 'get')) {
+            return $default;
+        }
+
+        try {
+            return (string) $configModel->get($key, $default);
+        } catch (Throwable $exception) {
+            return $default;
+        }
     }
 
     /**
@@ -659,13 +711,19 @@ class DependencyModel extends Base
         return strtolower(trim((string) $label));
     }
 
-    private function isDependencyLinkLabelSet(string $label, string $oppositeLabel): bool
+    /**
+     * @param array<int, string> $configuredLabels
+     */
+    private function isDependencyLinkLabelSet(string $label, string $oppositeLabel, array $configuredLabels): bool
     {
-        return in_array(self::BLOCKS_LABEL, [$label, $oppositeLabel], true)
-            || in_array(self::BLOCKED_BY_LABEL, [$label, $oppositeLabel], true);
+        return ($label !== '' && in_array($label, $configuredLabels, true))
+            || ($oppositeLabel !== '' && in_array($oppositeLabel, $configuredLabels, true));
     }
 
-    private function resolveTaskBlocksOpposite(string $label, string $oppositeLabel): ?bool
+    /**
+     * @param array<int, string> $configuredLabels
+     */
+    private function resolveTaskBlocksOpposite(string $label, string $oppositeLabel, array $configuredLabels): ?bool
     {
         if ($label === self::BLOCKS_LABEL) {
             return true;
@@ -680,6 +738,24 @@ class DependencyModel extends Base
         }
 
         if ($oppositeLabel === self::BLOCKS_LABEL) {
+            return false;
+        }
+
+        $labelIsConfigured = false;
+        if ($label !== '') {
+            $labelIsConfigured = in_array($label, $configuredLabels, true);
+        }
+
+        $oppositeIsConfigured = false;
+        if ($oppositeLabel !== '') {
+            $oppositeIsConfigured = in_array($oppositeLabel, $configuredLabels, true);
+        }
+
+        if ($labelIsConfigured) {
+            return true;
+        }
+
+        if ($oppositeIsConfigured) {
             return false;
         }
 

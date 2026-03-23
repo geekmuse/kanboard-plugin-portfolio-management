@@ -300,6 +300,20 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
         }
     }
 
+    final class PortfolioViewFakeConfigModel
+    {
+        /** @param array<string, mixed> $values */
+        public function __construct(private array $values = [])
+        {
+        }
+
+        /** @param mixed $default */
+        public function get(string $key, $default = null): mixed
+        {
+            return $this->values[$key] ?? $default;
+        }
+    }
+
     final class PortfolioViewControllerTest extends TestCase
     {
         public function testPortfolioDashboardRendersOverviewAndEscapesContent(): void
@@ -426,6 +440,35 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
                     'status_id' => null,
                 ],
             ], $portfolioTaskModel->countCalls);
+        }
+
+        public function testPortfolioTasksUsesConfiguredDefaultPageSizeWhenLimitIsMissing(): void
+        {
+            $request = new PortfolioViewFakeRequest([
+                'status_id' => '1',
+            ], ['portfolio_id' => 4]);
+
+            $portfolioModel = new PortfolioViewFakePortfolioModel([
+                ['id' => 4, 'name' => 'Launch', 'description' => 'desc', 'is_active' => 1],
+            ]);
+
+            $portfolioTaskModel = new PortfolioViewFakePortfolioTaskModel();
+
+            $services = $this->buildServices(
+                $portfolioModel,
+                $portfolioTaskModel,
+                $request,
+                null,
+                null,
+                new PortfolioViewFakeConfigModel([
+                    'portfolio_tasks_per_page' => 75,
+                ])
+            );
+
+            $controller = new PortfolioViewController($services);
+            $controller->tasks();
+
+            $this->assertSame(75, (int) $portfolioTaskModel->taskCalls[0]['filters']['limit']);
         }
 
         public function testPortfolioBoardRendersAggregateColumnsWithEscapedTaskContent(): void
@@ -587,7 +630,8 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             PortfolioViewFakePortfolioTaskModel $portfolioTaskModel,
             ?PortfolioViewFakeRequest $request = null,
             ?PortfolioViewFakePortfolioProjectModel $portfolioProjectModel = null,
-            ?PortfolioViewFakeMilestoneModel $milestoneModel = null
+            ?PortfolioViewFakeMilestoneModel $milestoneModel = null,
+            ?PortfolioViewFakeConfigModel $configModel = null
         ): array {
             return [
                 'request' => $request ?? new PortfolioViewFakeRequest(),
@@ -599,6 +643,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
                 'portfolioTaskModel' => $portfolioTaskModel,
                 'portfolioProjectModel' => $portfolioProjectModel ?? new PortfolioViewFakePortfolioProjectModel(),
                 'milestoneModel' => $milestoneModel ?? new PortfolioViewFakeMilestoneModel(),
+                'configModel' => $configModel ?? new PortfolioViewFakeConfigModel(),
             ];
         }
     }

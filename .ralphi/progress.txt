@@ -15,6 +15,7 @@
 - Aggregate portfolio board/timeline pages remain deterministic in the lightweight harness when controllers request active tasks with fixed filter defaults, then derive grouped columns/timeline arrays before rendering templates.
 - Milestone membership UI flows should post `task_id`, `is_critical`, and `position` directly to controller actions, while relying on `milestoneTaskModel->add()` for the portfolio-project validation rule to keep behavior consistent across UI/API callers.
 - Shared PHPUnit stubs guarded by `class_exists()` should preserve `Kanboard\Core\Base::checkCSRFParam()` token validation semantics; otherwise load-order differences can silently break CSRF-related controller assertions.
+- Plugin settings should be consumed through `configModel->get('portfolio_*', $default)` with safe defaults in models/controllers/templates so UI widgets and pagination remain stable even when config services are absent in lightweight test harnesses.
 ---
 
 ## PRD Run Context
@@ -378,4 +379,22 @@ Corrective Plan: N/A
 - **Learnings for future iterations:**
   - Custom automatic-action stories are easiest to verify in this repo by pairing plugin-registration tests (listener/action/type wiring) with action-level side-effect tests that run against lightweight fake models.
   - Because test suites share `class_exists()`-guarded core stubs, any new fallback `Kanboard\Core\Base` stub should preserve CSRF token-check semantics to avoid order-dependent failures in controller tests.
+---
+
+## 2026-03-23T02:18:14Z - US-020
+Session: N/A
+Review Outcome: PASS
+Trajectory: ON_TRACK
+Trajectory Notes: N/A
+Corrective Plan: N/A
+- Implemented plugin-wide configuration UI via new `ConfigController` routes (`/portfolio/config`, `/portfolio/config/save`) and `Template/config/settings.php`, including CSRF-protected save handling for all documented `portfolio_*` settings.
+- Added `Filter/TaskPortfolioFilter.php` and registered it in `Plugin.php` task lexer wiring so task search now supports `portfolio:<id|name>` scoping based on portfolio project membership.
+- Wired configuration keys into runtime behavior: risk-window/threshold now drive milestone risk checks (`MilestoneModel`), default task pagination uses `portfolio_tasks_per_page` (`PortfolioViewController` + `PortfolioTaskModel`), dependency link labels are configurable via `portfolio_dependency_link_types` (`DependencyModel`), and dashboard/board widgets honor enablement toggles.
+- Polished settings and widget UX by updating config sidebar links, adding config form styling in `Asset/css/portfolio.css`, and localizing all new user-facing strings in `Locale/en_US/translations.php`.
+- Expanded automated coverage with new integration/unit tests: `Test/Controller/ConfigControllerTest.php`, `Test/Filter/TaskPortfolioFilterTest.php`, plus updates across plugin/controller/model/widget suites for new routes, settings behavior, and configurable query logic.
+- Quality checks run: `bash scripts/docker-lint.sh`, `bash scripts/docker-test.sh`, `bash scripts/docker-phpcs.sh`, `bash scripts/docker-phpstan.sh` — all passed.
+- Files changed: `Controller/ConfigController.php`, `Template/config/settings.php`, `Filter/TaskPortfolioFilter.php`, `Plugin.php`, `Controller/PortfolioViewController.php`, `Model/MilestoneModel.php`, `Model/PortfolioTaskModel.php`, `Model/DependencyModel.php`, `Template/widget/config_sidebar.php`, `Template/widget/board_blocked_indicator.php`, `Template/widget/dashboard_portfolios.php`, `Asset/css/portfolio.css`, `Locale/en_US/translations.php`, `Test/Controller/ConfigControllerTest.php`, `Test/Filter/TaskPortfolioFilterTest.php`, `Test/Plugin/ApiRegistrationTest.php`, `Test/Controller/PortfolioViewControllerTest.php`, `Test/Controller/WidgetHookTest.php`, `Test/Model/MilestoneModelTest.php`, `Test/Model/PortfolioTaskModelTest.php`, `Test/Model/DependencyModelTest.php`, `.ralphi/prd.json`, `.ralphi/progress.txt`.
+- **Learnings for future iterations:**
+  - Config-driven behavior can be validated without full Kanboard runtime by injecting lightweight `configModel` stubs into controller/model/widget tests and asserting fallback defaults remain deterministic.
+  - Task lexer filters are safest when they support both numeric identifiers and name lookups, and convert unknown filter values into an explicit empty-result condition instead of silently broadening search scope.
 ---

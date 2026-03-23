@@ -39,7 +39,7 @@ class PortfolioTaskModel extends Base
 
         $this->sortTaskRows($rows, $sort, $direction);
 
-        $limit = $this->normalizeLimit($filters['limit'] ?? 50);
+        $limit = $this->normalizeLimit($filters['limit'] ?? null);
         $offset = max(0, (int) ($filters['offset'] ?? 0));
 
         return array_values(array_slice($rows, $offset, $limit));
@@ -652,7 +652,11 @@ class PortfolioTaskModel extends Base
         $resolvedLimit = (int) $limit;
 
         if ($resolvedLimit <= 0) {
-            return 50;
+            $resolvedLimit = $this->getConfigValueAsInt('portfolio_tasks_per_page', 50);
+        }
+
+        if ($resolvedLimit <= 0) {
+            $resolvedLimit = 50;
         }
 
         return min($resolvedLimit, 500);
