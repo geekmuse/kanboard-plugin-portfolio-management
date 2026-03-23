@@ -28,8 +28,16 @@
     </div>
 
     <div class="portfolio-form-row">
-        <label for="form-assignee-id"><?= $this->text->e(t('Assignee ID')) ?></label>
-        <input type="number" id="form-assignee-id" name="assignee_id" min="1" value="<?= $this->text->e((string) ($filters['assignee_id'] ?? '')) ?>">
+        <label for="form-assignee-id"><?= $this->text->e(t('Assignee')) ?></label>
+        <select id="form-assignee-id" name="assignee_id">
+            <option value=""><?= $this->text->e(t('All Users')) ?></option>
+            <?php $selectedAssignee = (string) ($filters['assignee_id'] ?? ''); ?>
+            <?php foreach (($users ?? []) as $userId => $userName): ?>
+                <option value="<?= $this->text->e((string) $userId) ?>"<?= (string) $userId === $selectedAssignee ? ' selected' : '' ?>>
+                    <?= $this->text->e($userName) ?>
+                </option>
+            <?php endforeach ?>
+        </select>
     </div>
 
     <div class="portfolio-form-row">

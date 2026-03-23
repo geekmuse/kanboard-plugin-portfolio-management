@@ -73,6 +73,7 @@ class PortfolioViewController extends BaseController
             'previous_offset' => $this->getPreviousOffset($filters),
             'next_offset' => $this->getNextOffset($filters, $tasks),
             'pagination_query' => $this->buildPaginationQuery($filters),
+            'users' => $this->userModel->getList(),
         ]));
     }
 

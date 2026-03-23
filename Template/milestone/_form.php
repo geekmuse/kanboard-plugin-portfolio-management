@@ -1,3 +1,14 @@
+<?php
+/**
+ * Shared milestone form fields (create + edit).
+ *
+ * @var array<string, mixed>  $values  Current form values
+ * @var array<int, string>    $users   User list [id => username]
+ * @var array<string, string> $colors  Color list [id => label]
+ */
+$users  = $users ?? [];
+$colors = $colors ?? [];
+?>
 <div class="portfolio-form-row">
     <label for="form-name"><?= $this->text->e(t('Milestone Name')) ?></label>
     <input
@@ -27,24 +38,30 @@
 
 <div class="portfolio-form-row">
     <label for="form-color-id"><?= $this->text->e(t('Color')) ?></label>
-    <input
-        type="text"
-        id="form-color-id"
-        name="color_id"
-        maxlength="32"
-        value="<?= $this->text->e((string) ($values['color_id'] ?? 'blue')) ?>"
-    >
+    <select id="form-color-id" name="color_id">
+        <?php $selectedColor = (string) ($values['color_id'] ?? 'blue'); ?>
+        <?php foreach ($colors as $colorId => $colorLabel): ?>
+            <option value="<?= $this->text->e((string) $colorId) ?>"<?= (string) $colorId === $selectedColor ? ' selected' : '' ?>>
+                <?= $this->text->e($colorLabel) ?>
+            </option>
+        <?php endforeach ?>
+        <?php if (empty($colors)): ?>
+            <option value="blue" selected><?= $this->text->e(t('Blue')) ?></option>
+        <?php endif ?>
+    </select>
 </div>
 
 <div class="portfolio-form-row">
-    <label for="form-owner-id"><?= $this->text->e(t('Owner ID')) ?></label>
-    <input
-        type="number"
-        id="form-owner-id"
-        name="owner_id"
-        min="0"
-        value="<?= $this->text->e((string) ((int) ($values['owner_id'] ?? 0))) ?>"
-    >
+    <label for="form-owner-id"><?= $this->text->e(t('Owner')) ?></label>
+    <select id="form-owner-id" name="owner_id">
+        <option value="0"><?= $this->text->e(t('Unassigned')) ?></option>
+        <?php $selectedOwner = (int) ($values['owner_id'] ?? 0); ?>
+        <?php foreach ($users as $userId => $userName): ?>
+            <option value="<?= $this->text->e((string) $userId) ?>"<?= (int) $userId === $selectedOwner ? ' selected' : '' ?>>
+                <?= $this->text->e($userName) ?>
+            </option>
+        <?php endforeach ?>
+    </select>
 </div>
 
 <div class="portfolio-form-row">

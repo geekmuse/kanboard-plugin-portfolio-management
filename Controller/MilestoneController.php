@@ -42,12 +42,21 @@ class MilestoneController extends BaseController
 
         $portfolioId = (int) ($milestone['portfolio_id'] ?? 0);
 
+        $portfolioTasks = $this->portfolioTaskModel->getTasks($portfolioId, [
+            'status_id' => 1,
+            'limit' => 500,
+            'offset' => 0,
+            'sort' => 'priority',
+            'direction' => 'DESC',
+        ]);
+
         return $this->response->html($this->helper->layout->app('Portfolio:milestone/show', [
             'title' => t('Milestone Details'),
             'milestone' => $milestone,
             'portfolio' => $this->getPortfolio($portfolioId) ?? [],
             'tasks' => $this->getMilestoneTasks($milestoneId),
             'progress' => $this->getMilestoneProgress($milestoneId),
+            'available_tasks' => is_array($portfolioTasks) ? $portfolioTasks : [],
         ]));
     }
 
@@ -82,6 +91,8 @@ class MilestoneController extends BaseController
             'portfolio' => $portfolio,
             'values' => $values,
             'errors' => $errors,
+            'users' => $this->userModel->getList(),
+            'colors' => $this->colorModel->getList(),
         ]));
     }
 
@@ -139,6 +150,8 @@ class MilestoneController extends BaseController
             'portfolio' => $this->getPortfolio((int) ($milestone['portfolio_id'] ?? 0)) ?? [],
             'values' => $values,
             'errors' => $errors,
+            'users' => $this->userModel->getList(),
+            'colors' => $this->colorModel->getList(),
         ]));
     }
 

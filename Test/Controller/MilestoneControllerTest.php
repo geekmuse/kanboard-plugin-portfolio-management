@@ -659,7 +659,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $this->assertSame('Portfolio:milestone/edit', $services['helper']->layout->lastTemplate);
             $this->assertStringContainsString('Edit Milestone', $html);
             $this->assertStringContainsString('2026-09-19', $html);
-            $this->assertStringContainsString('value="yellow"', $html);
+            $this->assertStringContainsString('value="yellow" selected', $html);
         }
 
         public function testUpdateMilestoneRedirectsToMilestonePageOnSuccess(): void
@@ -838,6 +838,9 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
                 'milestoneModel' => $milestoneModel,
                 'milestoneTaskModel' => $milestoneTaskModel,
                 'csrf_token' => self::CSRF_TOKEN,
+                'userModel' => new class { /** @return array<int,string> */ public function getList(): array { return [1 => 'admin']; } },
+                'colorModel' => new class { /** @return array<string,string> */ public function getList(): array { return ['blue' => 'Blue', 'green' => 'Green', 'yellow' => 'Yellow', 'red' => 'Red']; } },
+                'portfolioTaskModel' => new class { /** @return array<int,array<string,mixed>> */ public function getTasks(int $id, array $f = []): array { return []; } },
             ];
         }
     }

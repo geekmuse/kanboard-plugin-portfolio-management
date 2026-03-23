@@ -78,8 +78,17 @@ if ($statusId === 0) {
         <?= $this->form->csrf() ?>
 
         <div class="portfolio-form-row">
-            <label for="form-task-id"><?= $this->text->e(t('Task ID')) ?></label>
-            <input type="number" id="form-task-id" name="task_id" min="1" required>
+            <label for="form-task-id"><?= $this->text->e(t('Task')) ?></label>
+            <select id="form-task-id" name="task_id" required>
+                <option value=""><?= $this->text->e(t('-- Select a task --')) ?></option>
+                <?php foreach (($available_tasks ?? []) as $availTask): ?>
+                    <option value="<?= $this->text->e((string) ((int) ($availTask['id'] ?? 0))) ?>">
+                        #<?= $this->text->e((string) ((int) ($availTask['id'] ?? 0))) ?>
+                        <?= $this->text->e((string) ($availTask['title'] ?? '')) ?>
+                        (<?= $this->text->e((string) ($availTask['project_name'] ?? '')) ?>)
+                    </option>
+                <?php endforeach ?>
+            </select>
         </div>
 
         <div class="portfolio-form-row">
