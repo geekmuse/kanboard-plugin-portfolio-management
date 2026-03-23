@@ -19,8 +19,8 @@
       "dependsOn": [],
       "notes": "Root cause: Kanboard Request::getValues() validates+consumes CSRF token on first call. Files: Controller/MilestoneController.php lines 231-233, 252.",
       "startedAt": "2026-03-23T22:20:35.963Z",
-      "updatedAt": "2026-03-23T22:28:00.000Z",
-      "completedAt": "2026-03-23T22:28:00.000Z"
+      "updatedAt": "2026-03-23T22:38:42.914Z",
+      "completedAt": "2026-03-23T22:38:42.914Z"
     },
     {
       "id": "US-002",
@@ -31,9 +31,12 @@
         "PHP lint passes"
       ],
       "priority": 2,
-      "status": "open",
+      "status": "done",
       "dependsOn": [],
-      "notes": "Files: Plugin.php line 371."
+      "notes": "Files: Plugin.php line 371.",
+      "startedAt": "2026-03-23T22:38:43.372Z",
+      "updatedAt": "2026-03-23T22:45:00.000Z",
+      "completedAt": "2026-03-23T22:45:00.000Z"
     },
     {
       "id": "US-003",

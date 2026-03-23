@@ -30,3 +30,17 @@ Corrective Plan: N/A
   - One-liner anonymous classes in test `buildServices()` helpers trigger PSR-12 brace errors that PHPCBF cannot fix automatically — expand them manually.
   - Never name a property `$container` in a subclass of `Kanboard\Core\Base`; it conflicts with the base class's protected property.
 ---
+
+## 2026-03-23 — US-002
+Session: iter-d205829e / loop-9e860edc iteration 2
+Review Outcome: PASS
+Trajectory: ON_TRACK
+Trajectory Notes: N/A
+Corrective Plan: N/A
+- Updated `Plugin::getPluginHomepage()` to return the correct repository URL: `https://github.com/geekmuse/kanboard-plugin-portfolio-management` (was missing `-management` suffix).
+- Verified against `git remote -v` which shows `git@github.com:geekmuse/kanboard-plugin-portfolio-management.git`.
+- Files changed: `Plugin.php`, `.ralphi/prd.json`, `.ralphi/progress.txt`
+- **Learnings for future iterations:**
+  - Minimal single-line metadata fixes require no new tests (pure string constant, no behavior under test).
+  - Pre-existing PHPCS line-length warnings across many files do not block commits — they are warnings, not errors.
+---
