@@ -575,3 +575,40 @@
     font-size: 0.8rem;
     padding: 3px 10px;
 }
+
+/* ----------------------------------------------------------------
+   Task filter form — responsive horizontal grid layout
+   ---------------------------------------------------------------- */
+.portfolio-task-filter-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.75rem 1rem;
+    align-items: end;
+    margin-bottom: 1.5rem;
+}
+
+.portfolio-form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.portfolio-form-row label {
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.portfolio-form-row select,
+.portfolio-form-row input[type="number"],
+.portfolio-form-row input[type="text"] {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.portfolio-form-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
