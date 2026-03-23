@@ -379,8 +379,8 @@
       ],
       "notes": "Spec refs: sections 2.1 Helper, 6.1, 6.2, 6.3, Appendix A.",
       "startedAt": "2026-03-22T21:52:07.201Z",
-      "updatedAt": "2026-03-23T01:31:10.482Z",
-      "completedAt": "2026-03-23T01:31:10.486Z"
+      "updatedAt": "2026-03-23T01:32:47.942Z",
+      "completedAt": "2026-03-23T01:32:47.942Z"
     },
     {
       "id": "US-019",
@@ -393,11 +393,14 @@
         "Tests cover event dispatch and the expected side effects of the automatic actions at the model or integration level."
       ],
       "priority": 19,
-      "status": "open",
+      "status": "done",
       "dependsOn": [
         "US-009"
       ],
-      "notes": "Spec refs: section 7, section 12.2, Appendix A."
+      "notes": "Spec refs: section 7, section 12.2, Appendix A.",
+      "startedAt": "2026-03-23T01:32:48.120Z",
+      "updatedAt": "2026-03-23T01:43:35Z",
+      "completedAt": "2026-03-23T01:43:35Z"
     },
     {
       "id": "US-020",

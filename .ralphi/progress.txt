@@ -14,6 +14,7 @@
 - Filterable portfolio list views remain predictable when controllers normalize query params once, pass scalar `filters` values to templates, and build pagination links from a dedicated `pagination_query` map.
 - Aggregate portfolio board/timeline pages remain deterministic in the lightweight harness when controllers request active tasks with fixed filter defaults, then derive grouped columns/timeline arrays before rendering templates.
 - Milestone membership UI flows should post `task_id`, `is_critical`, and `position` directly to controller actions, while relying on `milestoneTaskModel->add()` for the portfolio-project validation rule to keep behavior consistent across UI/API callers.
+- Shared PHPUnit stubs guarded by `class_exists()` should preserve `Kanboard\Core\Base::checkCSRFParam()` token validation semantics; otherwise load-order differences can silently break CSRF-related controller assertions.
 ---
 
 ## PRD Run Context
@@ -336,4 +337,45 @@ Corrective Plan: N/A
   - Test stubs that use multiple classes per file should exclude PSR1.Classes.ClassDeclaration and PSR1.Files.SideEffects in .phpcs.xml for Test/.
   - Template PHP files have different formatting conventions; exclude Template/ from PHPCS via <exclude-pattern>.
   - Data-graph attribute pattern (serialized JSON via htmlspecialchars + json_encode) is the established pattern for passing structured data to JavaScript in this plugin.
+---
+
+## 2026-03-22T22:XX:XXZ - US-018
+Session: N/A
+Review Outcome: PASS
+Trajectory: ON_TRACK
+Trajectory Notes: N/A
+Corrective Plan: N/A
+- Implemented `Helper/PortfolioHelper.php` with `isTaskBlocked()`, `preloadBoardBlockedStatus()`, `getPortfoliosForProject()`, `getAllPortfolios()`, and `getGlobalAtRiskMilestones()` including lazy per-project caching to prevent N+1 queries during board card rendering.
+- Registered 9 template hooks in `Plugin.php::initialize()`: `template:layout:head`, `template:layout:js`, `template:dashboard:show:before-task-list`, `template:board:task:footer`, `template:task:details:second-column` (×2), `template:project:sidebar`, `template:header:dropdown:menu`, `template:config:sidebar`.
+- Created 9 widget templates under `Template/widget/`: `asset_css.php`, `asset_js.php`, `dashboard_portfolios.php` (portfolio links + at-risk milestones), `board_blocked_indicator.php` (blocked badge using helper cache), `task_milestone_info.php` (milestone membership with critical flag), `task_dependency_snippet.php` (blocked note + portfolio blocked-tasks links), `project_sidebar.php` (portfolio membership), `header_dropdown.php` (portfolio list + create links), `config_sidebar.php` (portfolio management link).
+- Added widget CSS classes with `portfolio-` prefix to `Asset/css/portfolio.css`.
+- Added 5 new translation strings to `Locale/en_US/translations.php`.
+- Updated `Test/Plugin/ApiRegistrationTest.php` to add `FakeTemplateHookRegistry`/`FakeTemplateHook` stubs and wire `container['template']` before `initialize()` so the new hook registrations do not fail; added 2 new tests verifying all hook names and template paths.
+- Created `Test/Controller/WidgetHookTest.php` with 18 tests covering: board blocked indicator (blocked/unblocked/escaped/missing task), task milestone info (with data/empty/null model), dashboard portfolios (links/at-risk/empty), project sidebar (member/non-member), and 7 PortfolioHelper unit tests for caching correctness, N+1 prevention, and model delegation.
+- All 119 tests pass; lint/PHPCS/PHPStan all clean.
+- Files changed: `Helper/PortfolioHelper.php`, `Plugin.php`, `Template/widget/asset_css.php`, `Template/widget/asset_js.php`, `Template/widget/board_blocked_indicator.php`, `Template/widget/config_sidebar.php`, `Template/widget/dashboard_portfolios.php`, `Template/widget/header_dropdown.php`, `Template/widget/project_sidebar.php`, `Template/widget/task_dependency_snippet.php`, `Template/widget/task_milestone_info.php`, `Asset/css/portfolio.css`, `Locale/en_US/translations.php`, `Test/Controller/WidgetHookTest.php`, `Test/Plugin/ApiRegistrationTest.php`, `.ralphi/prd.json`.
+- **Learnings for future iterations:**
+  - Template hook registrations in Plugin.php call `$this->template->hook->attach()` via `__get()` from container — test stubs must add `container['template']` before calling `initialize()` or all existing tests break.
+  - Widget templates rendered via Kanboard's hook system use `$this` as the Template object; the `WidgetFakeContext::renderWidget()` include-in-method pattern replicates this exactly for lightweight integration coverage.
+  - N+1 prevention for board card hooks: lazy-per-project caching in the helper (one DB query per project per request) is the stable pattern — avoid global preload hooks since hook ordering is not guaranteed.
+---
+
+## 2026-03-23T01:43:35Z - US-019
+Session: N/A
+Review Outcome: PASS
+Trajectory: ON_TRACK
+Trajectory Notes: N/A
+Corrective Plan: N/A
+- Implemented dependency-resolved automation classes: `Action/NotifyDependencyResolved.php` for assignee notifications and `Action/CommentDependencyResolved.php` for system comments on newly unblocked tasks.
+- Added `Notification/DependencyResolvedType.php` plus `Template/notification/dependency_resolved.php` to define, normalize, and render the custom `dependency_resolved` payload with escaped output.
+- Updated `Plugin.php` to register task lifecycle listeners (`task.close`, `task.open`, `task_internal_link.create_update`, `task_internal_link.delete`), register custom event label `portfolio.dependency.resolved`, register both automatic actions, and register the custom notification type template.
+- Expanded integration coverage in `Test/Plugin/ApiRegistrationTest.php` for event listener registration/delegation, custom event registration, action registration, and notification-type registration.
+- Added `Test/Action/DependencyResolvedActionsTest.php` to validate notification side effects, comment side effects, payload normalization, and escaped notification template rendering.
+- Updated `Locale/en_US/translations.php` with dependency-resolved action/notification strings and updated `phpstan-kanboard-stubs.php` with plugin `on()` and action-base stubs required by static analysis.
+- Updated `AGENTS.md` with a reusable testing gotcha about preserving CSRF semantics in shared `Kanboard\Core\Base` test stubs.
+- Quality checks run: `ralphi check` (lint, test, phpcs, phpstan) — all passed.
+- Files changed: `Action/NotifyDependencyResolved.php`, `Action/CommentDependencyResolved.php`, `Notification/DependencyResolvedType.php`, `Template/notification/dependency_resolved.php`, `Plugin.php`, `Locale/en_US/translations.php`, `Test/Action/DependencyResolvedActionsTest.php`, `Test/Plugin/ApiRegistrationTest.php`, `phpstan-kanboard-stubs.php`, `AGENTS.md`, `.ralphi/prd.json`, `.ralphi/progress.txt`.
+- **Learnings for future iterations:**
+  - Custom automatic-action stories are easiest to verify in this repo by pairing plugin-registration tests (listener/action/type wiring) with action-level side-effect tests that run against lightweight fake models.
+  - Because test suites share `class_exists()`-guarded core stubs, any new fallback `Kanboard\Core\Base` stub should preserve CSRF token-check semantics to avoid order-dependent failures in controller tests.
 ---

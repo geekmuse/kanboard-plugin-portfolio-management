@@ -204,6 +204,7 @@ ralphi check
 - Test access control (unauthorized → error)
 - If Kanboard runtime dependencies are unavailable locally, model tests may use an in-memory SQLite harness plus a minimal `Kanboard\Core\Base` stub and PicoDb-like adapter to validate behavior deterministically
 - If full HTTP functional helpers are unavailable, controller integration tests may execute controller actions directly using lightweight stubs for request/response/template/flash services, while still asserting rendered templates, redirects, and access-map role wiring
+- Shared test stubs guarded by `class_exists()` should keep `Kanboard\Core\Base::checkCSRFParam()` behavior compatible with controller harnesses (token compare + `RuntimeException`) to avoid cross-suite interference when PHPUnit load order changes
 
 ---
 

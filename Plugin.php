@@ -5,6 +5,9 @@ namespace Kanboard\Plugin\Portfolio;
 use Kanboard\Core\Plugin\Base;
 use Kanboard\Core\Security\Role;
 use Kanboard\Core\Translator;
+use Kanboard\Plugin\Portfolio\Action\CommentDependencyResolved;
+use Kanboard\Plugin\Portfolio\Action\NotifyDependencyResolved;
+use Kanboard\Plugin\Portfolio\Notification\DependencyResolvedType;
 
 class Plugin extends Base
 {
@@ -98,6 +101,36 @@ class Plugin extends Base
 
         // Config sidebar — portfolio management link
         $this->template->hook->attach('template:config:sidebar', 'Portfolio:widget/config_sidebar');
+
+        // Task/dependency lifecycle events
+        $this->on('task.close', function ($event) {
+            $taskId = (int) ($event['task_id'] ?? 0);
+            $this->dependencyModel->onTaskClosed($taskId);
+        });
+
+        $this->on('task.open', function ($event) {
+            $taskId = (int) ($event['task_id'] ?? 0);
+            $this->dependencyModel->onTaskOpened($taskId);
+        });
+
+        $this->on('task_internal_link.create_update', function ($event) {
+            $taskId = (int) ($event['task_id'] ?? 0);
+            $this->dependencyModel->onLinkChanged($taskId);
+        });
+
+        $this->on('task_internal_link.delete', function ($event) {
+            $taskId = (int) ($event['task_id'] ?? 0);
+            $this->dependencyModel->onLinkChanged($taskId);
+        });
+
+        $this->eventManager->register(DependencyResolvedType::EVENT_NAME, DependencyResolvedType::getLabel());
+        $this->actionManager->register(new NotifyDependencyResolved($this->container));
+        $this->actionManager->register(new CommentDependencyResolved($this->container));
+        $this->userNotificationTypeModel->setType(
+            DependencyResolvedType::getType(),
+            DependencyResolvedType::getLabel(),
+            DependencyResolvedType::getTemplate()
+        );
 
         $this->api->getProcedureHandler()
             ->withCallback('createPortfolio', function ($name, $description = '', $owner_id = 0) {

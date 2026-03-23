@@ -72,6 +72,44 @@ namespace Kanboard\Core\Plugin {
     if (! class_exists(\Kanboard\Core\Plugin\Base::class)) {
         abstract class Base extends \Kanboard\Core\Base
         {
+            /**
+             * @param callable(mixed): void $callable
+             */
+            public function on(string $eventName, callable $callable): void
+            {
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Kanboard\Action — Automatic action base class
+// ---------------------------------------------------------------------------
+namespace Kanboard\Action {
+    if (! class_exists(\Kanboard\Action\Base::class)) {
+        abstract class Base extends \Kanboard\Core\Base
+        {
+            /**
+             * @param array<string, mixed> $event
+             */
+            public function hasRequiredCondition(array $event): bool
+            {
+                return true;
+            }
+
+            /**
+             * @param array<string, mixed> $event
+             */
+            abstract public function doAction(array $event): bool;
+
+            abstract public function getEventName(): string;
+
+            /**
+             * @return array<int, string>
+             */
+            abstract public function getCompatibleEvents(): array;
+
+            abstract public function getDescription(): string;
         }
     }
 }

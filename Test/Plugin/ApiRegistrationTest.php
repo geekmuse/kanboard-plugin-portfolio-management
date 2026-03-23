@@ -2,6 +2,19 @@
 
 declare(strict_types=1);
 
+namespace Kanboard\Plugin\Portfolio;
+
+if (! function_exists(__NAMESPACE__ . '\\t')) {
+    function t(string $message, mixed ...$args): string
+    {
+        if ($args === []) {
+            return $message;
+        }
+
+        return vsprintf($message, $args);
+    }
+}
+
 namespace Kanboard\Core\Plugin;
 
 if (! class_exists(__NAMESPACE__ . '\\Base')) {
@@ -22,6 +35,9 @@ if (! class_exists(__NAMESPACE__ . '\\Base')) {
         /** @var mixed */
         public $applicationAccessMap;
 
+        /** @var array<string, array<int, callable>> */
+        public array $registeredEvents = [];
+
         /** @return mixed */
         public function __get(string $name)
         {
@@ -37,6 +53,15 @@ if (! class_exists(__NAMESPACE__ . '\\Base')) {
             }
 
             return $service;
+        }
+
+        public function on(string $eventName, callable $callback): void
+        {
+            if (! array_key_exists($eventName, $this->registeredEvents)) {
+                $this->registeredEvents[$eventName] = [];
+            }
+
+            $this->registeredEvents[$eventName][] = $callback;
         }
     }
 }
@@ -213,6 +238,79 @@ final class FakeTemplateHookRegistry
     }
 }
 
+final class FakeEventManager
+{
+    /**
+     * @var array<int, array{event_name: string, label: string}>
+     */
+    public array $registered = [];
+
+    public function register(string $eventName, string $label): void
+    {
+        $this->registered[] = [
+            'event_name' => $eventName,
+            'label' => $label,
+        ];
+    }
+}
+
+final class FakeActionManager
+{
+    /**
+     * @var array<int, object>
+     */
+    public array $actions = [];
+
+    public function register(object $action): void
+    {
+        $this->actions[] = $action;
+    }
+}
+
+final class FakeUserNotificationTypeModel
+{
+    /**
+     * @var array<int, array{type: string, label: string, template: string}>
+     */
+    public array $types = [];
+
+    public function setType(string $type, string $label, string $template): void
+    {
+        $this->types[] = [
+            'type' => $type,
+            'label' => $label,
+            'template' => $template,
+        ];
+    }
+}
+
+final class FakeDependencyModel
+{
+    /** @var array<int, int> */
+    public array $closedCalls = [];
+
+    /** @var array<int, int> */
+    public array $openedCalls = [];
+
+    /** @var array<int, int> */
+    public array $linkChangedCalls = [];
+
+    public function onTaskClosed(int $taskId): void
+    {
+        $this->closedCalls[] = $taskId;
+    }
+
+    public function onTaskOpened(int $taskId): void
+    {
+        $this->openedCalls[] = $taskId;
+    }
+
+    public function onLinkChanged(int $taskId): void
+    {
+        $this->linkChangedCalls[] = $taskId;
+    }
+}
+
 final class FakePortfolioModel
 {
     /**
@@ -269,19 +367,31 @@ final class ApiRegistrationTest extends TestCase
 
     private FakeTemplateHookRegistry $templateHookRegistry;
 
+    private FakeEventManager $eventManager;
+
+    private FakeActionManager $actionManager;
+
+    private FakeUserNotificationTypeModel $userNotificationTypeModel;
+
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->procedureHandler     = new FakeProcedureHandler();
-        $this->apiAccessMap         = new FakeApiAccessMap();
-        $this->route                = new FakeRoute();
-        $this->applicationAccessMap = new FakeApplicationAccessMap();
-        $this->templateHookRegistry = new FakeTemplateHookRegistry();
+        $this->procedureHandler          = new FakeProcedureHandler();
+        $this->apiAccessMap              = new FakeApiAccessMap();
+        $this->route                     = new FakeRoute();
+        $this->applicationAccessMap      = new FakeApplicationAccessMap();
+        $this->templateHookRegistry      = new FakeTemplateHookRegistry();
+        $this->eventManager              = new FakeEventManager();
+        $this->actionManager             = new FakeActionManager();
+        $this->userNotificationTypeModel = new FakeUserNotificationTypeModel();
 
         $this->plugin = new Plugin();
         $this->plugin->container = [
             'template' => $this->templateHookRegistry,
+            'eventManager' => $this->eventManager,
+            'actionManager' => $this->actionManager,
+            'userNotificationTypeModel' => $this->userNotificationTypeModel,
         ];
         $this->plugin->api = new FakeApi($this->procedureHandler);
         $this->plugin->apiAccessMap = $this->apiAccessMap;
@@ -526,6 +636,56 @@ final class ApiRegistrationTest extends TestCase
                 ],
             ],
             $this->apiAccessMap->getEntries()
+        );
+    }
+
+    public function testRegistersDependencyLifecycleListenersAndDelegatesToDependencyModel(): void
+    {
+        $dependencyModel = new FakeDependencyModel();
+        $this->plugin->container['dependencyModel'] = $dependencyModel;
+
+        $registeredEvents = $this->plugin->registeredEvents;
+
+        $this->assertArrayHasKey('task.close', $registeredEvents);
+        $this->assertArrayHasKey('task.open', $registeredEvents);
+        $this->assertArrayHasKey('task_internal_link.create_update', $registeredEvents);
+        $this->assertArrayHasKey('task_internal_link.delete', $registeredEvents);
+
+        $registeredEvents['task.close'][0](['task_id' => 17]);
+        $registeredEvents['task.open'][0](['task_id' => 29]);
+        $registeredEvents['task_internal_link.create_update'][0](['task_id' => 41]);
+        $registeredEvents['task_internal_link.delete'][0]([]);
+
+        $this->assertSame([17], $dependencyModel->closedCalls);
+        $this->assertSame([29], $dependencyModel->openedCalls);
+        $this->assertSame([41, 0], $dependencyModel->linkChangedCalls);
+    }
+
+    public function testRegistersCustomEventAutomaticActionsAndNotificationType(): void
+    {
+        $this->assertSame(
+            [[
+                'event_name' => 'portfolio.dependency.resolved',
+                'label' => 'Cross-project dependency resolved',
+            ]],
+            $this->eventManager->registered
+        );
+
+        $registeredActions = array_map(
+            static fn (object $action): string => get_class($action),
+            $this->actionManager->actions
+        );
+
+        $this->assertContains('Kanboard\\Plugin\\Portfolio\\Action\\NotifyDependencyResolved', $registeredActions);
+        $this->assertContains('Kanboard\\Plugin\\Portfolio\\Action\\CommentDependencyResolved', $registeredActions);
+
+        $this->assertSame(
+            [[
+                'type' => 'dependency_resolved',
+                'label' => 'Cross-project dependency resolved',
+                'template' => 'Portfolio:notification/dependency_resolved',
+            ]],
+            $this->userNotificationTypeModel->types
         );
     }
 

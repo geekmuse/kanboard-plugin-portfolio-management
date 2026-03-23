@@ -160,4 +160,15 @@ return [
     'Portfolio Dependencies' => 'Portfolio Dependencies',
     'This task is blocked by a cross-project dependency.' => 'This task is blocked by a cross-project dependency.',
     'Cross-project Portfolio Management' => 'Cross-project Portfolio Management',
+
+    // Dependency-resolved notifications and automatic actions
+    'Cross-project dependency resolved' => 'Cross-project dependency resolved',
+    'Send a notification when a cross-project dependency is resolved' =>
+        'Send a notification when a cross-project dependency is resolved',
+    'Add a comment when a cross-project dependency is resolved' =>
+        'Add a comment when a cross-project dependency is resolved',
+    '✅ Dependency resolved: Task #%d "%s" in project "%s" has been completed. This task is no longer blocked.' =>
+        '✅ Dependency resolved: Task #%d "%s" in project "%s" has been completed. This task is no longer blocked.',
+    'Task #%d "%s" is no longer blocked because task #%d "%s" in project "%s" was completed.' =>
+        'Task #%d "%s" is no longer blocked because task #%d "%s" in project "%s" was completed.',
 ];
