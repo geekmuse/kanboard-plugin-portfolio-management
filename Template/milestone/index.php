@@ -1,3 +1,7 @@
+<section class="sidebar-container">
+    <?php $sidebar_active = "milestones"; require __DIR__ . "/../portfolio/_sidebar.php"; ?>
+
+    <div class="sidebar-content">
 <div class="page-header">
     <h2 class="portfolio-milestone-list-title">
         <?= $this->text->e($title ?? t('Portfolio Milestones')) ?>:
@@ -67,3 +71,6 @@
         </tbody>
     </table>
 <?php endif ?>
+
+    </div>
+</section>

@@ -1,3 +1,7 @@
+<section class="sidebar-container">
+    <?php $sidebar_active = 'settings'; require __DIR__ . '/_sidebar.php'; ?>
+
+    <div class="sidebar-content">
 <div class="page-header">
     <h2 class="portfolio-settings-title"><?= $this->text->e($title ?? t('Portfolio Settings')) ?></h2>
 </div>
@@ -76,3 +80,6 @@
         </table>
     <?php endif ?>
 </div>
+
+    </div>
+</section>

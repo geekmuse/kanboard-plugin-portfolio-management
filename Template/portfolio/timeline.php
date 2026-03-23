@@ -1,35 +1,14 @@
+<section class="sidebar-container">
+    <?php $sidebar_active = "timeline"; require __DIR__ . "/_sidebar.php"; ?>
+
+    <div class="sidebar-content">
 <div class="page-header">
     <h2 class="portfolio-timeline-title">
         <?= $this->text->e($title ?? t('Portfolio Timeline')) ?>:
         <?= $this->text->e((string) ($portfolio['name'] ?? '')) ?>
     </h2>
 
-    <div class="portfolio-view-switcher">
-        <a href="<?= $this->url->href('PortfolioViewController', 'show', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>">
-            <?= $this->text->e(t('Dashboard')) ?>
-        </a>
-        ·
-        <a href="<?= $this->url->href('PortfolioViewController', 'tasks', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>">
-            <?= $this->text->e(t('Tasks')) ?>
-        </a>
-        ·
-        <a href="<?= $this->url->href('MilestoneController', 'index', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>">
-            <?= $this->text->e(t('Milestones')) ?>
-        </a>
-        ·
-        <a href="<?= $this->url->href('PortfolioViewController', 'board', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>">
-            <?= $this->text->e(t('Board')) ?>
-        </a>
-        ·
-        <a href="<?= $this->url->href('PortfolioViewController', 'timeline', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>">
-            <?= $this->text->e(t('Timeline')) ?>
-        </a>
-        ·
-        <a href="<?= $this->url->href('PortfolioModificationController', 'settings', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>">
-            <?= $this->text->e(t('Portfolio Settings')) ?>
-        </a>
     </div>
-</div>
 
 <?php if (! empty($timeline_data['has_items'])): ?>
     <p class="portfolio-timeline-range">
@@ -84,3 +63,6 @@
     window.PortfolioGantt.render(chartElement);
 })();
 </script>
+
+    </div>
+</section>

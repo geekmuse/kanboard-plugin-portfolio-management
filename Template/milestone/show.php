@@ -1,3 +1,7 @@
+<section class="sidebar-container">
+    <?php $sidebar_active = "milestones"; require __DIR__ . "/../portfolio/_sidebar.php"; ?>
+
+    <div class="sidebar-content">
 <?php
 $portfolioId = (int) ($milestone['portfolio_id'] ?? ($portfolio['id'] ?? 0));
 $milestoneId = (int) ($milestone['id'] ?? 0);
@@ -148,3 +152,6 @@ if ($statusId === 0) {
         </table>
     <?php endif ?>
 </div>
+
+    </div>
+</section>

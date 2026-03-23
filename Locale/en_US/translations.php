@@ -2,6 +2,7 @@
 
 return [
     'Portfolios' => 'Portfolios',
+    'All Portfolios' => 'All Portfolios',
     'Create Portfolio' => 'Create Portfolio',
     'Edit Portfolio' => 'Edit Portfolio',
     'Remove Portfolio' => 'Remove Portfolio',

@@ -1,3 +1,7 @@
+<section class="sidebar-container">
+    <?php $sidebar_active = "milestones"; require __DIR__ . "/../portfolio/_sidebar.php"; ?>
+
+    <div class="sidebar-content">
 <div class="page-header">
     <h2 class="portfolio-milestone-edit-title"><?= $this->text->e($title ?? t('Edit Milestone')) ?></h2>
 </div>
@@ -26,3 +30,6 @@
         </a>
     </div>
 </form>
+
+    </div>
+</section>

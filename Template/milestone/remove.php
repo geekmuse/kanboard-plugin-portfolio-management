@@ -1,3 +1,7 @@
+<section class="sidebar-container">
+    <?php $sidebar_active = "milestones"; require __DIR__ . "/../portfolio/_sidebar.php"; ?>
+
+    <div class="sidebar-content">
 <div class="page-header">
     <h2 class="portfolio-milestone-remove-title"><?= $this->text->e($title ?? t('Remove Milestone')) ?></h2>
 </div>
@@ -19,3 +23,6 @@
         <?= $this->text->e(t('Cancel')) ?>
     </a>
 </form>
+
+    </div>
+</section>
