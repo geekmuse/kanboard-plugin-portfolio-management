@@ -1,3 +1,19 @@
+## 2026-03-23 — US-003
+Session: iter-5f381b80 / loop-9e860edc iteration 3
+Review Outcome: PASS
+Trajectory: ON_TRACK
+Trajectory Notes: N/A
+Corrective Plan: N/A
+- Added CSS grid layout to `.portfolio-task-filter-form` so the 8 filter rows flow left-to-right using `repeat(auto-fill, minmax(180px, 1fr))`, collapsing to fewer columns on narrow screens.
+- Added `.portfolio-form-row` styles (flex column direction, label + input stacking) and `.portfolio-form-actions` with `grid-column: 1 / -1` to span the submit button row full width.
+- No template changes were needed — existing `<div class="portfolio-form-row">` wrappers in `tasks.php` already provided correct grid-cell granularity; `<input type="hidden">` is `display:none` and does not create a visual grid cell.
+- Files changed: `Asset/css/portfolio.css`, `.ralphi/prd.json`, `.ralphi/progress.txt`
+- **Learnings for future iterations:**
+  - CSS-only layout fixes (no PHP behavior change) require no new tests.
+  - `input[type="hidden"]` elements have `display:none` from the user-agent stylesheet and are therefore not grid items — safe to leave in-form without wrapping.
+  - Pre-existing PHPCS line-length warnings across many files do not block commits.
+---
+
 ## Codebase Patterns
 - **REQUIRED READING**: Before writing any code each iteration, read `docs/references/kanboard-plugin-development-guidelines.md`. It contains authoritative agent feedback, known pitfalls, and hard-won patterns from previous work on this project. Do NOT commit or modify this file.
 - **POST forms — always use `getValues()` once**: `Request::getValue()` internally calls `getValues()` which validates and strips the CSRF token. Calling it multiple times means only the first call returns real data. Pattern: `$values = $this->request->getValues(); $field = (int)($values['field'] ?? 0);`
