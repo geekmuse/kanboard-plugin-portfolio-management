@@ -105,9 +105,33 @@
                     });
             }
 
-            // Dismiss popover on SVG background click
+            // Build a lookup from task ID to node data
+            var nodeById = {};
+            nodes.forEach(function (n) { nodeById[n.id] = n; });
+
+            // Single click handler on the SVG — find which node was clicked
+            // by walking up the DOM from the click target to a node group.
+            // This avoids all D3 drag event conflicts.
             container.addEventListener('click', function (e) {
-                if (!popover.contains(e.target)) {
+                if (popover.contains(e.target)) { return; }
+
+                var el = e.target;
+                var nodeGroup = null;
+
+                while (el && el !== container) {
+                    if (el.classList && el.classList.contains('portfolio-graph-node')) {
+                        nodeGroup = el;
+                        break;
+                    }
+                    el = el.parentElement;
+                }
+
+                if (nodeGroup) {
+                    var datum = d3.select(nodeGroup).datum();
+                    if (datum && datum.id) {
+                        showPopover(datum, e);
+                    }
+                } else {
                     hidePopover();
                 }
             });
@@ -150,10 +174,6 @@
                 })
                 .attr('marker-end', 'url(#portfolio-graph-arrow)');
 
-            // Track drag via real DOM mouse position (not simulation coords,
-            // which jitter from the running force simulation).
-            var dragStartClientX, dragStartClientY, wasDragged;
-
             var node = svg.append('g')
                 .attr('class', 'portfolio-graph-nodes')
                 .selectAll('g')
@@ -165,19 +185,11 @@
                 .call(
                     d3.drag()
                         .on('start', function (event, d) {
-                            var se = event.sourceEvent || {};
-                            dragStartClientX = se.clientX || 0;
-                            dragStartClientY = se.clientY || 0;
-                            wasDragged = false;
                             if (!event.active) { simulation.alphaTarget(0.3).restart(); }
                             d.fx = d.x;
                             d.fy = d.y;
                         })
                         .on('drag', function (event, d) {
-                            var se = event.sourceEvent || {};
-                            var dx = (se.clientX || 0) - dragStartClientX;
-                            var dy = (se.clientY || 0) - dragStartClientY;
-                            if (dx * dx + dy * dy > 25) { wasDragged = true; }
                             d.fx = event.x;
                             d.fy = event.y;
                         })
@@ -185,11 +197,6 @@
                             if (!event.active) { simulation.alphaTarget(0); }
                             d.fx = null;
                             d.fy = null;
-
-                            // Show popover if this was a click (not a drag)
-                            if (!wasDragged && event.sourceEvent) {
-                                showPopover(d, event.sourceEvent);
-                            }
                         })
                 );
 
