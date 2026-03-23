@@ -3,17 +3,23 @@
  *
  * Reads serialized graph data from the container's data-graph attribute and
  * renders a force-directed dependency graph using the bundled D3.js library.
- * Nodes on the critical path are highlighted in a distinct color.
+ * Clicking a node shows a popover with task details and a link to the task.
  *
  * Expected data shape (from DependencyController::graphData()):
  * {
- *   nodes: [{ id, title, project_name, is_active }],
+ *   nodes: [{ id, title, project_name, is_active, assignee, color_id, priority }],
  *   edges: [{ source, target, label, is_resolved }],
  *   critical_path: [<task_id>, ...]
  * }
  */
 (function () {
     'use strict';
+
+    function escapeHtml(str) {
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(str || ''));
+        return div.innerHTML;
+    }
 
     window.PortfolioGraph = {
         /**
@@ -42,6 +48,67 @@
             var width = container.clientWidth || 800;
             var height = Math.max(400, Math.min(600, nodes.length * 40));
 
+            // --- Popover element (shared, repositioned on each click) ---
+            var popover = document.createElement('div');
+            popover.className = 'portfolio-graph-popover';
+            popover.style.display = 'none';
+            container.style.position = 'relative';
+            container.appendChild(popover);
+
+            function showPopover(d, event) {
+                var status = d.is_active === 0 ? 'Closed' : 'Active';
+                if (criticalSet[d.id]) { status += ' · Critical Path'; }
+
+                var taskUrl = '?controller=TaskViewController&action=show&task_id=' + d.id;
+
+                popover.innerHTML =
+                    '<div class="portfolio-graph-popover-header">' +
+                        '<strong>#' + escapeHtml(String(d.id)) + '</strong> ' +
+                        escapeHtml(d.title || '') +
+                        '<span class="portfolio-graph-popover-close" title="Close">&times;</span>' +
+                    '</div>' +
+                    '<div class="portfolio-graph-popover-body">' +
+                        '<div><strong>Project:</strong> ' + escapeHtml(d.project_name || '') + '</div>' +
+                        '<div><strong>Status:</strong> ' + escapeHtml(status) + '</div>' +
+                        (d.assignee ? '<div><strong>Assignee:</strong> ' + escapeHtml(d.assignee) + '</div>' : '') +
+                        (d.priority ? '<div><strong>Priority:</strong> ' + escapeHtml(String(d.priority)) + '</div>' : '') +
+                    '</div>' +
+                    '<div class="portfolio-graph-popover-footer">' +
+                        '<a href="' + taskUrl + '" class="btn btn-blue js-modal-large">Open Task</a>' +
+                    '</div>';
+
+                // Position relative to the container
+                var rect = container.getBoundingClientRect();
+                var x = event.clientX - rect.left + 12;
+                var y = event.clientY - rect.top - 10;
+
+                // Keep popover within container bounds
+                popover.style.display = 'block';
+                var pw = popover.offsetWidth || 240;
+                if (x + pw > container.clientWidth) { x = x - pw - 24; }
+                if (y < 0) { y = 0; }
+
+                popover.style.left = x + 'px';
+                popover.style.top = y + 'px';
+
+                // Close button
+                var closeBtn = popover.querySelector('.portfolio-graph-popover-close');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        popover.style.display = 'none';
+                    });
+                }
+            }
+
+            // Hide popover when clicking on empty SVG area
+            container.addEventListener('click', function (e) {
+                if (e.target === container || e.target.tagName === 'svg') {
+                    popover.style.display = 'none';
+                }
+            });
+
+            // --- SVG setup ---
             var svg = d3.select(container)
                 .append('svg')
                 .attr('width', '100%')
@@ -86,6 +153,7 @@
                 .enter()
                 .append('g')
                 .attr('class', 'portfolio-graph-node')
+                .style('cursor', 'pointer')
                 .call(
                     d3.drag()
                         .on('start', function (event, d) {
@@ -115,14 +183,22 @@
                         : 'portfolio-dependency-node portfolio-dependency-node--active';
                 });
 
-            node.append('title')
-                .text(function (d) { return '#' + d.id + ' ' + d.title + ' (' + d.project_name + ')'; });
-
             node.append('text')
                 .attr('dy', 4)
                 .attr('text-anchor', 'middle')
                 .attr('class', 'portfolio-graph-node-label')
                 .text(function (d) { return '#' + d.id; });
+
+            // Click handler — show popover (only fires if not dragging)
+            var dragged = false;
+            node.on('mousedown', function () { dragged = false; })
+                .on('mousemove', function () { dragged = true; })
+                .on('click', function (event, d) {
+                    if (! dragged) {
+                        event.stopPropagation();
+                        showPopover(d, event);
+                    }
+                });
 
             simulation.on('tick', function () {
                 link

@@ -468,3 +468,65 @@
     background: #fee2e2;
     color: #991b1b;
 }
+
+/* ----------------------------------------------------------------
+   Graph popover — shown on node click
+   ---------------------------------------------------------------- */
+.portfolio-graph-popover {
+    position: absolute;
+    z-index: 100;
+    width: 260px;
+    background: #fff;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    font-size: 0.85rem;
+    line-height: 1.5;
+    overflow: hidden;
+}
+
+.portfolio-graph-popover-header {
+    padding: 8px 10px;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.portfolio-graph-popover-header strong {
+    white-space: nowrap;
+}
+
+.portfolio-graph-popover-close {
+    margin-left: auto;
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    color: #6b7280;
+    padding: 0 2px;
+}
+
+.portfolio-graph-popover-close:hover {
+    color: #111827;
+}
+
+.portfolio-graph-popover-body {
+    padding: 8px 10px;
+}
+
+.portfolio-graph-popover-body div {
+    margin-bottom: 2px;
+}
+
+.portfolio-graph-popover-footer {
+    padding: 6px 10px 8px;
+    border-top: 1px solid #e5e7eb;
+    text-align: right;
+}
+
+.portfolio-graph-popover-footer .btn {
+    font-size: 0.8rem;
+    padding: 3px 10px;
+}
