@@ -814,15 +814,9 @@ final class ApiRegistrationTest extends TestCase
         $eventNames  = array_column($events, 'event');
         $templates   = array_column(array_column($events, 'params'), 'template');
 
-        // CSS asset
+        // CSS asset (JS assets are loaded per-page, not globally)
         $this->assertContains('template:layout:css', $eventNames);
         $this->assertContains('plugins/Portfolio/Asset/css/portfolio.css', $templates);
-
-        // JS assets
-        $jsEvents = array_filter($events, static fn ($e) => $e['event'] === 'template:layout:js');
-        $jsTemplates = array_column(array_column(array_values($jsEvents), 'params'), 'template');
-        $this->assertContains('plugins/Portfolio/Asset/js/portfolio-graph.js', $jsTemplates);
-        $this->assertContains('plugins/Portfolio/Asset/js/portfolio-gantt.js', $jsTemplates);
     }
 
     public function testTemplateHooksPointToCorrectWidgetTemplates(): void

@@ -86,8 +86,6 @@ class Plugin extends Base
         // CSS/JS assets — use hook->on() with real file paths so Kanboard's
         // AssetHelper can call filemtime() for cache-busting correctly.
         $this->hook->on('template:layout:css', ['template' => 'plugins/Portfolio/Asset/css/portfolio.css']);
-        $this->hook->on('template:layout:js', ['template' => 'plugins/Portfolio/Asset/js/portfolio-graph.js']);
-        $this->hook->on('template:layout:js', ['template' => 'plugins/Portfolio/Asset/js/portfolio-gantt.js']);
 
         // Dashboard — portfolio links + at-risk milestone summary
         // attachCallable pre-fetches data so templates don't need to access
