@@ -91,7 +91,7 @@ class MilestoneController extends BaseController
             'portfolio' => $portfolio,
             'values' => $values,
             'errors' => $errors,
-            'users' => $this->userModel->getList(),
+            'users' => $this->userModel->getActiveUsersList(),
             'colors' => $this->colorModel->getList(),
         ]));
     }
@@ -150,7 +150,7 @@ class MilestoneController extends BaseController
             'portfolio' => $this->getPortfolio((int) ($milestone['portfolio_id'] ?? 0)) ?? [],
             'values' => $values,
             'errors' => $errors,
-            'users' => $this->userModel->getList(),
+            'users' => $this->userModel->getActiveUsersList(),
             'colors' => $this->colorModel->getList(),
         ]));
     }
