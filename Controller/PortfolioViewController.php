@@ -115,6 +115,8 @@ class PortfolioViewController extends BaseController
             return $this->response->redirect($this->helper->url->href('PortfolioListController', 'index', ['plugin' => 'Portfolio']));
         }
 
+        $portfolioName = (string) ($portfolio['name'] ?? '');
+
         $timelineData = $this->buildTimelineData(
             $this->getPortfolioTasks($portfolioId, [
                 'status_id' => 1,
@@ -123,7 +125,8 @@ class PortfolioViewController extends BaseController
                 'limit' => 500,
                 'offset' => 0,
             ]),
-            $this->getPortfolioMilestones($portfolioId)
+            $this->getPortfolioMilestones($portfolioId),
+            $portfolioName
         );
 
         $timelineJson = json_encode($timelineData['items'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
@@ -271,7 +274,7 @@ class PortfolioViewController extends BaseController
      *
      * @return array<string, mixed>
      */
-    private function buildTimelineData(array $tasks, array $milestones): array
+    private function buildTimelineData(array $tasks, array $milestones, string $portfolioName = ''): array
     {
         $items = [];
 
@@ -286,7 +289,7 @@ class PortfolioViewController extends BaseController
                 'type' => 'milestone',
                 'type_label' => t('Milestone'),
                 'name' => (string) ($milestone['name'] ?? ''),
-                'project_name' => '',
+                'project_name' => $portfolioName,
                 'date' => $targetDate,
                 'date_label' => date('Y-m-d', $targetDate),
                 'status' => t('Milestone'),

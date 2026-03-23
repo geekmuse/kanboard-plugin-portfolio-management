@@ -599,6 +599,10 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $this->assertStringContainsString('portfolio-timeline-chart', $html);
             $this->assertStringContainsString('&lt;script&gt;alert(8)&lt;/script&gt;', $html);
             $this->assertStringNotContainsString('<script>alert(8)</script>', $html);
+            // Milestone rows must display the portfolio name in the Project column.
+            $this->assertStringContainsString('Launch &lt;Q2&gt;', $html);
+            // Task rows must display their project name.
+            $this->assertStringContainsString('Website', $html);
 
             $this->assertSame([
                 [
