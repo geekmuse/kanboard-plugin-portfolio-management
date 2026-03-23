@@ -48,6 +48,22 @@ Corrective Plan: N/A
   - Default parameter values (`string $portfolioName = ''`) are PHPStan-clean for optional enrichment parameters with backward-compatible call sites.
 ---
 
+## 2026-03-23 — US-006
+Session: iter-984d76a0 / loop-9e860edc iteration 6
+Review Outcome: PASS
+Trajectory: ON_TRACK
+Trajectory Notes: N/A
+Corrective Plan: N/A
+- Root cause: `.portfolio-board-column` had no explicit flex display, so the browser fell back to whatever formatting Kanboard's base CSS applied — causing cards to stack horizontally in some contexts.
+- Fix: added `display: flex; flex-direction: column; gap: 0.5rem;` to `.portfolio-board-column`, making each column an explicit flex column container so cards always stack vertically.
+- Removed the now-redundant `margin-bottom: 0.5rem;` from `.portfolio-board-card` — `gap` on the column handles spacing cleanly between all flex items (h3, p, articles).
+- No PHP behavior change, no template changes needed, no new tests required (CSS-only layout fix, same pattern as US-003 and US-004).
+- Files changed: `Asset/css/portfolio.css`, `.ralphi/prd.json`, `.ralphi/progress.txt`
+- **Learnings for future iterations:**
+  - When a parent is `display: flex`, its children become flex items, but those children are NOT automatically flex containers themselves — always add `display: flex; flex-direction: column;` to a column container explicitly to guarantee vertical card stacking.
+  - Replacing `margin-bottom` on cards with `gap` on the container is cleaner — it avoids trailing space after the last item and centralises spacing control in the column rule.
+---
+
 ## Codebase Patterns
 - **REQUIRED READING**: Before writing any code each iteration, read `docs/references/kanboard-plugin-development-guidelines.md`. It contains authoritative agent feedback, known pitfalls, and hard-won patterns from previous work on this project. Do NOT commit or modify this file.
 - **POST forms — always use `getValues()` once**: `Request::getValue()` internally calls `getValues()` which validates and strips the CSRF token. Calling it multiple times means only the first call returns real data. Pattern: `$values = $this->request->getValues(); $field = (int)($values['field'] ?? 0);`
