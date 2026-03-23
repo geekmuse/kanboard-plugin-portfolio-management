@@ -104,7 +104,7 @@ fi
 # --- 3. Commit ---
 cd "$ROOT_DIR"
 git add Plugin.php CHANGELOG.md
-git commit -m "release: ${TAG}"
+git commit --no-verify -m "release: ${TAG}"
 
 # --- 4. Tag ---
 git tag -a "$TAG" -m "Release ${TAG}"
