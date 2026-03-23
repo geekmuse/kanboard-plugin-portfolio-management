@@ -368,7 +368,7 @@ class Plugin extends Base
 
     public function getPluginHomepage()
     {
-        return 'https://github.com/geekmuse/kanboard-plugin-portfolio';
+        return 'https://github.com/geekmuse/kanboard-plugin-portfolio-management';
     }
 
     public function getCompatibleVersion()
