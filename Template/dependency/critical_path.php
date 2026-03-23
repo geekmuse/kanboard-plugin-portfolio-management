@@ -21,52 +21,45 @@
         </span>
     </div>
 
-    <ol class="portfolio-critical-path-list">
-        <?php foreach ($criticalPath as $task): ?>
+    <div class="portfolio-critical-path-flow">
+        <?php $lastIndex = count($criticalPath) - 1 ?>
+        <?php foreach ($criticalPath as $index => $task): ?>
             <?php
-            $chainPosition = (int) ($task['chain_position'] ?? 0);
+            $chainPosition  = (int) ($task['chain_position'] ?? 0);
             $downstreamCount = (int) ($task['downstream_count'] ?? 0);
-            $isActive = (int) ($task['is_active'] ?? 1);
+            $isActive       = (int) ($task['is_active'] ?? 1);
+            $taskId         = (int) ($task['id'] ?? 0);
+            $taskTitle      = (string) ($task['title'] ?? '');
+            $projectName    = (string) ($task['project_name'] ?? '');
+            $assignee       = (string) ($task['assignee'] ?? '');
+            $nodeCls        = 'portfolio-critical-path-node' . ($isActive === 0 ? ' portfolio-critical-path-node--closed' : '');
             ?>
-            <li class="portfolio-critical-path-item<?= $isActive === 0 ? ' portfolio-critical-path-item--closed' : '' ?>">
-                <div class="portfolio-critical-path-item-header">
-                    <span class="portfolio-critical-path-position"><?= $this->text->e((string) $chainPosition) ?>.</span>
-                    <strong class="portfolio-critical-path-task-title">
-                        #<?= $this->text->e((string) ((int) ($task['id'] ?? 0))) ?>
-                        <?= $this->text->e((string) ($task['title'] ?? '')) ?>
+            <div class="<?= $this->text->e($nodeCls) ?>">
+                <span class="portfolio-critical-path-pos"><?= $this->text->e((string) $chainPosition) ?></span>
+                <div class="portfolio-critical-path-node-body">
+                    <strong class="portfolio-critical-path-node-title">
+                        #<?= $this->text->e((string) $taskId) ?>
+                        <?= $this->text->e($taskTitle) ?>
                     </strong>
-                    <?php if ($isActive === 0): ?>
-                        <span class="portfolio-badge portfolio-task-closed"><?= $this->text->e(t('Closed')) ?></span>
-                    <?php endif ?>
-                </div>
-
-                <div class="portfolio-critical-path-item-meta">
-                    <span class="portfolio-critical-path-project">
-                        <?= $this->text->e(t('Project')) ?>: <?= $this->text->e((string) ($task['project_name'] ?? '')) ?>
+                    <span class="portfolio-critical-path-node-meta">
+                        <?= $this->text->e($projectName) ?>
+                        <?php if ($assignee !== ''): ?>
+                            · <?= $this->text->e($assignee) ?>
+                        <?php endif ?>
+                        <?php if ($isActive === 0): ?>
+                            · <em><?= $this->text->e(t('Closed')) ?></em>
+                        <?php endif ?>
+                        <?php if ($downstreamCount > 0): ?>
+                            · <?= $this->text->e(t('%d downstream', $downstreamCount)) ?>
+                        <?php endif ?>
                     </span>
-
-                    <?php $assignee = (string) ($task['assignee'] ?? '') ?>
-                    <?php if ($assignee !== ''): ?>
-                        ·
-                        <span class="portfolio-critical-path-assignee">
-                            <?= $this->text->e(t('Assignee')) ?>: <?= $this->text->e($assignee) ?>
-                        </span>
-                    <?php endif ?>
-
-                    <?php if ($downstreamCount > 0): ?>
-                        ·
-                        <span class="portfolio-critical-path-downstream">
-                            <?= $this->text->e(t('Downstream Tasks')) ?>: <?= $this->text->e((string) $downstreamCount) ?>
-                        </span>
-                    <?php endif ?>
                 </div>
-
-                <?php if ($chainPosition < count($criticalPath)): ?>
-                    <div class="portfolio-critical-path-connector" aria-hidden="true">↓</div>
-                <?php endif ?>
-            </li>
+            </div>
+            <?php if ($index < $lastIndex): ?>
+                <span class="portfolio-critical-path-arrow" aria-hidden="true">→</span>
+            <?php endif ?>
         <?php endforeach ?>
-    </ol>
+    </div>
 <?php endif ?>
 
     </div>

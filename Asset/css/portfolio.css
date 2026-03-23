@@ -314,57 +314,73 @@
     gap: 0.5rem;
 }
 
-.portfolio-critical-path-list {
-    list-style: none;
+/* Horizontal left-to-right flow with wrapping */
+.portfolio-critical-path-flow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
     padding: 0;
     margin: 0;
 }
 
-.portfolio-critical-path-item {
+.portfolio-critical-path-node {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
     border: 1px solid #fca5a5;
     border-left: 4px solid #ef4444;
     border-radius: 4px;
-    padding: 0.75rem 1rem;
+    padding: 0.5rem 0.75rem;
     background: #fff5f5;
-    margin-bottom: 0;
+    min-width: 160px;
+    max-width: 260px;
 }
 
-.portfolio-critical-path-item--closed {
+.portfolio-critical-path-node--closed {
     border-left-color: #9ca3af;
     background: #f9fafb;
-    opacity: 0.8;
+    opacity: 0.65;
 }
 
-.portfolio-critical-path-item-header {
-    display: flex;
-    align-items: baseline;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    margin-bottom: 0.25rem;
-}
-
-.portfolio-critical-path-position {
+.portfolio-critical-path-pos {
     color: #6b7280;
-    font-size: 0.875rem;
-    min-width: 1.5rem;
+    font-size: 0.8rem;
+    min-width: 1.25rem;
+    flex-shrink: 0;
+    padding-top: 0.1rem;
 }
 
-.portfolio-critical-path-task-title {
-    font-size: 1rem;
+.portfolio-critical-path-node-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
 }
 
-.portfolio-critical-path-item-meta {
-    font-size: 0.85rem;
-    color: #374151;
-    margin-left: 1.75rem;
+.portfolio-critical-path-node-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    word-break: break-word;
 }
 
-.portfolio-critical-path-connector {
-    text-align: center;
-    padding: 0.25rem 0;
+.portfolio-critical-path-node--closed .portfolio-critical-path-node-title {
+    text-decoration: line-through;
+    color: #6b7280;
+}
+
+.portfolio-critical-path-node-meta {
+    font-size: 0.78rem;
+    color: #6b7280;
+}
+
+.portfolio-critical-path-arrow {
     color: #ef4444;
-    font-size: 1.2rem;
+    font-size: 1.25rem;
     line-height: 1;
+    flex-shrink: 0;
+    align-self: center;
+    padding: 0 0.1rem;
 }
 
 .portfolio-task-closed {
