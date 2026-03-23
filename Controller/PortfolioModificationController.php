@@ -114,10 +114,10 @@ class PortfolioModificationController extends BaseController
 
     public function addProject()
     {
-
+        $values = $this->request->getValues();
         $portfolioId = $this->request->getIntegerParam('portfolio_id');
-        $projectId = $this->request->getIntegerParam('project_id');
-        $position = $this->request->getIntegerParam('position');
+        $projectId = (int) ($values['project_id'] ?? 0);
+        $position = (int) ($values['position'] ?? 0);
 
         if ($this->portfolioProjectModel->add($portfolioId, $projectId, $position)) {
             $this->flash->success(t('Project added to portfolio.'));
@@ -134,9 +134,9 @@ class PortfolioModificationController extends BaseController
 
     public function removeProject()
     {
-
+        $values = $this->request->getValues();
         $portfolioId = $this->request->getIntegerParam('portfolio_id');
-        $projectId = $this->request->getIntegerParam('project_id');
+        $projectId = (int) ($values['project_id'] ?? 0);
 
         if ($this->portfolioProjectModel->remove($portfolioId, $projectId)) {
             $this->flash->success(t('Project removed from portfolio.'));
