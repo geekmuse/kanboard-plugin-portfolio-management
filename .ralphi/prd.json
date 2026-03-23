@@ -74,8 +74,8 @@
       "dependsOn": [],
       "notes": "Files: Template/portfolio/show.php, Asset/css/portfolio.css.",
       "startedAt": "2026-03-23T22:50:24.752Z",
-      "updatedAt": "2026-03-23T23:05:00.000Z",
-      "completedAt": "2026-03-23T23:05:00.000Z"
+      "updatedAt": "2026-03-23T22:55:30.892Z",
+      "completedAt": "2026-03-23T22:55:30.892Z"
     },
     {
       "id": "US-005",
@@ -88,9 +88,12 @@
         "PHP lint passes and all existing tests pass"
       ],
       "priority": 5,
-      "status": "open",
+      "status": "done",
       "dependsOn": [],
-      "notes": "Files: Controller/PortfolioViewController.php buildTimelineData(), Template/portfolio/timeline.php."
+      "notes": "Files: Controller/PortfolioViewController.php buildTimelineData(), Template/portfolio/timeline.php.",
+      "startedAt": "2026-03-23T22:55:31.384Z",
+      "updatedAt": "2026-03-23T23:10:00.000Z",
+      "completedAt": "2026-03-23T23:10:00.000Z"
     },
     {
       "id": "US-006",

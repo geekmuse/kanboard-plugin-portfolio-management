@@ -30,6 +30,24 @@ Corrective Plan: N/A
   - `repeat(auto-fill, minmax(150px, 1fr))` with 8 items fits comfortably in 1–2 rows on standard 1280px screens.
 ---
 
+## 2026-03-23 — US-005
+Session: iter-0a257061 / loop-9e860edc iteration 5
+Review Outcome: PASS
+Trajectory: ON_TRACK
+Trajectory Notes: N/A
+Corrective Plan: N/A
+- Changed `buildTimelineData()` to accept a third `string $portfolioName = ''` parameter.
+- In `timeline()`, extracted `$portfolioName = (string) ($portfolio['name'] ?? '')` and passed it to `buildTimelineData()`.
+- Milestone items now populate `'project_name' => $portfolioName` instead of the previous empty string.
+- Task items remain unchanged: `'project_name' => (string) ($task['project_name'] ?? '')`.
+- Template (`Template/portfolio/timeline.php`) required no changes — it already rendered `$item['project_name']` for both types.
+- Added two assertions to the timeline controller test: one asserting the escaped portfolio name appears in rendered HTML (milestone Project column), one asserting the task's project name still appears.
+- Files changed: `Controller/PortfolioViewController.php`, `Test/Controller/PortfolioViewControllerTest.php`, `.ralphi/prd.json`, `.ralphi/progress.txt`
+- **Learnings for future iterations:**
+  - When `buildTimelineData()` already renders both item types through the same template field, the fix is entirely in the controller — no template change needed.
+  - Default parameter values (`string $portfolioName = ''`) are PHPStan-clean for optional enrichment parameters with backward-compatible call sites.
+---
+
 ## Codebase Patterns
 - **REQUIRED READING**: Before writing any code each iteration, read `docs/references/kanboard-plugin-development-guidelines.md`. It contains authoritative agent feedback, known pitfalls, and hard-won patterns from previous work on this project. Do NOT commit or modify this file.
 - **POST forms — always use `getValues()` once**: `Request::getValue()` internally calls `getValues()` which validates and strips the CSRF token. Calling it multiple times means only the first call returns real data. Pattern: `$values = $this->request->getValues(); $field = (int)($values['field'] ?? 0);`
