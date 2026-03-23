@@ -51,8 +51,8 @@ $criticalPathLength = count((array) ($graphData['critical_path'] ?? []));
         data-graph-data-url="<?= $this->text->e($graph_data_url ?? '') ?>"
         aria-label="<?= $this->text->e(t('Dependency Graph')) ?>"
     ></div>
-    <script src="<?= $this->text->e($this->url->href('PortfolioController', 'asset', ['file' => 'Asset/js/d3.v7.min.js', 'plugin' => 'Portfolio'])) ?>"></script>
-    <script src="<?= $this->text->e($this->url->href('PortfolioController', 'asset', ['file' => 'Asset/js/portfolio-graph.js', 'plugin' => 'Portfolio'])) ?>"></script>
+    <?= $this->asset->js('plugins/Portfolio/Asset/js/d3.v7.min.js') ?>
+    <?= $this->asset->js('plugins/Portfolio/Asset/js/portfolio-graph.js') ?>
 <?php endif ?>
 
 <div class="portfolio-dependency-legend">

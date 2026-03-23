@@ -52,6 +52,22 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
     }
 
     /**
+     * Minimal asset helper for template rendering in tests.
+     */
+    final class FakeLayoutAssetHelper
+    {
+        public function js(string $filename): string
+        {
+            return '<script defer src="' . htmlspecialchars($filename, ENT_QUOTES, 'UTF-8') . '"></script>';
+        }
+
+        public function css(string $filename): string
+        {
+            return '<link rel="stylesheet" href="' . htmlspecialchars($filename, ENT_QUOTES, 'UTF-8') . '">';
+        }
+    }
+
+    /**
      * Fake layout helper for controller tests.
      */
     final class FakeLayout
@@ -64,12 +80,14 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
         public FakeLayoutTextHelper $text;
         public FakeLayoutUrlHelper $url;
         public FakeLayoutFormHelper $form;
+        public FakeLayoutAssetHelper $asset;
 
         public function __construct()
         {
             $this->text = new FakeLayoutTextHelper();
             $this->url = new FakeLayoutUrlHelper();
             $this->form = new FakeLayoutFormHelper();
+            $this->asset = new FakeLayoutAssetHelper();
         }
 
         /** @param array<string, mixed> $params */
