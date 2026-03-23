@@ -72,6 +72,33 @@ class Plugin extends Base
         $this->applicationAccessMap->add('DependencyController', '*', Role::APP_USER);
         $this->applicationAccessMap->add('PortfolioModificationController', '*', Role::APP_MANAGER);
 
+        // -----------------------------------------------------------------
+        // Template hooks — integrate portfolio data into Kanboard pages
+        // -----------------------------------------------------------------
+
+        // CSS/JS assets injected into every page layout
+        $this->template->hook->attach('template:layout:head', 'Portfolio:widget/asset_css');
+        $this->template->hook->attach('template:layout:js', 'Portfolio:widget/asset_js');
+
+        // Dashboard — portfolio links + at-risk milestone summary
+        $this->template->hook->attach('template:dashboard:show:before-task-list', 'Portfolio:widget/dashboard_portfolios');
+
+        // Board card — blocked indicator (uses per-project lazy cache in PortfolioHelper)
+        $this->template->hook->attach('template:board:task:footer', 'Portfolio:widget/board_blocked_indicator');
+
+        // Task detail sidebar — milestone membership + dependency snippet
+        $this->template->hook->attach('template:task:details:second-column', 'Portfolio:widget/task_milestone_info');
+        $this->template->hook->attach('template:task:details:second-column', 'Portfolio:widget/task_dependency_snippet');
+
+        // Project sidebar — portfolio membership for the project
+        $this->template->hook->attach('template:project:sidebar', 'Portfolio:widget/project_sidebar');
+
+        // Header dropdown — quick links to portfolio list and create form
+        $this->template->hook->attach('template:header:dropdown:menu', 'Portfolio:widget/header_dropdown');
+
+        // Config sidebar — portfolio management link
+        $this->template->hook->attach('template:config:sidebar', 'Portfolio:widget/config_sidebar');
+
         $this->api->getProcedureHandler()
             ->withCallback('createPortfolio', function ($name, $description = '', $owner_id = 0) {
                 return $this->portfolioModel->create(compact('name', 'description', 'owner_id'));

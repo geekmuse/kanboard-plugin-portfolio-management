@@ -568,7 +568,7 @@
     {
       "id": "iter-ece2bfc1",
       "phase": "ralphi-loop-iteration",
-      "status": "running",
+      "status": "completed",
       "sessionKey": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-22T20-39-30-172Z_f92d2ae5-705f-4410-aeeb-877c6245463f.jsonl",
       "sessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-22T20-39-30-172Z_f92d2ae5-705f-4410-aeeb-877c6245463f.jsonl",
       "checkpointLeafId": null,
@@ -579,7 +579,53 @@
       "loopId": "loop-bf8f81a5",
       "iteration": 17,
       "storyId": "US-017",
-      "storyTitle": "Implement dependency web controllers, templates, and graph endpoint"
+      "storyTitle": "Implement dependency web controllers, templates, and graph endpoint",
+      "summary": "Implemented US-017 (Dependency web controllers, templates, and graph endpoint) and established Docker-based PHP quality infrastructure that works for all future iterations.\n\nUS-017 deliverables:\n- Controller/DependencyController.php: graph(), graphData() (JSON AJAX endpoint), blocked(), criticalPath() with portfolio-not-found redirects\n- Template/dependency/graph.php: D3.js force-directed graph page with data-graph attribute embedding and cross-project filter toggle\n- Template/dependency/blocked.php: blocked tasks list with nested blocker details\n- Template/dependency/critical_path.php: numbered chain with downstream counts\n- Asset/js/portfolio-graph.js: D3 v7 renderer with drag, critical-path highlighting, legend\n- Asset/css/portfolio.css: dependency graph / blocked / critical path styles\n- Plugin.php: 4 routes + DependencyController APP_USER access map\n- Locale/en_US/translations.php: 18 new strings\n- Test/Controller/DependencyControllerTest.php: 10 integration tests\n- 98/98 tests pass; 0 lint errors; 0 PHPCS errors; PHPStan level 5 clean\n\nInfrastructure (unblocks all iterations):\n- composer.json + lock (phpunit 10, phpcs 3, phpstan 1)\n- phpunit.xml, phpstan.neon, phpstan-kanboard-stubs.php, .phpcs.xml\n- scripts/docker-{lint,test,phpcs,phpstan}.sh via php:8.3-cli-alpine\n- .ralphi/config.yaml updated to use Docker scripts\n- .gitignore excludes vendor/",
+      "outputs": [
+        "Controller/DependencyController.php",
+        "Template/dependency/graph.php",
+        "Template/dependency/blocked.php",
+        "Template/dependency/critical_path.php",
+        "Asset/js/portfolio-graph.js",
+        "Asset/css/portfolio.css",
+        "Plugin.php",
+        "Locale/en_US/translations.php",
+        "Test/Controller/DependencyControllerTest.php",
+        "composer.json",
+        "composer.lock",
+        "phpunit.xml",
+        "phpstan.neon",
+        "phpstan-kanboard-stubs.php",
+        ".phpcs.xml",
+        "scripts/docker-lint.sh",
+        "scripts/docker-test.sh",
+        "scripts/docker-phpcs.sh",
+        "scripts/docker-phpstan.sh",
+        ".ralphi/config.yaml",
+        ".gitignore",
+        ".ralphi/prd.json",
+        ".ralphi/progress.txt"
+      ],
+      "complete": false,
+      "reviewPasses": 2,
+      "trajectory": "ON_TRACK",
+      "completedAt": "2026-03-22T21:52:06.846Z"
+    },
+    {
+      "id": "iter-9dc5c08d",
+      "phase": "ralphi-loop-iteration",
+      "status": "running",
+      "sessionKey": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-22T21-52-07-200Z_1e57a0bf-b92b-4d2b-ad7d-45a52985a6c5.jsonl",
+      "sessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-22T21-52-07-200Z_1e57a0bf-b92b-4d2b-ad7d-45a52985a6c5.jsonl",
+      "checkpointLeafId": null,
+      "checkpointSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-22T16-42-25-962Z_88fc4c52-cbad-498f-9cc4-7c0c0aeab3d0.jsonl",
+      "cwd": "/Users/bradmatic/Dev/geekmuse/kanboard-plugin-portfolio-mgmt",
+      "createdAt": "2026-03-22T21:52:07.201Z",
+      "autoConfirm": true,
+      "loopId": "loop-bf8f81a5",
+      "iteration": 18,
+      "storyId": "US-018",
+      "storyTitle": "Add template hooks, widgets, helper utilities, and board blocked-status preloading"
     }
   ],
   "loops": [
@@ -587,7 +633,7 @@
       "id": "loop-bf8f81a5",
       "controllerSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-22T16-42-25-962Z_88fc4c52-cbad-498f-9cc4-7c0c0aeab3d0.jsonl",
       "maxIterations": 50,
-      "iteration": 17,
+      "iteration": 18,
       "active": true,
       "stopRequested": false,
       "createdAt": "2026-03-22T18:34:37.341Z",
@@ -608,11 +654,12 @@
         "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-22T20-05-16-647Z_52104389-442b-4b4b-9518-9d2f6dbf159e.jsonl",
         "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-22T20-15-45-192Z_edeb1d41-2118-4871-90da-886456f26770.jsonl",
         "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-22T20-25-49-704Z_6ab2885c-99c5-42f6-b292-2efed2fac15f.jsonl",
-        "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-22T20-39-30-172Z_f92d2ae5-705f-4410-aeeb-877c6245463f.jsonl"
+        "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-22T20-39-30-172Z_f92d2ae5-705f-4410-aeeb-877c6245463f.jsonl",
+        "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-22T21-52-07-200Z_1e57a0bf-b92b-4d2b-ad7d-45a52985a6c5.jsonl"
       ],
-      "currentIterationStartedAt": "2026-03-22T20:39:30.172Z",
-      "activeIterationSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-22T20-39-30-172Z_f92d2ae5-705f-4410-aeeb-877c6245463f.jsonl"
+      "currentIterationStartedAt": "2026-03-22T21:52:07.200Z",
+      "activeIterationSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-22T21-52-07-200Z_1e57a0bf-b92b-4d2b-ad7d-45a52985a6c5.jsonl"
     }
   ],
-  "savedAt": "2026-03-22T20:39:30.174Z"
+  "savedAt": "2026-03-22T21:52:07.202Z"
 }

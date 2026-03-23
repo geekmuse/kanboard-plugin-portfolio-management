@@ -357,8 +357,8 @@
       ],
       "notes": "Spec refs: sections 4.5, 5.1, 5.3, 6, 12.4.",
       "startedAt": "2026-03-22T20:39:30.173Z",
-      "updatedAt": "2026-03-22T21:50:35.703Z",
-      "completedAt": "2026-03-22T21:50:35.703Z"
+      "updatedAt": "2026-03-22T21:52:07.070Z",
+      "completedAt": "2026-03-22T21:52:07.070Z"
     },
     {
       "id": "US-018",
@@ -371,13 +371,16 @@
         "Integration tests verify representative hook output such as the board blocker indicator and task sidebar milestone widget."
       ],
       "priority": 18,
-      "status": "open",
+      "status": "in_progress",
       "dependsOn": [
         "US-014",
         "US-016",
         "US-017"
       ],
-      "notes": "Spec refs: sections 2.1 Helper, 6.1, 6.2, 6.3, Appendix A."
+      "notes": "Spec refs: sections 2.1 Helper, 6.1, 6.2, 6.3, Appendix A.",
+      "startedAt": "2026-03-22T21:52:07.201Z",
+      "updatedAt": "2026-03-22T21:52:07.201Z",
+      "completedAt": null
     },
     {
       "id": "US-019",

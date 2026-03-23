@@ -153,4 +153,11 @@ return [
     'No blocked tasks found for this portfolio.' => 'No blocked tasks found for this portfolio.',
     'No critical path found. Add cross-project task dependencies to compute the critical path.' =>
         'No critical path found. Add cross-project task dependencies to compute the critical path.',
+
+    // Widget / hook templates
+    'View all portfolios' => 'View all portfolios',
+    'Blocked by cross-project dependency' => 'Blocked by cross-project dependency',
+    'Portfolio Dependencies' => 'Portfolio Dependencies',
+    'This task is blocked by a cross-project dependency.' => 'This task is blocked by a cross-project dependency.',
+    'Cross-project Portfolio Management' => 'Cross-project Portfolio Management',
 ];

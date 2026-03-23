@@ -182,6 +182,37 @@ final class FakeApplicationAccessMap
     }
 }
 
+final class FakeTemplateHook
+{
+    /**
+     * @var array<int, array{hook: string, template: string}>
+     */
+    private array $attachments = [];
+
+    public function attach(string $hook, string $template): void
+    {
+        $this->attachments[] = ['hook' => $hook, 'template' => $template];
+    }
+
+    /**
+     * @return array<int, array{hook: string, template: string}>
+     */
+    public function getAttachments(): array
+    {
+        return $this->attachments;
+    }
+}
+
+final class FakeTemplateHookRegistry
+{
+    public FakeTemplateHook $hook;
+
+    public function __construct()
+    {
+        $this->hook = new FakeTemplateHook();
+    }
+}
+
 final class FakePortfolioModel
 {
     /**
@@ -236,17 +267,22 @@ final class ApiRegistrationTest extends TestCase
 
     private FakeApplicationAccessMap $applicationAccessMap;
 
+    private FakeTemplateHookRegistry $templateHookRegistry;
+
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->procedureHandler = new FakeProcedureHandler();
-        $this->apiAccessMap = new FakeApiAccessMap();
-        $this->route = new FakeRoute();
+        $this->procedureHandler     = new FakeProcedureHandler();
+        $this->apiAccessMap         = new FakeApiAccessMap();
+        $this->route                = new FakeRoute();
         $this->applicationAccessMap = new FakeApplicationAccessMap();
+        $this->templateHookRegistry = new FakeTemplateHookRegistry();
 
         $this->plugin = new Plugin();
-        $this->plugin->container = [];
+        $this->plugin->container = [
+            'template' => $this->templateHookRegistry,
+        ];
         $this->plugin->api = new FakeApi($this->procedureHandler);
         $this->plugin->apiAccessMap = $this->apiAccessMap;
         $this->plugin->route = $this->route;
@@ -530,5 +566,62 @@ final class ApiRegistrationTest extends TestCase
             ]],
             $portfolioModel->updateCalls
         );
+    }
+
+    public function testRegistersAllRequiredTemplateHooks(): void
+    {
+        $attachments = $this->templateHookRegistry->hook->getAttachments();
+        $hookNames   = array_column($attachments, 'hook');
+
+        // Layout — CSS and JS
+        $this->assertContains('template:layout:head', $hookNames);
+        $this->assertContains('template:layout:js', $hookNames);
+
+        // Dashboard widget
+        $this->assertContains('template:dashboard:show:before-task-list', $hookNames);
+
+        // Board card blocked indicator
+        $this->assertContains('template:board:task:footer', $hookNames);
+
+        // Task detail sidebar (milestone + dependency; hook registered twice)
+        $taskDetailHooks = array_values(array_filter(
+            $hookNames,
+            static fn (string $h): bool => $h === 'template:task:details:second-column'
+        ));
+        $this->assertCount(2, $taskDetailHooks);
+
+        // Project sidebar
+        $this->assertContains('template:project:sidebar', $hookNames);
+
+        // Header dropdown
+        $this->assertContains('template:header:dropdown:menu', $hookNames);
+
+        // Config sidebar
+        $this->assertContains('template:config:sidebar', $hookNames);
+    }
+
+    public function testTemplateHooksPointToCorrectWidgetTemplates(): void
+    {
+        $attachments    = $this->templateHookRegistry->hook->getAttachments();
+        $templateByHook = [];
+
+        foreach ($attachments as $entry) {
+            $templateByHook[$entry['hook']][] = $entry['template'];
+        }
+
+        $this->assertSame(['Portfolio:widget/asset_css'], $templateByHook['template:layout:head']);
+        $this->assertSame(['Portfolio:widget/asset_js'], $templateByHook['template:layout:js']);
+        $this->assertSame(
+            ['Portfolio:widget/dashboard_portfolios'],
+            $templateByHook['template:dashboard:show:before-task-list']
+        );
+        $this->assertSame(['Portfolio:widget/board_blocked_indicator'], $templateByHook['template:board:task:footer']);
+        $this->assertSame(['Portfolio:widget/project_sidebar'], $templateByHook['template:project:sidebar']);
+        $this->assertSame(['Portfolio:widget/header_dropdown'], $templateByHook['template:header:dropdown:menu']);
+        $this->assertSame(['Portfolio:widget/config_sidebar'], $templateByHook['template:config:sidebar']);
+
+        // Two task-detail hooks for milestone info and dependency snippet
+        $this->assertContains('Portfolio:widget/task_milestone_info', $templateByHook['template:task:details:second-column']);
+        $this->assertContains('Portfolio:widget/task_dependency_snippet', $templateByHook['template:task:details:second-column']);
     }
 }
