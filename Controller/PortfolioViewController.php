@@ -17,7 +17,7 @@ class PortfolioViewController extends Base
         if (! is_array($portfolio)) {
             $this->flash->failure(t('Portfolio not found.'));
 
-            return $this->response->redirect($this->url->href('PortfolioListController', 'index', [], 'Portfolio'));
+            return $this->response->redirect($this->url->href('PortfolioListController', 'index', ['plugin' => 'Portfolio']));
         }
 
         return $this->response->html($this->template->render('Portfolio:portfolio/show', [
@@ -35,7 +35,7 @@ class PortfolioViewController extends Base
         if (! is_array($portfolio)) {
             $this->flash->failure(t('Portfolio not found.'));
 
-            return $this->response->redirect($this->url->href('PortfolioListController', 'index', [], 'Portfolio'));
+            return $this->response->redirect($this->url->href('PortfolioListController', 'index', ['plugin' => 'Portfolio']));
         }
 
         $filters = $this->buildTaskFilters();
@@ -84,7 +84,7 @@ class PortfolioViewController extends Base
         if (! is_array($portfolio)) {
             $this->flash->failure(t('Portfolio not found.'));
 
-            return $this->response->redirect($this->url->href('PortfolioListController', 'index', [], 'Portfolio'));
+            return $this->response->redirect($this->url->href('PortfolioListController', 'index', ['plugin' => 'Portfolio']));
         }
 
         $activeTasks = $this->getPortfolioTasks($portfolioId, [
@@ -111,7 +111,7 @@ class PortfolioViewController extends Base
         if (! is_array($portfolio)) {
             $this->flash->failure(t('Portfolio not found.'));
 
-            return $this->response->redirect($this->url->href('PortfolioListController', 'index', [], 'Portfolio'));
+            return $this->response->redirect($this->url->href('PortfolioListController', 'index', ['plugin' => 'Portfolio']));
         }
 
         $timelineData = $this->buildTimelineData(

@@ -11,11 +11,11 @@
     <?= $this->text->e((string) ($milestone['name'] ?? '')) ?>
 </p>
 
-<form method="post" action="<?= $this->url->href('MilestoneController', 'delete', ['milestone_id' => (int) ($milestone['id'] ?? 0)], 'Portfolio') ?>" class="portfolio-milestone-remove-form">
+<form method="post" action="<?= $this->url->href('MilestoneController', 'delete', ['milestone_id' => (int) ($milestone['id'] ?? 0), 'plugin' => 'Portfolio']) ?>" class="portfolio-milestone-remove-form">
     <?= $this->form->csrf() ?>
 
     <button type="submit" class="btn btn-red"><?= $this->text->e(t('Remove Milestone')) ?></button>
-    <a href="<?= $this->url->href('MilestoneController', 'show', ['milestone_id' => (int) ($milestone['id'] ?? 0)], 'Portfolio') ?>" class="btn">
+    <a href="<?= $this->url->href('MilestoneController', 'show', ['milestone_id' => (int) ($milestone['id'] ?? 0), 'plugin' => 'Portfolio']) ?>" class="btn">
         <?= $this->text->e(t('Cancel')) ?>
     </a>
 </form>

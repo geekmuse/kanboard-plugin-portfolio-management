@@ -1,7 +1,7 @@
 <div class="page-header">
     <h2 class="portfolio-list-title"><?= $this->text->e($title ?? t('Portfolios')) ?></h2>
     <div class="portfolio-list-actions">
-        <a href="<?= $this->url->href('PortfolioModificationController', 'create', [], 'Portfolio') ?>" class="btn btn-blue">
+        <a href="<?= $this->url->href('PortfolioModificationController', 'create', ['plugin' => 'Portfolio']) ?>" class="btn btn-blue">
             <?= $this->text->e(t('Create Portfolio')) ?>
         </a>
     </div>
@@ -28,35 +28,35 @@
                     <?= $this->text->e(((int) ($portfolio['is_active'] ?? 1) === 1) ? t('Active') : t('Inactive')) ?>
                 </td>
                 <td>
-                    <a href="<?= $this->url->href('PortfolioViewController', 'show', ['portfolio_id' => (int) ($portfolio['id'] ?? 0)], 'Portfolio') ?>">
+                    <a href="<?= $this->url->href('PortfolioViewController', 'show', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>">
                         <?= $this->text->e(t('Dashboard')) ?>
                     </a>
                     ·
-                    <a href="<?= $this->url->href('PortfolioViewController', 'tasks', ['portfolio_id' => (int) ($portfolio['id'] ?? 0)], 'Portfolio') ?>">
+                    <a href="<?= $this->url->href('PortfolioViewController', 'tasks', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>">
                         <?= $this->text->e(t('Tasks')) ?>
                     </a>
                     ·
-                    <a href="<?= $this->url->href('MilestoneController', 'index', ['portfolio_id' => (int) ($portfolio['id'] ?? 0)], 'Portfolio') ?>">
+                    <a href="<?= $this->url->href('MilestoneController', 'index', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>">
                         <?= $this->text->e(t('Milestones')) ?>
                     </a>
                     ·
-                    <a href="<?= $this->url->href('PortfolioViewController', 'board', ['portfolio_id' => (int) ($portfolio['id'] ?? 0)], 'Portfolio') ?>">
+                    <a href="<?= $this->url->href('PortfolioViewController', 'board', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>">
                         <?= $this->text->e(t('Board')) ?>
                     </a>
                     ·
-                    <a href="<?= $this->url->href('PortfolioViewController', 'timeline', ['portfolio_id' => (int) ($portfolio['id'] ?? 0)], 'Portfolio') ?>">
+                    <a href="<?= $this->url->href('PortfolioViewController', 'timeline', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>">
                         <?= $this->text->e(t('Timeline')) ?>
                     </a>
                     ·
-                    <a href="<?= $this->url->href('PortfolioModificationController', 'settings', ['portfolio_id' => (int) ($portfolio['id'] ?? 0)], 'Portfolio') ?>">
+                    <a href="<?= $this->url->href('PortfolioModificationController', 'settings', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>">
                         <?= $this->text->e(t('Portfolio Settings')) ?>
                     </a>
                     ·
-                    <a href="<?= $this->url->href('PortfolioModificationController', 'edit', ['portfolio_id' => (int) ($portfolio['id'] ?? 0)], 'Portfolio') ?>">
+                    <a href="<?= $this->url->href('PortfolioModificationController', 'edit', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>">
                         <?= $this->text->e(t('Edit')) ?>
                     </a>
                     ·
-                    <a href="<?= $this->url->href('PortfolioModificationController', 'remove', ['portfolio_id' => (int) ($portfolio['id'] ?? 0)], 'Portfolio') ?>">
+                    <a href="<?= $this->url->href('PortfolioModificationController', 'remove', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>">
                         <?= $this->text->e(t('Remove')) ?>
                     </a>
                 </td>

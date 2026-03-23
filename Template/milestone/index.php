@@ -5,10 +5,10 @@
     </h2>
 
     <div class="portfolio-milestone-list-actions">
-        <a href="<?= $this->url->href('MilestoneController', 'create', ['portfolio_id' => (int) ($portfolio['id'] ?? 0)], 'Portfolio') ?>" class="btn btn-blue">
+        <a href="<?= $this->url->href('MilestoneController', 'create', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>" class="btn btn-blue">
             <?= $this->text->e(t('Create Milestone')) ?>
         </a>
-        <a href="<?= $this->url->href('PortfolioViewController', 'show', ['portfolio_id' => (int) ($portfolio['id'] ?? 0)], 'Portfolio') ?>" class="btn">
+        <a href="<?= $this->url->href('PortfolioViewController', 'show', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>" class="btn">
             <?= $this->text->e(t('Dashboard')) ?>
         </a>
     </div>
@@ -50,15 +50,15 @@
                     (<?= $this->text->e((string) ((int) ($progress['completed'] ?? 0))) ?>/<?= $this->text->e((string) ((int) ($progress['total'] ?? 0))) ?>)
                 </td>
                 <td>
-                    <a href="<?= $this->url->href('MilestoneController', 'show', ['milestone_id' => $milestoneId], 'Portfolio') ?>">
+                    <a href="<?= $this->url->href('MilestoneController', 'show', ['milestone_id' => $milestoneId, 'plugin' => 'Portfolio']) ?>">
                         <?= $this->text->e(t('View')) ?>
                     </a>
                     ·
-                    <a href="<?= $this->url->href('MilestoneController', 'edit', ['milestone_id' => $milestoneId], 'Portfolio') ?>">
+                    <a href="<?= $this->url->href('MilestoneController', 'edit', ['milestone_id' => $milestoneId, 'plugin' => 'Portfolio']) ?>">
                         <?= $this->text->e(t('Edit')) ?>
                     </a>
                     ·
-                    <a href="<?= $this->url->href('MilestoneController', 'remove', ['milestone_id' => $milestoneId], 'Portfolio') ?>">
+                    <a href="<?= $this->url->href('MilestoneController', 'remove', ['milestone_id' => $milestoneId, 'plugin' => 'Portfolio']) ?>">
                         <?= $this->text->e(t('Remove')) ?>
                     </a>
                 </td>

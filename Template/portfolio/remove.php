@@ -11,11 +11,11 @@
     <?= $this->text->e((string) ($portfolio['name'] ?? '')) ?>
 </p>
 
-<form method="post" action="<?= $this->url->href('PortfolioModificationController', 'delete', ['portfolio_id' => (int) ($portfolio['id'] ?? 0)], 'Portfolio') ?>" class="portfolio-remove-form">
+<form method="post" action="<?= $this->url->href('PortfolioModificationController', 'delete', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>" class="portfolio-remove-form">
     <?= $this->form->csrf() ?>
 
     <button type="submit" class="btn btn-red"><?= $this->text->e(t('Remove Portfolio')) ?></button>
-    <a href="<?= $this->url->href('PortfolioViewController', 'show', ['portfolio_id' => (int) ($portfolio['id'] ?? 0)], 'Portfolio') ?>" class="btn">
+    <a href="<?= $this->url->href('PortfolioViewController', 'show', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>" class="btn">
         <?= $this->text->e(t('Cancel')) ?>
     </a>
 </form>

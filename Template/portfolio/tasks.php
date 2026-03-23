@@ -5,27 +5,27 @@
     </h2>
 
     <div class="portfolio-view-switcher">
-        <a href="<?= $this->url->href('PortfolioViewController', 'show', ['portfolio_id' => (int) ($portfolio['id'] ?? 0)], 'Portfolio') ?>">
+        <a href="<?= $this->url->href('PortfolioViewController', 'show', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>">
             <?= $this->text->e(t('Dashboard')) ?>
         </a>
         ·
-        <a href="<?= $this->url->href('PortfolioViewController', 'tasks', ['portfolio_id' => (int) ($portfolio['id'] ?? 0)], 'Portfolio') ?>">
+        <a href="<?= $this->url->href('PortfolioViewController', 'tasks', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>">
             <?= $this->text->e(t('Tasks')) ?>
         </a>
         ·
-        <a href="<?= $this->url->href('MilestoneController', 'index', ['portfolio_id' => (int) ($portfolio['id'] ?? 0)], 'Portfolio') ?>">
+        <a href="<?= $this->url->href('MilestoneController', 'index', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>">
             <?= $this->text->e(t('Milestones')) ?>
         </a>
         ·
-        <a href="<?= $this->url->href('PortfolioViewController', 'board', ['portfolio_id' => (int) ($portfolio['id'] ?? 0)], 'Portfolio') ?>">
+        <a href="<?= $this->url->href('PortfolioViewController', 'board', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>">
             <?= $this->text->e(t('Board')) ?>
         </a>
         ·
-        <a href="<?= $this->url->href('PortfolioViewController', 'timeline', ['portfolio_id' => (int) ($portfolio['id'] ?? 0)], 'Portfolio') ?>">
+        <a href="<?= $this->url->href('PortfolioViewController', 'timeline', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>">
             <?= $this->text->e(t('Timeline')) ?>
         </a>
         ·
-        <a href="<?= $this->url->href('PortfolioModificationController', 'settings', ['portfolio_id' => (int) ($portfolio['id'] ?? 0)], 'Portfolio') ?>">
+        <a href="<?= $this->url->href('PortfolioModificationController', 'settings', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>">
             <?= $this->text->e(t('Portfolio Settings')) ?>
         </a>
     </div>
@@ -38,7 +38,7 @@
     <span class="portfolio-badge"><?= $this->text->e(t('Blocked Tasks')) ?>: <?= $this->text->e((string) ((int) ($counts['blocked'] ?? 0))) ?></span>
 </div>
 
-<form method="get" action="<?= $this->url->href('PortfolioViewController', 'tasks', ['portfolio_id' => (int) ($portfolio['id'] ?? 0)], 'Portfolio') ?>" class="portfolio-task-filter-form">
+<form method="get" action="<?= $this->url->href('PortfolioViewController', 'tasks', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>" class="portfolio-task-filter-form">
     <div class="portfolio-form-row">
         <label for="form-status-id"><?= $this->text->e(t('Status')) ?></label>
         <select id="form-status-id" name="status_id">
@@ -114,7 +114,7 @@
 
     <div class="portfolio-form-actions">
         <button type="submit" class="btn btn-blue"><?= $this->text->e(t('Apply Filters')) ?></button>
-        <a href="<?= $this->url->href('PortfolioViewController', 'tasks', ['portfolio_id' => (int) ($portfolio['id'] ?? 0)], 'Portfolio') ?>" class="btn">
+        <a href="<?= $this->url->href('PortfolioViewController', 'tasks', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>" class="btn">
             <?= $this->text->e(t('Clear Filters')) ?>
         </a>
     </div>
@@ -172,13 +172,13 @@
 
     <div class="portfolio-task-pagination">
         <?php if ($previous_offset !== null): ?>
-            <a class="btn" href="<?= $this->url->href('PortfolioViewController', 'tasks', array_merge(['portfolio_id' => (int) ($portfolio['id'] ?? 0)], $pagination_query, ['offset' => (int) $previous_offset]), 'Portfolio') ?>">
+            <a class="btn" href="<?= $this->url->href('PortfolioViewController', 'tasks', array_merge(['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio'], $pagination_query, ['offset' => (int) $previous_offset])) ?>">
                 <?= $this->text->e(t('Previous')) ?>
             </a>
         <?php endif ?>
 
         <?php if ($next_offset !== null): ?>
-            <a class="btn" href="<?= $this->url->href('PortfolioViewController', 'tasks', array_merge(['portfolio_id' => (int) ($portfolio['id'] ?? 0)], $pagination_query, ['offset' => (int) $next_offset]), 'Portfolio') ?>">
+            <a class="btn" href="<?= $this->url->href('PortfolioViewController', 'tasks', array_merge(['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio'], $pagination_query, ['offset' => (int) $next_offset])) ?>">
                 <?= $this->text->e(t('Next')) ?>
             </a>
         <?php endif ?>

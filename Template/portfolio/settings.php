@@ -13,7 +13,7 @@
     <?php if (empty($available_projects)): ?>
         <p class="portfolio-settings-empty-available"><?= $this->text->e(t('No available projects to add.')) ?></p>
     <?php else: ?>
-        <form method="post" action="<?= $this->url->href('PortfolioModificationController', 'addProject', ['portfolio_id' => (int) ($portfolio['id'] ?? 0)], 'Portfolio') ?>" class="portfolio-settings-add-form">
+        <form method="post" action="<?= $this->url->href('PortfolioModificationController', 'addProject', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>" class="portfolio-settings-add-form">
             <?= $this->form->csrf() ?>
 
             <div class="portfolio-form-row">
@@ -64,7 +64,7 @@
                     <td><?= $this->text->e((string) ($project['identifier'] ?? '')) ?></td>
                     <td><?= $this->text->e((string) ((int) ($project['position'] ?? 0))) ?></td>
                     <td>
-                        <form method="post" action="<?= $this->url->href('PortfolioModificationController', 'removeProject', ['portfolio_id' => (int) ($portfolio['id'] ?? 0)], 'Portfolio') ?>" class="portfolio-settings-remove-form">
+                        <form method="post" action="<?= $this->url->href('PortfolioModificationController', 'removeProject', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>" class="portfolio-settings-remove-form">
                             <?= $this->form->csrf() ?>
                             <input type="hidden" name="project_id" value="<?= $this->text->e((string) ((int) ($project['id'] ?? 0))) ?>">
                             <button type="submit" class="btn btn-red btn-sm"><?= $this->text->e(t('Remove Project')) ?></button>

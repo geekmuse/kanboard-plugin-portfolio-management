@@ -12,7 +12,7 @@
     <ul class="portfolio-widget-list">
         <?php foreach ($portfolios as $portfolio): ?>
         <li class="portfolio-widget-list-item">
-            <a href="<?= $this->url->href('PortfolioViewController', 'show', ['portfolio_id' => (int) ($portfolio['id'] ?? 0)], 'Portfolio') ?>">
+            <a href="<?= $this->url->href('PortfolioViewController', 'show', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>">
                 <?= $this->text->e((string) ($portfolio['name'] ?? '')) ?>
             </a>
         </li>

@@ -40,7 +40,7 @@ class ConfigController extends Base
         if (! is_object($configModel) || ! method_exists($configModel, 'save')) {
             $this->flash->failure(t('Unable to save portfolio settings.'));
 
-            return $this->response->redirect($this->url->href('ConfigController', 'show', [], 'Portfolio'));
+            return $this->response->redirect($this->url->href('ConfigController', 'show', ['plugin' => 'Portfolio']));
         }
 
         $settings = $this->normalizeSubmittedSettings();
@@ -63,7 +63,7 @@ class ConfigController extends Base
             $this->flash->success(t('Portfolio settings saved successfully.'));
         }
 
-        return $this->response->redirect($this->url->href('ConfigController', 'show', [], 'Portfolio'));
+        return $this->response->redirect($this->url->href('ConfigController', 'show', ['plugin' => 'Portfolio']));
     }
 
     /**

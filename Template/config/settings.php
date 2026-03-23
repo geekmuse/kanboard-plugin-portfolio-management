@@ -3,7 +3,7 @@
 </div>
 
 <div class="portfolio-config-settings">
-    <form method="post" action="<?= $this->url->href('ConfigController', 'save', [], 'Portfolio') ?>" class="portfolio-config-form">
+    <form method="post" action="<?= $this->url->href('ConfigController', 'save', ['plugin' => 'Portfolio']) ?>" class="portfolio-config-form">
         <?= $this->form->csrf() ?>
 
         <div class="portfolio-config-field">
@@ -83,7 +83,7 @@
         <div class="form-actions">
             <button type="submit" class="btn btn-blue"><?= $this->text->e(t('Save')) ?></button>
             <?= $this->text->e(t('or')) ?>
-            <a href="<?= $this->url->href('PortfolioListController', 'index', [], 'Portfolio') ?>" class="btn"><?= $this->text->e(t('Portfolios')) ?></a>
+            <a href="<?= $this->url->href('PortfolioListController', 'index', ['plugin' => 'Portfolio']) ?>" class="btn"><?= $this->text->e(t('Portfolios')) ?></a>
         </div>
     </form>
 </div>

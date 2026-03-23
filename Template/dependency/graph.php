@@ -5,31 +5,31 @@
     </h2>
 
     <div class="portfolio-view-switcher">
-        <a href="<?= $this->url->href('PortfolioViewController', 'show', ['portfolio_id' => (int) ($portfolio['id'] ?? 0)], 'Portfolio') ?>">
+        <a href="<?= $this->url->href('PortfolioViewController', 'show', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>">
             <?= $this->text->e(t('Dashboard')) ?>
         </a>
         ·
-        <a href="<?= $this->url->href('PortfolioViewController', 'tasks', ['portfolio_id' => (int) ($portfolio['id'] ?? 0)], 'Portfolio') ?>">
+        <a href="<?= $this->url->href('PortfolioViewController', 'tasks', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>">
             <?= $this->text->e(t('Tasks')) ?>
         </a>
         ·
-        <a href="<?= $this->url->href('MilestoneController', 'index', ['portfolio_id' => (int) ($portfolio['id'] ?? 0)], 'Portfolio') ?>">
+        <a href="<?= $this->url->href('MilestoneController', 'index', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>">
             <?= $this->text->e(t('Milestones')) ?>
         </a>
         ·
-        <a href="<?= $this->url->href('DependencyController', 'graph', ['portfolio_id' => (int) ($portfolio['id'] ?? 0)], 'Portfolio') ?>">
+        <a href="<?= $this->url->href('DependencyController', 'graph', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>">
             <?= $this->text->e(t('Dependency Graph')) ?>
         </a>
         ·
-        <a href="<?= $this->url->href('DependencyController', 'blocked', ['portfolio_id' => (int) ($portfolio['id'] ?? 0)], 'Portfolio') ?>">
+        <a href="<?= $this->url->href('DependencyController', 'blocked', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>">
             <?= $this->text->e(t('Blocked Tasks')) ?>
         </a>
         ·
-        <a href="<?= $this->url->href('DependencyController', 'criticalPath', ['portfolio_id' => (int) ($portfolio['id'] ?? 0)], 'Portfolio') ?>">
+        <a href="<?= $this->url->href('DependencyController', 'criticalPath', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>">
             <?= $this->text->e(t('Critical Path')) ?>
         </a>
         ·
-        <a href="<?= $this->url->href('PortfolioModificationController', 'settings', ['portfolio_id' => (int) ($portfolio['id'] ?? 0)], 'Portfolio') ?>">
+        <a href="<?= $this->url->href('PortfolioModificationController', 'settings', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>">
             <?= $this->text->e(t('Portfolio Settings')) ?>
         </a>
     </div>
@@ -41,11 +41,11 @@
     <?php if ($crossProjectOnly): ?>
         <strong><?= $this->text->e(t('Cross-project only')) ?></strong>
         ·
-        <a href="<?= $this->url->href('DependencyController', 'graph', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'cross_project_only' => 0], 'Portfolio') ?>">
+        <a href="<?= $this->url->href('DependencyController', 'graph', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'cross_project_only' => 0, 'plugin' => 'Portfolio']) ?>">
             <?= $this->text->e(t('Show all')) ?>
         </a>
     <?php else: ?>
-        <a href="<?= $this->url->href('DependencyController', 'graph', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'cross_project_only' => 1], 'Portfolio') ?>">
+        <a href="<?= $this->url->href('DependencyController', 'graph', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'cross_project_only' => 1, 'plugin' => 'Portfolio']) ?>">
             <?= $this->text->e(t('Cross-project only')) ?>
         </a>
         ·
@@ -76,8 +76,8 @@ $criticalPathLength = count((array) ($graphData['critical_path'] ?? []));
         data-graph-data-url="<?= $this->text->e($graph_data_url ?? '') ?>"
         aria-label="<?= $this->text->e(t('Dependency Graph')) ?>"
     ></div>
-    <script src="<?= $this->text->e($this->url->href('PortfolioController', 'asset', ['file' => 'Asset/js/d3.v7.min.js'], 'Portfolio')) ?>"></script>
-    <script src="<?= $this->text->e($this->url->href('PortfolioController', 'asset', ['file' => 'Asset/js/portfolio-graph.js'], 'Portfolio')) ?>"></script>
+    <script src="<?= $this->text->e($this->url->href('PortfolioController', 'asset', ['file' => 'Asset/js/d3.v7.min.js', 'plugin' => 'Portfolio'])) ?>"></script>
+    <script src="<?= $this->text->e($this->url->href('PortfolioController', 'asset', ['file' => 'Asset/js/portfolio-graph.js', 'plugin' => 'Portfolio'])) ?>"></script>
 <?php endif ?>
 
 <div class="portfolio-dependency-legend">

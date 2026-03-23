@@ -208,11 +208,10 @@ class MilestoneController extends Base
         $this->flash->failure(t('Unable to remove milestone.'));
 
         return $this->response->redirect($this->url->href(
-            'MilestoneController',
-            'remove',
-            ['milestone_id' => $milestoneId],
-            'Portfolio'
-        ));
+                'MilestoneController',
+                'remove',
+                ['milestone_id' => $milestoneId, 'plugin' => 'Portfolio']
+            ));
     }
 
     public function addTask()
@@ -384,27 +383,25 @@ class MilestoneController extends Base
 
     private function redirectToPortfolioList()
     {
-        return $this->response->redirect($this->url->href('PortfolioListController', 'index', [], 'Portfolio'));
+        return $this->response->redirect($this->url->href('PortfolioListController', 'index', ['plugin' => 'Portfolio']));
     }
 
     private function redirectToPortfolioMilestones(int $portfolioId)
     {
         return $this->response->redirect($this->url->href(
-            'MilestoneController',
-            'index',
-            ['portfolio_id' => $portfolioId],
-            'Portfolio'
-        ));
+                'MilestoneController',
+                'index',
+                ['portfolio_id' => $portfolioId, 'plugin' => 'Portfolio']
+            ));
     }
 
     private function redirectToMilestone(int $milestoneId)
     {
         return $this->response->redirect($this->url->href(
-            'MilestoneController',
-            'show',
-            ['milestone_id' => $milestoneId],
-            'Portfolio'
-        ));
+                'MilestoneController',
+                'show',
+                ['milestone_id' => $milestoneId, 'plugin' => 'Portfolio']
+            ));
     }
 
     private function formatTargetDate(mixed $targetDate): string

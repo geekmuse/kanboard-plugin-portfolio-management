@@ -34,8 +34,7 @@ class PortfolioModificationController extends Base
             return $this->response->redirect($this->url->href(
                 'PortfolioViewController',
                 'show',
-                ['portfolio_id' => (int) $portfolioId],
-                'Portfolio'
+                ['portfolio_id' => (int) $portfolioId, 'plugin' => 'Portfolio']
             ));
         }
 
@@ -52,7 +51,7 @@ class PortfolioModificationController extends Base
         if ($portfolio === null) {
             $this->flash->failure(t('Portfolio not found.'));
 
-            return $this->response->redirect($this->url->href('PortfolioListController', 'index', [], 'Portfolio'));
+            return $this->response->redirect($this->url->href('PortfolioListController', 'index', ['plugin' => 'Portfolio']));
         }
 
         if ($values === []) {
@@ -85,8 +84,7 @@ class PortfolioModificationController extends Base
             return $this->response->redirect($this->url->href(
                 'PortfolioViewController',
                 'show',
-                ['portfolio_id' => $portfolioId],
-                'Portfolio'
+                ['portfolio_id' => $portfolioId, 'plugin' => 'Portfolio']
             ));
         }
 
@@ -103,7 +101,7 @@ class PortfolioModificationController extends Base
         if ($portfolio === null) {
             $this->flash->failure(t('Portfolio not found.'));
 
-            return $this->response->redirect($this->url->href('PortfolioListController', 'index', [], 'Portfolio'));
+            return $this->response->redirect($this->url->href('PortfolioListController', 'index', ['plugin' => 'Portfolio']));
         }
 
         $projects = $this->portfolioProjectModel->getProjects($portfolioId);
@@ -131,11 +129,10 @@ class PortfolioModificationController extends Base
         }
 
         return $this->response->redirect($this->url->href(
-            'PortfolioModificationController',
-            'settings',
-            ['portfolio_id' => $portfolioId],
-            'Portfolio'
-        ));
+                'PortfolioModificationController',
+                'settings',
+                ['portfolio_id' => $portfolioId, 'plugin' => 'Portfolio']
+            ));
     }
 
     public function removeProject()
@@ -152,11 +149,10 @@ class PortfolioModificationController extends Base
         }
 
         return $this->response->redirect($this->url->href(
-            'PortfolioModificationController',
-            'settings',
-            ['portfolio_id' => $portfolioId],
-            'Portfolio'
-        ));
+                'PortfolioModificationController',
+                'settings',
+                ['portfolio_id' => $portfolioId, 'plugin' => 'Portfolio']
+            ));
     }
 
     public function remove()
@@ -167,7 +163,7 @@ class PortfolioModificationController extends Base
         if ($portfolio === null) {
             $this->flash->failure(t('Portfolio not found.'));
 
-            return $this->response->redirect($this->url->href('PortfolioListController', 'index', [], 'Portfolio'));
+            return $this->response->redirect($this->url->href('PortfolioListController', 'index', ['plugin' => 'Portfolio']));
         }
 
         return $this->response->html($this->template->render('Portfolio:portfolio/remove', [
@@ -185,17 +181,16 @@ class PortfolioModificationController extends Base
         if ($this->portfolioModel->remove($portfolioId)) {
             $this->flash->success(t('Portfolio removed successfully.'));
 
-            return $this->response->redirect($this->url->href('PortfolioListController', 'index', [], 'Portfolio'));
+            return $this->response->redirect($this->url->href('PortfolioListController', 'index', ['plugin' => 'Portfolio']));
         }
 
         $this->flash->failure(t('Unable to remove portfolio.'));
 
         return $this->response->redirect($this->url->href(
-            'PortfolioModificationController',
-            'remove',
-            ['portfolio_id' => $portfolioId],
-            'Portfolio'
-        ));
+                'PortfolioModificationController',
+                'remove',
+                ['portfolio_id' => $portfolioId, 'plugin' => 'Portfolio']
+            ));
     }
 
     /**

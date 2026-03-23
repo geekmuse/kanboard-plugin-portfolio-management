@@ -12,7 +12,7 @@
     <ul class="portfolio-widget-list">
         <?php foreach ($milestones as $ms): ?>
         <li class="portfolio-widget-list-item">
-            <a href="<?= $this->url->href('MilestoneController', 'show', ['milestone_id' => (int) ($ms['id'] ?? 0)], 'Portfolio') ?>">
+            <a href="<?= $this->url->href('MilestoneController', 'show', ['milestone_id' => (int) ($ms['id'] ?? 0), 'plugin' => 'Portfolio']) ?>">
                 <?= $this->text->e((string) ($ms['name'] ?? '')) ?>
             </a>
             <?php if ((int) ($ms['is_critical'] ?? 0)): ?>

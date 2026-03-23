@@ -18,19 +18,19 @@ if ($statusId === 0) {
     </h2>
 
     <div class="portfolio-milestone-show-actions">
-        <a href="<?= $this->url->href('MilestoneController', 'index', ['portfolio_id' => $portfolioId], 'Portfolio') ?>">
+        <a href="<?= $this->url->href('MilestoneController', 'index', ['portfolio_id' => $portfolioId, 'plugin' => 'Portfolio']) ?>">
             <?= $this->text->e(t('Milestones')) ?>
         </a>
         ·
-        <a href="<?= $this->url->href('MilestoneController', 'edit', ['milestone_id' => $milestoneId], 'Portfolio') ?>">
+        <a href="<?= $this->url->href('MilestoneController', 'edit', ['milestone_id' => $milestoneId, 'plugin' => 'Portfolio']) ?>">
             <?= $this->text->e(t('Edit')) ?>
         </a>
         ·
-        <a href="<?= $this->url->href('MilestoneController', 'remove', ['milestone_id' => $milestoneId], 'Portfolio') ?>">
+        <a href="<?= $this->url->href('MilestoneController', 'remove', ['milestone_id' => $milestoneId, 'plugin' => 'Portfolio']) ?>">
             <?= $this->text->e(t('Remove')) ?>
         </a>
         ·
-        <a href="<?= $this->url->href('PortfolioViewController', 'show', ['portfolio_id' => $portfolioId], 'Portfolio') ?>">
+        <a href="<?= $this->url->href('PortfolioViewController', 'show', ['portfolio_id' => $portfolioId, 'plugin' => 'Portfolio']) ?>">
             <?= $this->text->e(t('Dashboard')) ?>
         </a>
     </div>
@@ -70,7 +70,7 @@ if ($statusId === 0) {
 <div class="portfolio-milestone-task-actions">
     <h3><?= $this->text->e(t('Add Task')) ?></h3>
 
-    <form method="post" action="<?= $this->url->href('MilestoneController', 'addTask', ['milestone_id' => $milestoneId], 'Portfolio') ?>" class="portfolio-milestone-add-task-form">
+    <form method="post" action="<?= $this->url->href('MilestoneController', 'addTask', ['milestone_id' => $milestoneId, 'plugin' => 'Portfolio']) ?>" class="portfolio-milestone-add-task-form">
         <?= $this->form->csrf() ?>
 
         <div class="portfolio-form-row">
@@ -136,7 +136,7 @@ if ($statusId === 0) {
                     <td><?= $this->text->e(((int) ($task['is_critical'] ?? 0) === 1) ? t('Yes') : t('No')) ?></td>
                     <td><?= $this->text->e((string) ((int) ($task['position'] ?? 0))) ?></td>
                     <td>
-                        <form method="post" action="<?= $this->url->href('MilestoneController', 'removeTask', ['milestone_id' => $milestoneId], 'Portfolio') ?>" class="portfolio-milestone-remove-task-form">
+                        <form method="post" action="<?= $this->url->href('MilestoneController', 'removeTask', ['milestone_id' => $milestoneId, 'plugin' => 'Portfolio']) ?>" class="portfolio-milestone-remove-task-form">
                             <?= $this->form->csrf() ?>
                             <input type="hidden" name="task_id" value="<?= $this->text->e((string) ((int) ($task['id'] ?? 0))) ?>">
                             <button type="submit" class="btn btn-red btn-sm"><?= $this->text->e(t('Remove Task')) ?></button>

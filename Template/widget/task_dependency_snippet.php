@@ -17,7 +17,7 @@
     <ul class="portfolio-widget-list">
         <?php foreach ($portfolios as $pf): ?>
         <li class="portfolio-widget-list-item">
-            <a href="<?= $this->url->href('DependencyController', 'blocked', ['portfolio_id' => (int) ($pf['id'] ?? 0)], 'Portfolio') ?>">
+            <a href="<?= $this->url->href('DependencyController', 'blocked', ['portfolio_id' => (int) ($pf['id'] ?? 0), 'plugin' => 'Portfolio']) ?>">
                 <?= $this->text->e((string) ($pf['name'] ?? '')) ?>
                 &mdash; <?= $this->text->e(t('Blocked Tasks')) ?>
             </a>

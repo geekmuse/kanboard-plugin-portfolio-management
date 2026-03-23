@@ -14,7 +14,7 @@
     <ul class="portfolio-widget-list">
         <?php foreach ($portfolios as $portfolio): ?>
         <li class="portfolio-widget-list-item">
-            <a href="<?= $this->url->href('PortfolioViewController', 'show', ['portfolio_id' => (int) ($portfolio['id'] ?? 0)], 'Portfolio') ?>">
+            <a href="<?= $this->url->href('PortfolioViewController', 'show', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>">
                 <?= $this->text->e((string) ($portfolio['name'] ?? '')) ?>
             </a>
         </li>
@@ -26,7 +26,7 @@
     <ul class="portfolio-widget-list portfolio-widget-list--at-risk">
         <?php foreach ($atRiskMilestones as $ms): ?>
         <li class="portfolio-widget-list-item">
-            <a href="<?= $this->url->href('MilestoneController', 'show', ['milestone_id' => (int) ($ms['id'] ?? 0)], 'Portfolio') ?>">
+            <a href="<?= $this->url->href('MilestoneController', 'show', ['milestone_id' => (int) ($ms['id'] ?? 0), 'plugin' => 'Portfolio']) ?>">
                 <?= $this->text->e((string) ($ms['name'] ?? '')) ?>
             </a>
             <span class="portfolio-badge portfolio-badge--warning">
@@ -41,11 +41,11 @@
     <?php endif ?>
 
     <p class="portfolio-widget-footer">
-        <a href="<?= $this->url->href('PortfolioListController', 'index', [], 'Portfolio') ?>">
+        <a href="<?= $this->url->href('PortfolioListController', 'index', ['plugin' => 'Portfolio']) ?>">
             <?= $this->text->e(t('View all portfolios')) ?>
         </a>
         &nbsp;·&nbsp;
-        <a href="<?= $this->url->href('PortfolioModificationController', 'create', [], 'Portfolio') ?>">
+        <a href="<?= $this->url->href('PortfolioModificationController', 'create', ['plugin' => 'Portfolio']) ?>">
             <?= $this->text->e(t('Create Portfolio')) ?>
         </a>
     </p>
