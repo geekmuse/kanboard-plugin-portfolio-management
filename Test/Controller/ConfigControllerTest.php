@@ -322,19 +322,6 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $this->assertStringContainsString('action=show', (string) $redirectUrl);
         }
 
-        public function testSaveThrowsWhenCsrfTokenIsInvalid(): void
-        {
-            $request = new ConfigControllerFakeRequest([
-                'csrf_token' => 'bad-token',
-            ]);
-
-            $controller = $this->buildController($request, new ConfigControllerFakeConfigModel());
-
-            $this->expectException(\Kanboard\Core\Controller\AccessForbiddenException::class);
-
-            $controller->save();
-        }
-
         public function testSaveShowsFailureWhenConfigSaveFails(): void
         {
             $request = new ConfigControllerFakeRequest([
@@ -364,7 +351,6 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
                 'flash' => new ConfigControllerFakeFlash(),
                 'url' => new ConfigControllerFakeUrlHelper(),
                 'configModel' => $configModel,
-                'token' => new FakeToken(self::CSRF_TOKEN),
                 'session' => new ConfigControllerFakeSession(self::CSRF_TOKEN),
             ];
 

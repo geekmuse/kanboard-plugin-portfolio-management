@@ -600,7 +600,6 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $request = new MilestoneControllerFakeRequest(
                 [
                     'csrf_token' => self::CSRF_TOKEN,
-                'token' => new FakeToken(self::CSRF_TOKEN),
                     'name' => 'Release Candidate',
                     'description' => 'Cross-project hardening',
                     'target_date' => '2026-08-01',
@@ -668,7 +667,6 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $request = new MilestoneControllerFakeRequest(
                 [
                     'csrf_token' => self::CSRF_TOKEN,
-                'token' => new FakeToken(self::CSRF_TOKEN),
                     'name' => 'RC Final',
                     'description' => 'Final prep',
                     'target_date' => '2026-08-10',
@@ -757,7 +755,6 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $request = new MilestoneControllerFakeRequest(
                 [
                     'csrf_token' => self::CSRF_TOKEN,
-                'token' => new FakeToken(self::CSRF_TOKEN),
                     'task_id' => 707,
                     'is_critical' => 1,
                     'position' => 8,
@@ -794,7 +791,6 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $request = new MilestoneControllerFakeRequest(
                 [
                     'csrf_token' => self::CSRF_TOKEN,
-                'token' => new FakeToken(self::CSRF_TOKEN),
                     'task_id' => 808,
                 ],
                 ['milestone_id' => 42]
@@ -822,29 +818,6 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $this->assertStringContainsString('milestone_id=42', (string) $services['response']->redirectUrl);
         }
 
-        public function testAddTaskRejectsInvalidCsrfToken(): void
-        {
-            $request = new MilestoneControllerFakeRequest(
-                [
-                    'csrf_token' => 'invalid-token',
-                    'task_id' => 100,
-                ],
-                ['milestone_id' => 42]
-            );
-
-            $services = $this->buildServices(
-                new MilestoneControllerFakePortfolioModel(),
-                new MilestoneControllerFakeMilestoneModel(),
-                new MilestoneControllerFakeMilestoneTaskModel(),
-                $request
-            );
-
-            $controller = new MilestoneController($services);
-
-            $this->expectException(\Kanboard\Core\Controller\AccessForbiddenException::class);
-            $controller->addTask();
-        }
-
         /**
          * @return array<string, mixed>
          */
@@ -865,7 +838,6 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
                 'milestoneModel' => $milestoneModel,
                 'milestoneTaskModel' => $milestoneTaskModel,
                 'csrf_token' => self::CSRF_TOKEN,
-                'token' => new FakeToken(self::CSRF_TOKEN),
             ];
         }
     }

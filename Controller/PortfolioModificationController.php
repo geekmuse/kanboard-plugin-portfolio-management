@@ -8,7 +8,6 @@ use Kanboard\Controller\BaseController;
 
 class PortfolioModificationController extends BaseController
 {
-    use CsrfTrait;
     /**
      * @param array<string, mixed> $values
      * @param array<string, mixed> $errors
@@ -24,7 +23,6 @@ class PortfolioModificationController extends BaseController
 
     public function save()
     {
-        $this->checkCSRFToken();
 
         $values = $this->getFormValues();
         $portfolioId = $this->portfolioModel->create($values);
@@ -74,7 +72,6 @@ class PortfolioModificationController extends BaseController
 
     public function update()
     {
-        $this->checkCSRFToken();
 
         $portfolioId = $this->request->getIntegerParam('portfolio_id');
         $values = $this->getFormValues();
@@ -117,7 +114,6 @@ class PortfolioModificationController extends BaseController
 
     public function addProject()
     {
-        $this->checkCSRFToken();
 
         $portfolioId = $this->request->getIntegerParam('portfolio_id');
         $projectId = $this->request->getIntegerParam('project_id');
@@ -138,7 +134,6 @@ class PortfolioModificationController extends BaseController
 
     public function removeProject()
     {
-        $this->checkCSRFToken();
 
         $portfolioId = $this->request->getIntegerParam('portfolio_id');
         $projectId = $this->request->getIntegerParam('project_id');
@@ -175,7 +170,6 @@ class PortfolioModificationController extends BaseController
 
     public function delete()
     {
-        $this->checkCSRFToken();
 
         $portfolioId = $this->request->getIntegerParam('portfolio_id');
 

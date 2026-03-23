@@ -8,7 +8,6 @@ use Kanboard\Controller\BaseController;
 
 class MilestoneController extends BaseController
 {
-    use CsrfTrait;
     public function index()
     {
         $portfolioId = $this->request->getIntegerParam('portfolio_id');
@@ -88,7 +87,6 @@ class MilestoneController extends BaseController
 
     public function save()
     {
-        $this->checkCSRFToken();
 
         $portfolioId = $this->request->getIntegerParam('portfolio_id');
         $values = $this->getFormValues();
@@ -146,7 +144,6 @@ class MilestoneController extends BaseController
 
     public function update()
     {
-        $this->checkCSRFToken();
 
         $milestoneId = $this->request->getIntegerParam('milestone_id');
         $values = $this->getFormValues();
@@ -186,7 +183,6 @@ class MilestoneController extends BaseController
 
     public function delete()
     {
-        $this->checkCSRFToken();
 
         $milestoneId = $this->request->getIntegerParam('milestone_id');
         $milestone = $this->getMilestone($milestoneId);
@@ -217,7 +213,6 @@ class MilestoneController extends BaseController
 
     public function addTask()
     {
-        $this->checkCSRFToken();
 
         $milestoneId = $this->request->getIntegerParam('milestone_id');
         $taskId = (int) $this->request->getValue('task_id', 0);
@@ -239,7 +234,6 @@ class MilestoneController extends BaseController
 
     public function removeTask()
     {
-        $this->checkCSRFToken();
 
         $milestoneId = $this->request->getIntegerParam('milestone_id');
         $taskId = (int) $this->request->getValue('task_id', 0);

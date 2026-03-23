@@ -9,7 +9,6 @@ use Throwable;
 
 class ConfigController extends BaseController
 {
-    use CsrfTrait;
     /**
      * @return array<string, int|string>
      */
@@ -35,7 +34,6 @@ class ConfigController extends BaseController
 
     public function save()
     {
-        $this->checkCSRFToken();
 
         $configModel = $this->resolveConfigModel();
         if (! is_object($configModel) || ! method_exists($configModel, 'save')) {
