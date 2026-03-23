@@ -950,7 +950,7 @@
     {
       "id": "iter-bbff2e52",
       "phase": "ralphi-loop-iteration",
-      "status": "running",
+      "status": "completed",
       "sessionKey": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-23T23-11-41-876Z_2242c49f-3ccc-4f37-afff-4c08c139fc66.jsonl",
       "sessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-23T23-11-41-876Z_2242c49f-3ccc-4f37-afff-4c08c139fc66.jsonl",
       "checkpointLeafId": null,
@@ -961,7 +961,41 @@
       "loopId": "loop-9e860edc",
       "iteration": 8,
       "storyId": "US-008",
-      "storyTitle": "Add drag-and-drop card movement between board columns"
+      "storyTitle": "Add drag-and-drop card movement between board columns",
+      "summary": "Implemented US-008: Add drag-and-drop card movement between board columns. Added moveTask() AJAX endpoint to PortfolioViewController, registered route in Plugin.php, updated board.php template with draggable attributes and CSRF token, created Asset/js/portfolio-board.js with ES5-compatible HTML5 DnD + XHR persistence, added CSS drag states, wrote 5 new integration tests. All lint/test/phpcs/phpstan checks pass.",
+      "outputs": [
+        "Controller/PortfolioViewController.php",
+        "Plugin.php",
+        "Template/portfolio/board.php",
+        "Asset/js/portfolio-board.js",
+        "Asset/css/portfolio.css",
+        "Test/Controller/PortfolioViewControllerTest.php",
+        "Test/Plugin/ApiRegistrationTest.php",
+        ".ralphi/prd.json",
+        ".ralphi/progress.txt"
+      ],
+      "complete": false,
+      "reviewPasses": 1,
+      "trajectory": "ON_TRACK",
+      "reflectionSummary": "US-008 fully implemented across 7 production files and 2 test files. The moveTask() controller method validates input via getValues(), guards taskModificationModel with is_object/method_exists, returns JSON success/error responses. The JS handles optimistic DOM moves with automatic revert on failure. All 7 acceptance criteria satisfied. Route registration test updated to expect the new route (slice count 16→17). One story (US-009) remains open.",
+      "nextIterationPlan": "Implement US-009: Build Gantt chart view with D3.js duration bars and dependency arrows. This is the last open story. Requires new gantt action in PortfolioViewController, new Template/portfolio/gantt.php, rewrite of Asset/js/portfolio-gantt.js using bundled D3.js, new route in Plugin.php, and sidebar navigation link.",
+      "completedAt": "2026-03-23T23:24:57.483Z"
+    },
+    {
+      "id": "iter-67c4bccb",
+      "phase": "ralphi-loop-iteration",
+      "status": "running",
+      "sessionKey": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-23T23-25-03-167Z_a146d9e1-43f0-4c13-b41f-98b65ca872ed.jsonl",
+      "sessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-23T23-25-03-167Z_a146d9e1-43f0-4c13-b41f-98b65ca872ed.jsonl",
+      "checkpointLeafId": null,
+      "checkpointSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-22T16-42-25-962Z_88fc4c52-cbad-498f-9cc4-7c0c0aeab3d0.jsonl",
+      "cwd": "/Users/bradmatic/Dev/geekmuse/kanboard-plugin-portfolio-mgmt",
+      "createdAt": "2026-03-23T23:25:03.167Z",
+      "autoConfirm": true,
+      "loopId": "loop-9e860edc",
+      "iteration": 9,
+      "storyId": "US-009",
+      "storyTitle": "Build Gantt chart view with D3.js duration bars and dependency arrows"
     }
   ],
   "loops": [
@@ -1001,7 +1035,7 @@
       "id": "loop-9e860edc",
       "controllerSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-22T16-42-25-962Z_88fc4c52-cbad-498f-9cc4-7c0c0aeab3d0.jsonl",
       "maxIterations": 50,
-      "iteration": 8,
+      "iteration": 9,
       "active": true,
       "stopRequested": false,
       "createdAt": "2026-03-23T22:20:35.327Z",
@@ -1013,11 +1047,12 @@
         "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-23T22-55-31-382Z_829bf72d-b589-46c6-be56-55516f544e2f.jsonl",
         "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-23T22-59-46-144Z_95ee4775-2952-40d0-8d07-431a0479b9aa.jsonl",
         "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-23T23-05-26-752Z_9f2f91bc-9b52-4c39-a315-479be4745bff.jsonl",
-        "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-23T23-11-41-876Z_2242c49f-3ccc-4f37-afff-4c08c139fc66.jsonl"
+        "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-23T23-11-41-876Z_2242c49f-3ccc-4f37-afff-4c08c139fc66.jsonl",
+        "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-23T23-25-03-167Z_a146d9e1-43f0-4c13-b41f-98b65ca872ed.jsonl"
       ],
-      "currentIterationStartedAt": "2026-03-23T23:11:41.876Z",
-      "activeIterationSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-23T23-11-41-876Z_2242c49f-3ccc-4f37-afff-4c08c139fc66.jsonl"
+      "currentIterationStartedAt": "2026-03-23T23:25:03.167Z",
+      "activeIterationSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-23T23-25-03-167Z_a146d9e1-43f0-4c13-b41f-98b65ca872ed.jsonl"
     }
   ],
-  "savedAt": "2026-03-23T23:11:41.879Z"
+  "savedAt": "2026-03-23T23:25:03.169Z"
 }

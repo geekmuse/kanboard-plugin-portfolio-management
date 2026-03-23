@@ -682,3 +682,92 @@
     font-weight: 700;
     color: #1f2937;
 }
+
+/* ----------------------------------------------------------------
+   Gantt chart
+   ---------------------------------------------------------------- */
+.portfolio-gantt-chart {
+    margin: 1rem 0;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    background: #fff;
+    overflow-x: auto;
+}
+
+.portfolio-gantt-svg {
+    display: block;
+    font-size: 0.8rem;
+    font-family: inherit;
+}
+
+.portfolio-gantt-grid-line {
+    stroke: #e5e7eb;
+    stroke-width: 1px;
+}
+
+.portfolio-gantt-axis path,
+.portfolio-gantt-axis line {
+    stroke: #9ca3af;
+}
+
+.portfolio-gantt-axis text {
+    fill: #374151;
+    font-size: 0.75rem;
+}
+
+.portfolio-gantt-row-label {
+    font-size: 0.78rem;
+    fill: #1f2937;
+    dominant-baseline: auto;
+}
+
+.portfolio-gantt-row-label--closed {
+    fill: #9ca3af;
+    text-decoration: line-through;
+}
+
+.portfolio-gantt-row-label--milestone {
+    fill: #92400e;
+    font-style: italic;
+}
+
+.portfolio-gantt-bar {
+    /* fill set inline by JS */
+}
+
+.portfolio-gantt-bar--closed {
+    /* opacity set inline */
+}
+
+.portfolio-gantt-milestone-diamond {
+    fill: #d97706;
+    stroke: #92400e;
+    stroke-width: 1.5px;
+}
+
+.portfolio-gantt-milestone-marker {
+    fill: #d97706;
+    stroke: #92400e;
+    stroke-width: 1.5px;
+}
+
+.portfolio-gantt-dep-edge {
+    fill: none;
+    stroke: #6b7280;
+    stroke-width: 1.5px;
+    marker-end: url(#gantt-arrow);
+}
+
+.portfolio-gantt-dep-edge--resolved {
+    stroke: #d1d5db;
+    stroke-dasharray: 4 3;
+    marker-end: url(#gantt-arrow-resolved);
+}
+
+.portfolio-gantt-arrow-head {
+    fill: #6b7280;
+}
+
+.portfolio-gantt-arrow-head--resolved {
+    fill: #d1d5db;
+}

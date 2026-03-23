@@ -360,6 +360,29 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
         }
     }
 
+    final class PortfolioViewFakeDependencyModel
+    {
+        /** @var array<int, int> */
+        public array $getCalls = [];
+
+        /**
+         * @param array<int, array<string, mixed>> $dependencies
+         */
+        public function __construct(private array $dependencies = [])
+        {
+        }
+
+        /**
+         * @return array<int, array<string, mixed>>
+         */
+        public function getDependencies(int $portfolioId, bool $crossProjectOnly = true): array
+        {
+            $this->getCalls[] = $portfolioId;
+
+            return $this->dependencies;
+        }
+    }
+
     final class PortfolioViewControllerTest extends TestCase
     {
         public function testPortfolioDashboardRendersOverviewAndEscapesContent(): void
@@ -656,6 +679,215 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $this->assertSame([4], $milestoneModel->getByPortfolioIdCalls);
         }
 
+        public function testPortfolioGanttRendersChartWithD3Assets(): void
+        {
+            $request = new PortfolioViewFakeRequest([], ['portfolio_id' => 4]);
+            $portfolioModel = new PortfolioViewFakePortfolioModel([
+                ['id' => 4, 'name' => 'Launch <Q2>', 'description' => 'desc', 'is_active' => 1],
+            ]);
+
+            $portfolioTaskModel = new PortfolioViewFakePortfolioTaskModel(
+                [],
+                [
+                    [
+                        'id' => 900,
+                        'title' => '<script>alert(9)</script>',
+                        'project_name' => 'WebApp',
+                        'date_started' => 1717000000,
+                        'date_creation' => 1716000000,
+                        'date_due' => 1719800000,
+                        'is_active' => 1,
+                    ],
+                ]
+            );
+
+            $milestoneModel = new PortfolioViewFakeMilestoneModel([
+                4 => [
+                    [
+                        'id' => 55,
+                        'name' => 'Release <v2>',
+                        'target_date' => 1720000000,
+                    ],
+                ],
+            ]);
+
+            $dependencyModel = new PortfolioViewFakeDependencyModel([
+                [
+                    'task_id' => 900,
+                    'opposite_task_id' => 901,
+                    'is_resolved' => false,
+                ],
+            ]);
+
+            $services = $this->buildServices(
+                $portfolioModel,
+                $portfolioTaskModel,
+                $request,
+                null,
+                $milestoneModel,
+                null,
+                null,
+                $dependencyModel
+            );
+
+            $controller = new PortfolioViewController($services);
+            $html = $controller->gantt();
+
+            $this->assertSame('Portfolio:portfolio/gantt', $services['helper']->layout->lastTemplate);
+            $this->assertStringContainsString('Portfolio Gantt', $html);
+            $this->assertStringContainsString('plugins/Portfolio/Asset/js/d3.v7.min.js', $html);
+            $this->assertStringContainsString('plugins/Portfolio/Asset/js/portfolio-gantt.js', $html);
+            $this->assertStringContainsString('portfolio-gantt-chart', $html);
+            $this->assertStringContainsString('data-gantt=', $html);
+            // Task title is JSON_HEX_TAG-encoded then HTML-attribute-escaped:
+            // < → \u003C, > → \u003E — no literal < or > allowed in attribute
+            $this->assertStringNotContainsString('<script>alert(9)</script>', $html);
+            // JSON hex encoding of < and > (JSON_HEX_TAG)
+            $this->assertStringContainsString('\\u003Cscript\\u003E', $html);
+            // Portfolio name is escaped in the page title (h2 element)
+            $this->assertStringContainsString('Launch &lt;Q2&gt;', $html);
+            $this->assertSame([4], $dependencyModel->getCalls);
+        }
+
+        public function testPortfolioGanttBuildsJsonWithTasksAndMilestonesAndEdges(): void
+        {
+            $request = new PortfolioViewFakeRequest([], ['portfolio_id' => 7]);
+            $portfolioModel = new PortfolioViewFakePortfolioModel([
+                ['id' => 7, 'name' => 'Alpha', 'description' => '', 'is_active' => 1],
+            ]);
+
+            $portfolioTaskModel = new PortfolioViewFakePortfolioTaskModel(
+                [],
+                [
+                    [
+                        'id' => 200,
+                        'title' => 'Design phase',
+                        'project_name' => 'ProjectA',
+                        'date_started' => 1717000000,
+                        'date_creation' => 1716000000,
+                        'date_due' => 1719000000,
+                        'is_active' => 1,
+                    ],
+                    [
+                        'id' => 201,
+                        'title' => 'Dev phase',
+                        'project_name' => 'ProjectB',
+                        'date_started' => 0,
+                        'date_creation' => 1718000000,
+                        'date_due' => 1721000000,
+                        'is_active' => 0,
+                    ],
+                    [
+                        'id' => 202,
+                        'title' => 'No due date — excluded',
+                        'project_name' => 'ProjectA',
+                        'date_started' => 1717000000,
+                        'date_creation' => 1716000000,
+                        'date_due' => 0,
+                        'is_active' => 1,
+                    ],
+                ]
+            );
+
+            $milestoneModel = new PortfolioViewFakeMilestoneModel([
+                7 => [
+                    ['id' => 10, 'name' => 'Beta Launch', 'target_date' => 1720000000],
+                ],
+            ]);
+
+            $dependencyModel = new PortfolioViewFakeDependencyModel([
+                ['task_id' => 200, 'opposite_task_id' => 201, 'is_resolved' => false],
+            ]);
+
+            $services = $this->buildServices(
+                $portfolioModel,
+                $portfolioTaskModel,
+                $request,
+                null,
+                $milestoneModel,
+                null,
+                null,
+                $dependencyModel
+            );
+
+            $controller = new PortfolioViewController($services);
+            $controller->gantt();
+
+            /** @var array<string, mixed> $params */
+            $params = $services['helper']->layout->lastParams;
+
+            $this->assertTrue((bool) ($params['has_items'] ?? false));
+
+            $ganttJson = (string) ($params['gantt_json'] ?? '');
+            $ganttData = json_decode($ganttJson, true);
+
+            $this->assertIsArray($ganttData);
+            $this->assertArrayHasKey('tasks', $ganttData);
+            $this->assertArrayHasKey('milestones', $ganttData);
+            $this->assertArrayHasKey('edges', $ganttData);
+            $this->assertArrayHasKey('projects', $ganttData);
+
+            // Only tasks with a due date are included (task 202 is excluded)
+            $this->assertCount(2, $ganttData['tasks']);
+
+            // Task with date_started set uses date_started as start
+            $this->assertSame(200, (int) $ganttData['tasks'][0]['id']);
+            $this->assertSame(1717000000, (int) $ganttData['tasks'][0]['date_start']);
+
+            // Task with no date_started falls back to date_creation
+            $this->assertSame(201, (int) $ganttData['tasks'][1]['id']);
+            $this->assertSame(1718000000, (int) $ganttData['tasks'][1]['date_start']);
+
+            $this->assertCount(1, $ganttData['milestones']);
+            $this->assertSame(10, (int) $ganttData['milestones'][0]['id']);
+            $this->assertSame('Alpha', (string) $ganttData['milestones'][0]['portfolio_name']);
+
+            $this->assertCount(1, $ganttData['edges']);
+            $this->assertSame(200, (int) $ganttData['edges'][0]['from']);
+            $this->assertSame(201, (int) $ganttData['edges'][0]['to']);
+            $this->assertFalse((bool) $ganttData['edges'][0]['is_resolved']);
+
+            $this->assertSame(['ProjectA', 'ProjectB'], $ganttData['projects']);
+        }
+
+        public function testPortfolioGanttRedirectsWhenPortfolioNotFound(): void
+        {
+            $request = new PortfolioViewFakeRequest([], ['portfolio_id' => 99]);
+            $portfolioModel = new PortfolioViewFakePortfolioModel();
+            $portfolioTaskModel = new PortfolioViewFakePortfolioTaskModel();
+
+            $services = $this->buildServices($portfolioModel, $portfolioTaskModel, $request);
+            $controller = new PortfolioViewController($services);
+
+            $controller->gantt();
+
+            $this->assertSame(['Portfolio not found.'], $services['flash']->failureMessages);
+            $this->assertStringContainsString('controller=PortfolioListController', (string) $services['response']->redirectUrl);
+        }
+
+        public function testPortfolioGanttShowsEmptyStateWhenNoItemsHaveDueDates(): void
+        {
+            $request = new PortfolioViewFakeRequest([], ['portfolio_id' => 4]);
+            $portfolioModel = new PortfolioViewFakePortfolioModel([
+                ['id' => 4, 'name' => 'Empty', 'description' => '', 'is_active' => 1],
+            ]);
+
+            $portfolioTaskModel = new PortfolioViewFakePortfolioTaskModel(
+                [],
+                [
+                    // Task has no due date — should be excluded from Gantt
+                    ['id' => 300, 'title' => 'No due date', 'project_name' => 'X', 'date_started' => 0, 'date_creation' => 1717000000, 'date_due' => 0, 'is_active' => 1],
+                ]
+            );
+
+            $services = $this->buildServices($portfolioModel, $portfolioTaskModel, $request);
+            $controller = new PortfolioViewController($services);
+            $html = $controller->gantt();
+
+            // Empty-state message should appear because has_items will be false
+            $this->assertStringContainsString('No items found', $html);
+        }
+
         public function testPortfolioDashboardRedirectsWhenPortfolioDoesNotExist(): void
         {
             $request = new PortfolioViewFakeRequest([], ['portfolio_id' => 99]);
@@ -682,7 +914,8 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             ?PortfolioViewFakePortfolioProjectModel $portfolioProjectModel = null,
             ?PortfolioViewFakeMilestoneModel $milestoneModel = null,
             ?PortfolioViewFakeConfigModel $configModel = null,
-            ?PortfolioViewFakeTaskModificationModel $taskModificationModel = null
+            ?PortfolioViewFakeTaskModificationModel $taskModificationModel = null,
+            ?PortfolioViewFakeDependencyModel $dependencyModel = null
         ): array {
             return [
                 'request' => $request ?? new PortfolioViewFakeRequest(),
@@ -697,6 +930,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
                 'milestoneModel' => $milestoneModel ?? new PortfolioViewFakeMilestoneModel(),
                 'configModel' => $configModel ?? new PortfolioViewFakeConfigModel(),
                 'taskModificationModel' => $taskModificationModel ?? new PortfolioViewFakeTaskModificationModel(),
+                'dependencyModel' => $dependencyModel ?? new PortfolioViewFakeDependencyModel(),
                 'userModel' => new class
                 {
                     /** @return array<int,string> */

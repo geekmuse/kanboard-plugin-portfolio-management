@@ -155,8 +155,8 @@
       ],
       "notes": "Uses Kanboard's taskModificationModel->update() which writes to core tasks table through the proper API. Requires JS for drag-and-drop + PHP AJAX endpoint. Files: Controller/PortfolioViewController.php (new moveTask action), Template/portfolio/board.php, Asset/js/ (new or updated board JS), Plugin.php (new route).",
       "startedAt": "2026-03-23T23:11:41.877Z",
-      "updatedAt": "2026-03-23T23:17:00.000Z",
-      "completedAt": "2026-03-23T23:17:00.000Z"
+      "updatedAt": "2026-03-23T23:25:02.539Z",
+      "completedAt": "2026-03-23T23:25:02.539Z"
     },
     {
       "id": "US-009",
@@ -174,9 +174,12 @@
         "PHP lint passes and all existing tests pass"
       ],
       "priority": 9,
-      "status": "open",
+      "status": "in_progress",
       "dependsOn": [],
-      "notes": "Large feature. Controller needs to supply start dates (date_started or date_creation) and dependency edges alongside existing timeline data. New JS file for Gantt rendering. Files: Controller/PortfolioViewController.php (new gantt action or extended timeline), Template/portfolio/gantt.php (new), Asset/js/portfolio-gantt.js (rewrite), Asset/css/portfolio.css, Plugin.php (new route + sidebar)."
+      "notes": "Large feature. Controller needs to supply start dates (date_started or date_creation) and dependency edges alongside existing timeline data. New JS file for Gantt rendering. Files: Controller/PortfolioViewController.php (new gantt action or extended timeline), Template/portfolio/gantt.php (new), Asset/js/portfolio-gantt.js (rewrite), Asset/css/portfolio.css, Plugin.php (new route + sidebar).",
+      "startedAt": "2026-03-23T23:25:03.168Z",
+      "updatedAt": "2026-03-23T23:25:03.168Z",
+      "completedAt": null
     }
   ]
 }

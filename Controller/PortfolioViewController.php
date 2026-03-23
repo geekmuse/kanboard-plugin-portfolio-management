@@ -138,6 +138,44 @@ class PortfolioViewController extends BaseController
         return $this->response->json(['success' => true]);
     }
 
+    public function gantt(): mixed
+    {
+        $portfolioId = $this->request->getIntegerParam('portfolio_id');
+        $portfolio = $this->portfolioModel->getById($portfolioId);
+
+        if (! is_array($portfolio)) {
+            $this->flash->failure(t('Portfolio not found.'));
+
+            return $this->response->redirect($this->helper->url->href('PortfolioListController', 'index', ['plugin' => 'Portfolio']));
+        }
+
+        $portfolioName = (string) ($portfolio['name'] ?? '');
+
+        $tasks = $this->getPortfolioTasks($portfolioId, [
+            'sort' => 'date_due',
+            'direction' => 'ASC',
+            'limit' => 500,
+            'offset' => 0,
+        ]);
+
+        $milestones = $this->getPortfolioMilestones($portfolioId);
+        $dependencies = $this->getPortfolioDependencies($portfolioId);
+
+        $ganttData = $this->buildGanttData($tasks, $milestones, $dependencies, $portfolioName);
+
+        $ganttJson = json_encode($ganttData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+        if (! is_string($ganttJson)) {
+            $ganttJson = '{}';
+        }
+
+        return $this->response->html($this->helper->layout->app('Portfolio:portfolio/gantt', [
+            'title' => t('Portfolio Gantt'),
+            'portfolio' => $portfolio,
+            'gantt_json' => $ganttJson,
+            'has_items' => $ganttData['tasks'] !== [] || $ganttData['milestones'] !== [],
+        ]));
+    }
+
     public function timeline()
     {
         $portfolioId = $this->request->getIntegerParam('portfolio_id');
@@ -377,6 +415,127 @@ class PortfolioViewController extends BaseController
             'min_date_label' => $timelineMinDate > 0 ? date('Y-m-d', $timelineMinDate) : '',
             'max_date_label' => $timelineMaxDate > 0 ? date('Y-m-d', $timelineMaxDate) : '',
         ];
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $tasks
+     * @param array<int, array<string, mixed>> $milestones
+     * @param array<int, array<string, mixed>> $dependencies
+     *
+     * @return array<string, mixed>
+     */
+    private function buildGanttData(
+        array $tasks,
+        array $milestones,
+        array $dependencies,
+        string $portfolioName = ''
+    ): array {
+        $ganttTasks = [];
+        $projectNames = [];
+
+        foreach ($tasks as $task) {
+            $taskId = (int) ($task['id'] ?? 0);
+            if ($taskId <= 0) {
+                continue;
+            }
+
+            $dueDate = (int) ($task['date_due'] ?? 0);
+            if ($dueDate <= 0) {
+                continue;
+            }
+
+            // Use date_started if set, otherwise fall back to date_creation, otherwise use due date
+            $startDate = (int) ($task['date_started'] ?? 0);
+            if ($startDate <= 0) {
+                $startDate = (int) ($task['date_creation'] ?? 0);
+            }
+
+            if ($startDate <= 0) {
+                $startDate = $dueDate;
+            }
+
+            // Ensure start is not after end
+            if ($startDate > $dueDate) {
+                $startDate = $dueDate;
+            }
+
+            $projectName = (string) ($task['project_name'] ?? '');
+            if ($projectName !== '' && ! in_array($projectName, $projectNames, true)) {
+                $projectNames[] = $projectName;
+            }
+
+            $ganttTasks[] = [
+                'id' => $taskId,
+                'title' => (string) ($task['title'] ?? ''),
+                'project_name' => $projectName,
+                'date_start' => $startDate,
+                'date_end' => $dueDate,
+                'is_active' => (int) ($task['is_active'] ?? 1) === 1,
+                'date_start_label' => date('Y-m-d', $startDate),
+                'date_end_label' => date('Y-m-d', $dueDate),
+            ];
+        }
+
+        $ganttMilestones = [];
+
+        foreach ($milestones as $milestone) {
+            $milestoneId = (int) ($milestone['id'] ?? 0);
+            $targetDate = (int) ($milestone['target_date'] ?? 0);
+            if ($milestoneId <= 0 || $targetDate <= 0) {
+                continue;
+            }
+
+            $ganttMilestones[] = [
+                'id' => $milestoneId,
+                'name' => (string) ($milestone['name'] ?? ''),
+                'portfolio_name' => $portfolioName,
+                'date' => $targetDate,
+                'date_label' => date('Y-m-d', $targetDate),
+            ];
+        }
+
+        $ganttEdges = [];
+
+        foreach ($dependencies as $dep) {
+            $fromId = (int) ($dep['task_id'] ?? 0);
+            $toId = (int) ($dep['opposite_task_id'] ?? 0);
+            if ($fromId <= 0 || $toId <= 0) {
+                continue;
+            }
+
+            $ganttEdges[] = [
+                'from' => $fromId,
+                'to' => $toId,
+                'is_resolved' => (bool) ($dep['is_resolved'] ?? false),
+            ];
+        }
+
+        sort($projectNames);
+
+        return [
+            'tasks' => $ganttTasks,
+            'milestones' => $ganttMilestones,
+            'edges' => $ganttEdges,
+            'projects' => $projectNames,
+        ];
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function getPortfolioDependencies(int $portfolioId): array
+    {
+        if (! is_object($this->dependencyModel) || ! method_exists($this->dependencyModel, 'getDependencies')) {
+            return [];
+        }
+
+        try {
+            $deps = $this->dependencyModel->getDependencies($portfolioId, false);
+
+            return is_array($deps) ? $deps : [];
+        } catch (\Throwable $exception) {
+            return [];
+        }
     }
 
     /**
