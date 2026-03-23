@@ -83,9 +83,11 @@ class Plugin extends Base
         // Template hooks — integrate portfolio data into Kanboard pages
         // -----------------------------------------------------------------
 
-        // CSS/JS assets injected into every page layout
-        $this->template->hook->attach('template:layout:head', 'Portfolio:widget/asset_css');
-        $this->template->hook->attach('template:layout:js', 'Portfolio:widget/asset_js');
+        // CSS/JS assets — use hook->on() with real file paths so Kanboard's
+        // AssetHelper can call filemtime() for cache-busting correctly.
+        $this->hook->on('template:layout:css', ['template' => 'plugins/Portfolio/Asset/css/portfolio.css']);
+        $this->hook->on('template:layout:js', ['template' => 'plugins/Portfolio/Asset/js/portfolio-graph.js']);
+        $this->hook->on('template:layout:js', ['template' => 'plugins/Portfolio/Asset/js/portfolio-gantt.js']);
 
         // Dashboard — portfolio links + at-risk milestone summary
         $this->template->hook->attach('template:dashboard:show:before-task-list', 'Portfolio:widget/dashboard_portfolios');

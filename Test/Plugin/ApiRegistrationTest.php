@@ -238,6 +238,28 @@ final class FakeTemplateHookRegistry
     }
 }
 
+final class FakeHook
+{
+    /**
+     * @var array<int, array{event: string, params: mixed}>
+     */
+    private array $events = [];
+
+    /** @param mixed $params */
+    public function on(string $event, $params): void
+    {
+        $this->events[] = ['event' => $event, 'params' => $params];
+    }
+
+    /**
+     * @return array<int, array{event: string, params: mixed}>
+     */
+    public function getEvents(): array
+    {
+        return $this->events;
+    }
+}
+
 final class FakeEventManager
 {
     /**
@@ -373,6 +395,8 @@ final class ApiRegistrationTest extends TestCase
 
     private FakeUserNotificationTypeModel $userNotificationTypeModel;
 
+    private FakeHook $hookRegistry;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -385,6 +409,7 @@ final class ApiRegistrationTest extends TestCase
         $this->eventManager              = new FakeEventManager();
         $this->actionManager             = new FakeActionManager();
         $this->userNotificationTypeModel = new FakeUserNotificationTypeModel();
+        $this->hookRegistry              = new FakeHook();
 
         $this->plugin = new Plugin();
         $this->plugin->container = [
@@ -397,6 +422,7 @@ final class ApiRegistrationTest extends TestCase
         $this->plugin->apiAccessMap = $this->apiAccessMap;
         $this->plugin->route = $this->route;
         $this->plugin->applicationAccessMap = $this->applicationAccessMap;
+        $this->plugin->hook = $this->hookRegistry;
 
         $this->plugin->initialize();
     }
@@ -750,9 +776,8 @@ final class ApiRegistrationTest extends TestCase
         $attachments = $this->templateHookRegistry->hook->getAttachments();
         $hookNames   = array_column($attachments, 'hook');
 
-        // Layout — CSS and JS
-        $this->assertContains('template:layout:head', $hookNames);
-        $this->assertContains('template:layout:js', $hookNames);
+        // Layout assets are registered via hook->on(), not template->hook->attach()
+        // — verified separately in testRegistersAssetHooks().
 
         // Dashboard widget
         $this->assertContains('template:dashboard:show:before-task-list', $hookNames);
@@ -777,6 +802,23 @@ final class ApiRegistrationTest extends TestCase
         $this->assertContains('template:config:sidebar', $hookNames);
     }
 
+    public function testRegistersAssetHooks(): void
+    {
+        $events      = $this->hookRegistry->getEvents();
+        $eventNames  = array_column($events, 'event');
+        $templates   = array_column(array_column($events, 'params'), 'template');
+
+        // CSS asset
+        $this->assertContains('template:layout:css', $eventNames);
+        $this->assertContains('plugins/Portfolio/Asset/css/portfolio.css', $templates);
+
+        // JS assets
+        $jsEvents = array_filter($events, static fn ($e) => $e['event'] === 'template:layout:js');
+        $jsTemplates = array_column(array_column(array_values($jsEvents), 'params'), 'template');
+        $this->assertContains('plugins/Portfolio/Asset/js/portfolio-graph.js', $jsTemplates);
+        $this->assertContains('plugins/Portfolio/Asset/js/portfolio-gantt.js', $jsTemplates);
+    }
+
     public function testTemplateHooksPointToCorrectWidgetTemplates(): void
     {
         $attachments    = $this->templateHookRegistry->hook->getAttachments();
@@ -786,8 +828,6 @@ final class ApiRegistrationTest extends TestCase
             $templateByHook[$entry['hook']][] = $entry['template'];
         }
 
-        $this->assertSame(['Portfolio:widget/asset_css'], $templateByHook['template:layout:head']);
-        $this->assertSame(['Portfolio:widget/asset_js'], $templateByHook['template:layout:js']);
         $this->assertSame(
             ['Portfolio:widget/dashboard_portfolios'],
             $templateByHook['template:dashboard:show:before-task-list']

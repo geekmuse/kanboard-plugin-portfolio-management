@@ -15,6 +15,31 @@ class CommentDependencyResolved extends Base
     }
 
     /**
+     * No configurable parameters for this action.
+     *
+     * @return array<string, string>
+     */
+    public function getActionRequiredParameters(): array
+    {
+        return [];
+    }
+
+    /**
+     * Keys that must be present in the event payload.
+     *
+     * @return array<string, string>
+     */
+    public function getEventRequiredParameters(): array
+    {
+        return [
+            'unblocked_tasks'       => 'unblocked_tasks',
+            'resolved_task_id'      => 'resolved_task_id',
+            'resolved_task_title'   => 'resolved_task_title',
+            'resolved_project_name' => 'resolved_project_name',
+        ];
+    }
+
+    /**
      * @return array<int, string>
      */
     public function getCompatibleEvents(): array
