@@ -118,6 +118,33 @@
     /*  D3 Gantt chart renderer (gantt.php)                                */
     /* ------------------------------------------------------------------ */
 
+    // Kanboard color IDs → hex values (matches Kanboard's ColorModel)
+    var MILESTONE_COLORS = {
+        blue:       '#4d7cfe',
+        green:      '#34c843',
+        yellow:     '#f7d000',
+        orange:     '#fc8c03',
+        red:        '#e10000',
+        purple:     '#7c3aed',
+        grey:       '#999',
+        brown:      '#835234',
+        deep_orange:'#dc4500',
+        dark_grey:  '#555',
+        teal:       '#0f766e',
+        cyan:       '#0097c0',
+        lime:       '#7ec500',
+        amber:      '#ffc107',
+        pink:       '#d81b60',
+        indigo:     '#3f51b5'
+    };
+
+    function diamondPath(cx, cy, size) {
+        return 'M' + cx + ',' + (cy - size)
+            + ' L' + (cx + size) + ',' + cy
+            + ' L' + cx + ',' + (cy + size)
+            + ' L' + (cx - size) + ',' + cy + ' Z';
+    }
+
     var PROJECT_COLORS = [
         '#4d7cfe', '#0f766e', '#d97706', '#7c3aed', '#db2777',
         '#059669', '#dc2626', '#2563eb', '#9333ea', '#d97706'
@@ -408,23 +435,54 @@
                     .text('#' + task.id + ' ' + (task.title || '') + '\n' + formatDateLabel(task.date_start) + ' → ' + formatDateLabel(task.date_end));
 
             } else {
-                /* Milestone diamond */
+                /* Milestone: intended diamond + actual status diamond */
                 var ms = rowEntry.item;
                 if (!ms.date) {
                     continue;
                 }
 
-                var mx = xScale(new Date(ms.date * 1000));
                 var mSize = 9;
 
+                // Intended due date diamond — always drawn in the milestone's color
+                var intendedX = xScale(new Date(ms.date * 1000));
+                var msColor = MILESTONE_COLORS[ms.color_id] || '#4d7cfe';
+
                 barsG.append('path')
-                    .attr('d', 'M' + mx + ',' + (yMid - mSize)
-                        + ' L' + (mx + mSize) + ',' + yMid
-                        + ' L' + mx + ',' + (yMid + mSize)
-                        + ' L' + (mx - mSize) + ',' + yMid + ' Z')
+                    .attr('d', diamondPath(intendedX, yMid, mSize))
+                    .attr('fill', msColor)
+                    .attr('stroke', '#333')
+                    .attr('stroke-width', 1)
                     .attr('class', 'portfolio-gantt-milestone-marker')
                     .append('title')
-                    .text((ms.name || '') + '\n' + formatDateLabel(ms.date));
+                    .text((ms.name || '') + ' (intended)\n' + formatDateLabel(ms.date));
+
+                // Actual finish date diamond — green/blue if on time, red if late
+                var actualDate = ms.date_actual || ms.date;
+                if (actualDate !== ms.date) {
+                    var actualX = xScale(new Date(actualDate * 1000));
+                    var statusColor = ms.is_late ? '#dc2626' : '#059669';
+
+                    // Draw a dashed line connecting intended → actual
+                    barsG.append('line')
+                        .attr('x1', intendedX)
+                        .attr('y1', yMid)
+                        .attr('x2', actualX)
+                        .attr('y2', yMid)
+                        .attr('stroke', statusColor)
+                        .attr('stroke-width', 1.5)
+                        .attr('stroke-dasharray', '4 3')
+                        .attr('opacity', 0.7);
+
+                    barsG.append('path')
+                        .attr('d', diamondPath(actualX, yMid, mSize))
+                        .attr('fill', statusColor)
+                        .attr('stroke', '#333')
+                        .attr('stroke-width', 1)
+                        .attr('class', 'portfolio-gantt-milestone-actual')
+                        .append('title')
+                        .text((ms.name || '') + ' (actual)\n' + formatDateLabel(actualDate)
+                            + (ms.is_late ? ' — LATE' : ' — On Track'));
+                }
             }
         }
 

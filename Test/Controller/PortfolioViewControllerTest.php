@@ -834,9 +834,9 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $this->assertSame(200, (int) $ganttData['tasks'][0]['id']);
             $this->assertSame(1717000000, (int) $ganttData['tasks'][0]['date_start']);
 
-            // Task with no date_started falls back to date_creation
+            // Task 201 is blocked by 200 (due 1719000000) — start pushed to blocker's due date
             $this->assertSame(201, (int) $ganttData['tasks'][1]['id']);
-            $this->assertSame(1718000000, (int) $ganttData['tasks'][1]['date_start']);
+            $this->assertSame(1719000000, (int) $ganttData['tasks'][1]['date_start']);
 
             $this->assertCount(1, $ganttData['milestones']);
             $this->assertSame(10, (int) $ganttData['milestones'][0]['id']);
@@ -928,6 +928,10 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
                 'portfolioTaskModel' => $portfolioTaskModel,
                 'portfolioProjectModel' => $portfolioProjectModel ?? new PortfolioViewFakePortfolioProjectModel(),
                 'milestoneModel' => $milestoneModel ?? new PortfolioViewFakeMilestoneModel(),
+                'milestoneTaskModel' => new class {
+                    /** @return array<int, array<string, mixed>> */
+                    public function getTasks(int $id): array { return []; }
+                },
                 'configModel' => $configModel ?? new PortfolioViewFakeConfigModel(),
                 'taskModificationModel' => $taskModificationModel ?? new PortfolioViewFakeTaskModificationModel(),
                 'dependencyModel' => $dependencyModel ?? new PortfolioViewFakeDependencyModel(),

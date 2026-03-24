@@ -252,6 +252,7 @@ class PortfolioTaskModel extends Base
                 'assignee_name' => (string) ($user['name'] ?? ''),
                 'is_active' => $task['is_active'] ?? 1,
                 'date_due' => $task['date_due'] ?? 0,
+                'date_started' => $task['date_started'] ?? 0,
                 'date_creation' => $task['date_creation'] ?? 0,
                 'priority' => $task['priority'] ?? 0,
                 'score' => $task['score'] ?? 0,

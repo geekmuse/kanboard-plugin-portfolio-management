@@ -430,6 +430,37 @@ class PortfolioViewController extends BaseController
         array $dependencies,
         string $portfolioName = ''
     ): array {
+        // ---------------------------------------------------------------
+        // 1. Build dependency constraint map: blocked task → latest blocker due date
+        // ---------------------------------------------------------------
+        $taskDueDateMap = [];
+        foreach ($tasks as $task) {
+            $tid = (int) ($task['id'] ?? 0);
+            if ($tid > 0) {
+                $taskDueDateMap[$tid] = (int) ($task['date_due'] ?? 0);
+            }
+        }
+
+        // blockerConstraint[blockedId] = max due date of all blockers
+        $blockerConstraint = [];
+        foreach ($dependencies as $dep) {
+            if ((bool) ($dep['is_resolved'] ?? false)) {
+                continue;
+            }
+            $blockerId = (int) ($dep['task_id'] ?? 0);
+            $blockedId = (int) ($dep['opposite_task_id'] ?? 0);
+            $blockerDue = $taskDueDateMap[$blockerId] ?? 0;
+            if ($blockerId > 0 && $blockedId > 0 && $blockerDue > 0) {
+                $existing = $blockerConstraint[$blockedId] ?? 0;
+                if ($blockerDue > $existing) {
+                    $blockerConstraint[$blockedId] = $blockerDue;
+                }
+            }
+        }
+
+        // ---------------------------------------------------------------
+        // 2. Build task bars (respecting dependency start constraints)
+        // ---------------------------------------------------------------
         $ganttTasks = [];
         $projectNames = [];
 
@@ -444,14 +475,19 @@ class PortfolioViewController extends BaseController
                 continue;
             }
 
-            // Use date_started if set, otherwise fall back to date_creation, otherwise use due date
+            // Base start: date_started > date_creation > due date
             $startDate = (int) ($task['date_started'] ?? 0);
             if ($startDate <= 0) {
                 $startDate = (int) ($task['date_creation'] ?? 0);
             }
-
             if ($startDate <= 0) {
                 $startDate = $dueDate;
+            }
+
+            // Enforce dependency constraint: can't start before all blockers finish
+            $constraintDate = $blockerConstraint[$taskId] ?? 0;
+            if ($constraintDate > 0 && $constraintDate > $startDate) {
+                $startDate = $constraintDate;
             }
 
             // Ensure start is not after end
@@ -476,6 +512,9 @@ class PortfolioViewController extends BaseController
             ];
         }
 
+        // ---------------------------------------------------------------
+        // 3. Build milestones with intended + actual finish dates
+        // ---------------------------------------------------------------
         $ganttMilestones = [];
 
         foreach ($milestones as $milestone) {
@@ -485,12 +524,26 @@ class PortfolioViewController extends BaseController
                 continue;
             }
 
+            // Compute actual finish: latest due date among the milestone's tasks
+            $actualDate = 0;
+            $milestoneTasks = $this->milestoneTaskModel->getTasks($milestoneId);
+            foreach ($milestoneTasks as $mt) {
+                $mtDue = (int) ($mt['date_due'] ?? 0);
+                if ($mtDue > $actualDate) {
+                    $actualDate = $mtDue;
+                }
+            }
+
             $ganttMilestones[] = [
                 'id' => $milestoneId,
                 'name' => (string) ($milestone['name'] ?? ''),
                 'portfolio_name' => $portfolioName,
+                'color_id' => (string) ($milestone['color_id'] ?? 'blue'),
                 'date' => $targetDate,
                 'date_label' => date('Y-m-d', $targetDate),
+                'date_actual' => $actualDate > 0 ? $actualDate : $targetDate,
+                'date_actual_label' => $actualDate > 0 ? date('Y-m-d', $actualDate) : date('Y-m-d', $targetDate),
+                'is_late' => $actualDate > $targetDate,
             ];
         }
 
