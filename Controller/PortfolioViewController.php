@@ -336,11 +336,8 @@ class PortfolioViewController extends BaseController
             $lanes[$lane]['tasks'][] = $task;
         }
 
-        // Only return lanes that have tasks
-        return array_values(array_filter(
-            $lanes,
-            static fn (array $lane): bool => $lane['tasks'] !== []
-        ));
+        // Return all lanes (including empty) so drag-and-drop targets are always visible
+        return array_values($lanes);
     }
 
     /**
