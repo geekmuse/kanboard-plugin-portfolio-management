@@ -452,4 +452,28 @@
         render: render,
         renderGantt: renderGantt
     };
+
+    /* ------------------------------------------------------------------ */
+    /*  Auto-init on DOMContentLoaded                                      */
+    /*  (inline scripts are blocked by Kanboard's CSP)                     */
+    /* ------------------------------------------------------------------ */
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Gantt chart (gantt.php) — reads from data-gantt attribute
+        var ganttEl = document.getElementById('portfolio-gantt-chart');
+        if (ganttEl) {
+            var raw = ganttEl.getAttribute('data-gantt') || '{}';
+            try {
+                renderGantt(ganttEl, JSON.parse(raw));
+            } catch (e) {
+                ganttEl.innerHTML = '<p class="portfolio-empty-state">Failed to parse Gantt data.</p>';
+            }
+        }
+
+        // Legacy timeline (timeline.php) — reads from data-items attribute
+        var timelineEl = document.getElementById('portfolio-timeline-chart');
+        if (timelineEl) {
+            render(timelineEl);
+        }
+    });
 })();

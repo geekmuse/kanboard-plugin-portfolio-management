@@ -52,17 +52,7 @@
     </table>
 <?php endif ?>
 
-<script src="plugins/Portfolio/Asset/js/portfolio-gantt.js"></script>
-<script>
-(function () {
-    var chartElement = document.getElementById('portfolio-timeline-chart');
-    if (!chartElement || !window.PortfolioGantt || typeof window.PortfolioGantt.render !== 'function') {
-        return;
-    }
-
-    window.PortfolioGantt.render(chartElement);
-})();
-</script>
+<?= $this->asset->js('plugins/Portfolio/Asset/js/portfolio-gantt.js') ?>
 
     </div>
 </section>

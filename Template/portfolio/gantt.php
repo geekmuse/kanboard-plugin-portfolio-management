@@ -17,29 +17,10 @@
         class="portfolio-gantt-chart"
         data-gantt="<?= $this->text->e((string) ($gantt_json ?? '{}')) ?>"
     ></div>
-
-    <?= $this->asset->js('plugins/Portfolio/Asset/js/d3.v7.min.js') ?>
-    <?= $this->asset->js('plugins/Portfolio/Asset/js/portfolio-gantt.js') ?>
-    <script>
-    // D3 and portfolio-gantt.js are loaded with "defer", so they execute
-    // after parsing but before DOMContentLoaded. Use DOMContentLoaded to
-    // ensure both scripts have executed before we call renderGantt().
-    document.addEventListener('DOMContentLoaded', function () {
-        var chartElement = document.getElementById('portfolio-gantt-chart');
-        if (!chartElement || !window.PortfolioGantt || typeof window.PortfolioGantt.renderGantt !== 'function') {
-            return;
-        }
-
-        var raw = chartElement.getAttribute('data-gantt') || '{}';
-        try {
-            var ganttData = JSON.parse(raw);
-            window.PortfolioGantt.renderGantt(chartElement, ganttData);
-        } catch (e) {
-            chartElement.innerHTML = '<p class="portfolio-empty-state">Failed to parse Gantt data.</p>';
-        }
-    });
-    </script>
 <?php endif ?>
+
+<?= $this->asset->js('plugins/Portfolio/Asset/js/d3.v7.min.js') ?>
+<?= $this->asset->js('plugins/Portfolio/Asset/js/portfolio-gantt.js') ?>
 
     </div>
 </section>
