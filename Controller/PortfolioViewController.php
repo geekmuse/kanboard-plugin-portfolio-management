@@ -96,11 +96,15 @@ class PortfolioViewController extends BaseController
             'offset' => 0,
         ]);
 
+        $columnPositionMap = $this->buildColumnPositionMap($activeTasks);
+        $laneColumnMap = $this->buildLaneColumnMap($activeTasks, $columnPositionMap);
+
         return $this->response->html($this->helper->layout->app('Portfolio:portfolio/board', [
             'title' => t('Portfolio Board'),
             'portfolio' => $portfolio,
             'counts' => $this->getPortfolioTaskCounts($portfolioId),
             'board_columns' => $this->buildBoardColumns($activeTasks),
+            'lane_column_map_json' => json_encode($laneColumnMap, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?: '{}',
         ]));
     }
 
@@ -437,6 +441,62 @@ class PortfolioViewController extends BaseController
         }
 
         return $map;
+    }
+
+    /**
+     * Build a mapping of project_id → { lane_name → column_id } so the
+     * drag-and-drop JS can resolve the correct column_id when a card is
+     * dropped on a canonical lane.
+     *
+     * @return array<int, array<string, int>>
+     */
+    private function buildLaneColumnMap(array $tasks, array $positionMap): array
+    {
+        $projectColumns = [];
+        foreach ($tasks as $task) {
+            $projectId = (int) ($task['project_id'] ?? 0);
+            $columnId = (int) ($task['column_id'] ?? 0);
+            if ($projectId > 0 && $columnId > 0) {
+                $projectColumns[$projectId][$columnId] = true;
+            }
+        }
+
+        $result = [];
+
+        foreach ($projectColumns as $projectId => $columnIds) {
+            try {
+                $columns = $this->db->table('columns')
+                    ->eq('project_id', $projectId)
+                    ->asc('position')
+                    ->findAll();
+            } catch (\Throwable $e) {
+                $columns = [];
+            }
+
+            if (! is_array($columns) || $columns === []) {
+                continue;
+            }
+
+            $projectLanes = [];
+            foreach ($columns as $col) {
+                $cid = (int) ($col['id'] ?? 0);
+                $title = trim((string) ($col['title'] ?? ''));
+                if ($cid <= 0) {
+                    continue;
+                }
+
+                $lane = $this->resolveCanonicalLane($title, $cid, $positionMap);
+
+                // Use the first matching column for each lane (by position order)
+                if (! isset($projectLanes[$lane])) {
+                    $projectLanes[$lane] = $cid;
+                }
+            }
+
+            $result[$projectId] = $projectLanes;
+        }
+
+        return $result;
     }
 
     /**

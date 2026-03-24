@@ -27,7 +27,8 @@
     </div>
     <div class="portfolio-board"
          data-move-task-url="<?= $this->url->href('PortfolioViewController', 'moveTask', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>"
-         data-move-error-label="<?= $this->text->e(t('Failed to move task.')) ?>">
+         data-move-error-label="<?= $this->text->e(t('Failed to move task.')) ?>"
+         data-lane-column-map="<?= $this->text->e((string) ($lane_column_map_json ?? '{}')) ?>">
         <?php foreach ($board_columns as $column): ?>
             <div class="portfolio-board-column" data-lane="<?= $this->text->e((string) ($column['position'] ?? 0)) ?>">
                 <h3 class="portfolio-board-column-title">
@@ -57,7 +58,8 @@
                         <article class="portfolio-board-card"
                                  draggable="true"
                                  data-task-id="<?= (int) ($task['id'] ?? 0) ?>"
-                                 data-column-id="<?= (int) ($task['column_id'] ?? 0) ?>">
+                                 data-column-id="<?= (int) ($task['column_id'] ?? 0) ?>"
+                                 data-project-id="<?= (int) ($task['project_id'] ?? 0) ?>">
                             <header class="portfolio-board-card-header">
                                 <span class="portfolio-board-card-id">#<?= $this->text->e((string) ((int) ($task['id'] ?? 0))) ?></span>
                                 <?php if ((bool) ($task['is_blocked'] ?? false)): ?>
