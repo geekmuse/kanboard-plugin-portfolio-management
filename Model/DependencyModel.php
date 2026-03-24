@@ -45,6 +45,7 @@ class DependencyModel extends Base
         }
 
         $dependencies = [];
+        $seenEdges = [];
 
         foreach ($taskLinks as $taskLink) {
             if (! is_array($taskLink)) {
@@ -86,6 +87,17 @@ class DependencyModel extends Base
             if ($crossProjectOnly && ! $isCrossProject) {
                 continue;
             }
+
+            $blockingTaskId = (int) ($blockingTask['id'] ?? 0);
+            $blockedTaskId = (int) ($blockedTask['id'] ?? 0);
+
+            // Deduplicate: Kanboard stores bidirectional rows (blocks + is blocked by)
+            // for each logical dependency. Only keep one direction per pair.
+            $edgeKey = $blockingTaskId . ':' . $blockedTaskId;
+            if (isset($seenEdges[$edgeKey])) {
+                continue;
+            }
+            $seenEdges[$edgeKey] = true;
 
             $blockingTaskIsActive = (int) ($blockingTask['is_active'] ?? 1);
             $blockedTaskIsActive = (int) ($blockedTask['is_active'] ?? 1);
