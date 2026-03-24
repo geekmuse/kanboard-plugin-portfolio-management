@@ -826,25 +826,29 @@ class DependencyModel extends Base
         }
         unset($targets);
 
+        // Time-weighted longest path: use each blocker's due date as the
+        // edge weight so the critical path is the chain that delays the
+        // final task the most, not just the chain with the most hops.
+        $nodeWeight = [];
+        foreach ($graph['nodes'] as $nid => $nodeData) {
+            $dueDate = (int) ($nodeData['date_due'] ?? 0);
+            // Fallback: use 1 if no due date, so hop-count still works
+            $nodeWeight[$nid] = $dueDate > 0 ? $dueDate : 1;
+        }
+
         $distance = [];
         $previous = [];
 
         foreach ($topologicalOrder as $nodeId) {
             if (! array_key_exists($nodeId, $distance)) {
-                $distance[$nodeId] = 1;
+                $distance[$nodeId] = $nodeWeight[$nodeId] ?? 1;
             }
 
             foreach ($adjacency[$nodeId] as $targetId) {
-                $candidateDistance = $distance[$nodeId] + 1;
-                $existingDistance = $distance[$targetId] ?? 1;
+                $candidateDistance = $distance[$nodeId] + ($nodeWeight[$targetId] ?? 1);
+                $existingDistance = $distance[$targetId] ?? ($nodeWeight[$targetId] ?? 1);
 
-                if (
-                    $candidateDistance > $existingDistance
-                    || (
-                        $candidateDistance === $existingDistance
-                        && $nodeId < (int) ($previous[$targetId] ?? PHP_INT_MAX)
-                    )
-                ) {
+                if ($candidateDistance > $existingDistance) {
                     $distance[$targetId] = $candidateDistance;
                     $previous[$targetId] = $nodeId;
                 }
@@ -855,15 +859,15 @@ class DependencyModel extends Base
         $bestLength = 0;
 
         foreach ($topologicalOrder as $nodeId) {
-            $nodeDistance = $distance[$nodeId] ?? 1;
+            $nodeDistance = $distance[$nodeId] ?? 0;
 
-            if ($nodeDistance > $bestLength || ($nodeDistance === $bestLength && $nodeId < $bestEndNode)) {
+            if ($nodeDistance > $bestLength) {
                 $bestLength = $nodeDistance;
                 $bestEndNode = $nodeId;
             }
         }
 
-        if ($bestLength <= 1 || $bestEndNode <= 0) {
+        if ($bestEndNode <= 0) {
             return [];
         }
 
