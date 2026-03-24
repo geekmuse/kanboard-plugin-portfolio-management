@@ -299,45 +299,147 @@ class PortfolioViewController extends BaseController
      *
      * @return array<int, array<string, mixed>>
      */
+    /**
+     * Map per-project column names to canonical board lanes so tasks
+     * from different projects stack together regardless of origin.
+     *
+     * Lanes (left to right):
+     *   "Not Started" — Backlog, Ready, New, To Do, etc.
+     *   "In Progress" — Work in progress, Doing, Active, etc.
+     *   "Done"        — Done, Completed, Closed, etc.
+     */
     private function buildBoardColumns(array $tasks): array
     {
-        $columnMap = [];
+        $lanes = [
+            'not_started' => ['title' => t('Not Started'), 'position' => 1, 'total' => 0, 'blocked' => 0, 'tasks' => []],
+            'in_progress' => ['title' => t('In Progress'), 'position' => 2, 'total' => 0, 'blocked' => 0, 'tasks' => []],
+            'done'        => ['title' => t('Done'),        'position' => 3, 'total' => 0, 'blocked' => 0, 'tasks' => []],
+        ];
+
+        // Build a column_id → position lookup so we can map by position
+        // when the title doesn't match any known pattern.
+        $columnPositionMap = $this->buildColumnPositionMap($tasks);
 
         foreach ($tasks as $task) {
-            $columnId = (int) ($task['column_id'] ?? 0);
-            $columnTitle = trim((string) ($task['column_title'] ?? ''));
-            if ($columnTitle === '') {
-                $columnTitle = t('Unassigned');
-            }
+            $lane = $this->resolveCanonicalLane(
+                trim((string) ($task['column_title'] ?? '')),
+                (int) ($task['column_id'] ?? 0),
+                $columnPositionMap
+            );
 
-            $columnKey = $columnId > 0 ? 'id-' . $columnId : 'title-' . $columnTitle;
-            if (! array_key_exists($columnKey, $columnMap)) {
-                $columnMap[$columnKey] = [
-                    'id' => $columnId,
-                    'title' => $columnTitle,
-                    'total' => 0,
-                    'blocked' => 0,
-                    'tasks' => [],
-                ];
-            }
-
-            ++$columnMap[$columnKey]['total'];
+            ++$lanes[$lane]['total'];
 
             if ((bool) ($task['is_blocked'] ?? false)) {
-                ++$columnMap[$columnKey]['blocked'];
+                ++$lanes[$lane]['blocked'];
             }
 
-            $columnMap[$columnKey]['tasks'][] = $task;
+            $lanes[$lane]['tasks'][] = $task;
         }
 
-        $columns = array_values($columnMap);
+        // Only return lanes that have tasks
+        return array_values(array_filter(
+            $lanes,
+            static fn (array $lane): bool => $lane['tasks'] !== []
+        ));
+    }
 
-        usort(
-            $columns,
-            static fn (array $left, array $right): int => strcmp((string) ($left['title'] ?? ''), (string) ($right['title'] ?? ''))
-        );
+    /**
+     * Map a column title (or position) to one of three canonical lanes.
+     */
+    private function resolveCanonicalLane(string $title, int $columnId, array $positionMap): string
+    {
+        $lower = strtolower($title);
 
-        return $columns;
+        // Title-based matching (covers common Kanboard column names)
+        $donePatterns = ['done', 'completed', 'closed', 'finished', 'deployed', 'released'];
+        foreach ($donePatterns as $pattern) {
+            if (str_contains($lower, $pattern)) {
+                return 'done';
+            }
+        }
+
+        $progressPatterns = ['progress', 'doing', 'active', 'review', 'testing', 'started'];
+        foreach ($progressPatterns as $pattern) {
+            if (str_contains($lower, $pattern)) {
+                return 'in_progress';
+            }
+        }
+
+        $notStartedPatterns = ['backlog', 'ready', 'new', 'to do', 'todo', 'planned', 'queue', 'open'];
+        foreach ($notStartedPatterns as $pattern) {
+            if (str_contains($lower, $pattern)) {
+                return 'not_started';
+            }
+        }
+
+        // Fallback: use column position within its project
+        $position = $positionMap[$columnId] ?? [];
+        $pos = (int) ($position['position'] ?? 0);
+        $maxPos = (int) ($position['max_position'] ?? 4);
+
+        if ($maxPos <= 0) {
+            return 'not_started';
+        }
+
+        // Last position = Done; middle = In Progress; first = Not Started
+        if ($pos >= $maxPos) {
+            return 'done';
+        }
+
+        if ($pos > 1) {
+            return 'in_progress';
+        }
+
+        return 'not_started';
+    }
+
+    /**
+     * Build column_id → { position, max_position } from distinct column IDs in the task set.
+     *
+     * @return array<int, array{position: int, max_position: int}>
+     */
+    private function buildColumnPositionMap(array $tasks): array
+    {
+        // Collect column IDs per project
+        $projectColumns = [];
+        foreach ($tasks as $task) {
+            $projectId = (int) ($task['project_id'] ?? 0);
+            $columnId = (int) ($task['column_id'] ?? 0);
+            if ($projectId > 0 && $columnId > 0) {
+                $projectColumns[$projectId][$columnId] = true;
+            }
+        }
+
+        $map = [];
+
+        foreach ($projectColumns as $projectId => $columnIds) {
+            // Query the project's columns for position data
+            try {
+                $columns = $this->db->table('columns')
+                    ->eq('project_id', $projectId)
+                    ->asc('position')
+                    ->findAll();
+            } catch (\Throwable $e) {
+                $columns = [];
+            }
+
+            if (! is_array($columns) || $columns === []) {
+                continue;
+            }
+
+            $maxPos = count($columns);
+            foreach ($columns as $col) {
+                $cid = (int) ($col['id'] ?? 0);
+                if ($cid > 0) {
+                    $map[$cid] = [
+                        'position' => (int) ($col['position'] ?? 0),
+                        'max_position' => $maxPos,
+                    ];
+                }
+            }
+        }
+
+        return $map;
     }
 
     /**
