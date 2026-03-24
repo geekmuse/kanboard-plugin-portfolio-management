@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.19.0] — 2026-03-23
+
+### Fixed
+- **Board view** — columns now map to three canonical lanes (Not Started / In Progress / Done) instead of duplicating per-project columns; tasks from all projects stack together
+- **Drag-and-drop** — rewrote for canonical lane architecture with per-project column resolution, DOMContentLoaded init, and embedded lane-column map
+- **Empty lanes** — all three board lanes render even when empty so drag-and-drop targets are always available
+
 ## [1.18.0] — 2026-03-23
 
 ### Fixed
