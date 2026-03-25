@@ -1,4 +1,6 @@
 ## Codebase Patterns
+- For `git commit` to succeed when the pre-commit hook runs `ralphi check` + phpstan Docker (which takes ~46s), call `git commit` with `timeout: 300` in the Bash tool. Using the default 30s timeout causes the tool to report "Command timed out" even though the commit may be in progress.
+
 - `docker-phpstan.sh` requires `--memory-limit=512M` flag; the default 128M container limit causes a crash/timeout. Fixed in scripts/docker-phpstan.sh — always use the updated script.
 - `project_activities` table schema for tests: `id INTEGER PRIMARY KEY AUTOINCREMENT, project_id, task_id, event_name TEXT, creator_id INTEGER, date_creation INTEGER, data TEXT`. The defensive try/catch in `getActivity()` handles both missing-table and wrong-table-name cases.
 - `getActivity()` follows the same in-memory scan pattern as `buildFilteredTaskRows()`: fetch all rows from the table, filter by projectScope map, then sort/paginate. This is consistent cross-driver behavior without raw SQL JOINs or IN clauses.
@@ -17,6 +19,32 @@
 - Multi-line function declarations in PSR-12: `)` closing paren must be on the same line as `): ReturnType {` (i.e., `): void {` not `): void\n    {`).
 ---
 
+---
+
+## 2026-03-25 - US-005
+Session: iter-0951cd49 / loop-cfe4d683
+Review Outcome: PASS
+Trajectory: ON_TRACK
+Trajectory Notes: N/A
+Corrective Plan: N/A
+- Updated `PortfolioViewController::show()` to call `getPortfolioActivity($portfolioId, 10)` and pass `activities` to template
+- Added private `getPortfolioActivity(int $portfolioId, int $limit = 10): array` helper method following the same `is_object()` + `method_exists()` + null-safe pattern used throughout the controller
+- Added 'Recent Activity' section to `Template/portfolio/show.php` below Milestone Health section
+- Section shows: date, event_name, task link (TaskViewController::show with task_id+project_id), project_name
+- Empty state: "No recent activity." in `<p class="alert portfolio-activity-empty">`
+- All CSS classes prefixed with `portfolio-activity-`: table, row, date, event, task, project, empty
+- All output escaped via `$this->text->e()`; all strings wrapped in `t()`
+- Added 3 translation strings to `Locale/en_US/translations.php`: 'Recent Activity', 'No recent activity.', 'Event'
+- Added `getActivity()` method + `activityCalls` tracking + `$activities` constructor param to `PortfolioViewFakePortfolioTaskModel` (new 4th param with default `[]` — fully backward compatible)
+- Added 2 controller tests: `testPortfolioDashboardPassesActivitiesToTemplate` (verifies activity data passthrough + HTML rendering), `testPortfolioDashboardShowsEmptyActivityStateWhenNoActivities` (verifies empty state)
+- Fixed pre-existing PHPCS brace error: `new class\n{` → `new class {` in `buildServices()` userModel entry
+- Test count: 163 (161 from US-004 + 2 new); 897 assertions; 0 errors; 1 pre-existing deprecation
+- Files changed: `Controller/PortfolioViewController.php`, `Template/portfolio/show.php`, `Locale/en_US/translations.php`, `Test/Controller/PortfolioViewControllerTest.php`
+- **Learnings for future iterations:**
+  - `git commit` requires `timeout: 300` in the Bash tool call — phpstan Docker takes ~46s, so default 30s tool timeout kills the process
+  - `PortfolioViewFakePortfolioTaskModel` now has a 4th constructor param `$activities = []` — add it when constructing in tests that need activity data
+  - Template defensive pattern for optional controller vars: `$activityList = is_array($activities ?? null) ? ($activities ?? []) : [];`
+  - The `activityCalls` tracking array records `portfolio_id` and `limit` (not `offset`) — consistent with how other call trackers in the fake model work
 ---
 
 ## 2026-03-25 - US-004

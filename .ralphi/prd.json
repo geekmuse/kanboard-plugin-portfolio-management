@@ -119,14 +119,14 @@
         "PHP lint passes, all existing tests pass"
       ],
       "priority": 5,
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": [
         "US-004"
       ],
       "notes": "Template + controller changes. Depends on US-004 for the getActivity() model method.",
       "startedAt": "2026-03-25T19:11:35.297Z",
-      "updatedAt": "2026-03-25T19:11:35.297Z",
-      "completedAt": null
+      "updatedAt": "2026-03-25T19:25:00.000Z",
+      "completedAt": "2026-03-25T19:25:00.000Z"
     },
     {
       "id": "US-006",
