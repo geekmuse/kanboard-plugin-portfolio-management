@@ -258,15 +258,25 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
         /** @var array<int, array{portfolio_id: int, status_id: int|null}> */
         public array $countCalls = [];
 
+        /** @var array<int, array{portfolio_id: int, limit: int}> */
+        public array $activityCalls = [];
+
+        /** @var array<int, int> */
+        public array $workloadCalls = [];
+
         /**
          * @param array<string, mixed> $overview
          * @param array<int, array<string, mixed>> $tasks
          * @param array<string, int> $counts
+         * @param array<int, array<string, mixed>> $activities
+         * @param array<string, mixed> $workload
          */
         public function __construct(
             private array $overview = [],
             private array $tasks = [],
-            private array $counts = ['total' => 0, 'active' => 0, 'closed' => 0, 'blocked' => 0]
+            private array $counts = ['total' => 0, 'active' => 0, 'closed' => 0, 'blocked' => 0],
+            private array $activities = [],
+            private array $workload = ['users' => [], 'unassigned' => []]
         ) {
         }
 
@@ -303,6 +313,29 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
 
             return $this->counts;
         }
+
+        /**
+         * @return array<int, array<string, mixed>>
+         */
+        public function getActivity(int $portfolioId, int $limit = 25, int $offset = 0): array
+        {
+            $this->activityCalls[] = [
+                'portfolio_id' => $portfolioId,
+                'limit' => $limit,
+            ];
+
+            return $this->activities;
+        }
+
+        /**
+         * @return array<string, mixed>
+         */
+        public function getWorkload(int $portfolioId): array
+        {
+            $this->workloadCalls[] = $portfolioId;
+
+            return $this->workload;
+        }
     }
 
     final class PortfolioViewFakePortfolioProjectModel
@@ -328,11 +361,17 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
         /** @var array<int, int> */
         public array $getByPortfolioIdCalls = [];
 
+        /** @var array<int, int> */
+        public array $getProgressCalls = [];
+
         /**
          * @param array<int, array<int, array<string, mixed>>> $milestonesByPortfolio
+         * @param array<int, array<string, mixed>> $progressByMilestone
          */
-        public function __construct(private array $milestonesByPortfolio = [])
-        {
+        public function __construct(
+            private array $milestonesByPortfolio = [],
+            private array $progressByMilestone = []
+        ) {
         }
 
         /**
@@ -343,6 +382,16 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $this->getByPortfolioIdCalls[] = $portfolioId;
 
             return $this->milestonesByPortfolio[$portfolioId] ?? [];
+        }
+
+        /**
+         * @return array<string, mixed>|null
+         */
+        public function getProgress(int $milestoneId, string $weightBy = 'count'): ?array
+        {
+            $this->getProgressCalls[] = $milestoneId;
+
+            return $this->progressByMilestone[$milestoneId] ?? null;
         }
     }
 
@@ -930,13 +979,15 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
                 'milestoneModel' => $milestoneModel ?? new PortfolioViewFakeMilestoneModel(),
                 'milestoneTaskModel' => new class {
                     /** @return array<int, array<string, mixed>> */
-                    public function getTasks(int $id): array { return []; }
+                    public function getTasks(int $id): array
+                    {
+                        return [];
+                    }
                 },
                 'configModel' => $configModel ?? new PortfolioViewFakeConfigModel(),
                 'taskModificationModel' => $taskModificationModel ?? new PortfolioViewFakeTaskModificationModel(),
                 'dependencyModel' => $dependencyModel ?? new PortfolioViewFakeDependencyModel(),
-                'userModel' => new class
-                {
+                'userModel' => new class {
                     /** @return array<int,string> */
                     public function getActiveUsersList(): array
                     {
@@ -1102,6 +1153,304 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $this->assertStringContainsString('data-move-task-url=', $html);
             $this->assertStringContainsString('portfolio-board-column-count', $html);
             $this->assertStringContainsString('plugins/Portfolio/Asset/js/portfolio-board.js', $html);
+        }
+
+        public function testPortfolioDashboardPassesActivitiesToTemplate(): void
+        {
+            $request = new PortfolioViewFakeRequest([], ['portfolio_id' => 7]);
+            $portfolioModel = new PortfolioViewFakePortfolioModel([
+                ['id' => 7, 'name' => 'Alpha Portfolio', 'description' => '', 'is_active' => 1],
+            ]);
+
+            $activities = [
+                [
+                    'id' => 1,
+                    'project_id' => 10,
+                    'project_name' => 'Website',
+                    'task_id' => 42,
+                    'event_name' => 'task.move.column',
+                    'creator_id' => 1,
+                    'date_creation' => 1717200000,
+                    'data' => '',
+                ],
+                [
+                    'id' => 2,
+                    'project_id' => 10,
+                    'project_name' => 'Website',
+                    'task_id' => 43,
+                    'event_name' => 'task.create',
+                    'creator_id' => 1,
+                    'date_creation' => 1717100000,
+                    'data' => '',
+                ],
+            ];
+
+            $portfolioTaskModel = new PortfolioViewFakePortfolioTaskModel(
+                [],
+                [],
+                ['total' => 0, 'active' => 0, 'closed' => 0, 'blocked' => 0],
+                $activities
+            );
+
+            $services = $this->buildServices($portfolioModel, $portfolioTaskModel, $request);
+            $controller = new PortfolioViewController($services);
+            $html = $controller->show();
+
+            // Verify activity data was passed to template
+            $this->assertSame('Portfolio:portfolio/show', $services['helper']->layout->lastTemplate);
+            $this->assertArrayHasKey('activities', $services['helper']->layout->lastParams);
+            $this->assertCount(2, $services['helper']->layout->lastParams['activities']);
+
+            // Verify getActivity was called with correct args
+            $this->assertCount(1, $portfolioTaskModel->activityCalls);
+            $this->assertSame(7, $portfolioTaskModel->activityCalls[0]['portfolio_id']);
+            $this->assertSame(10, $portfolioTaskModel->activityCalls[0]['limit']);
+
+            // Verify rendered HTML contains activity items
+            $this->assertStringContainsString('Recent Activity', $html);
+            $this->assertStringContainsString('task.move.column', $html);
+            $this->assertStringContainsString('task.create', $html);
+            $this->assertStringContainsString('Website', $html);
+            $this->assertStringContainsString('Task #42', $html);
+            $this->assertStringContainsString('Task #43', $html);
+        }
+
+        public function testPortfolioDashboardShowsEmptyActivityStateWhenNoActivities(): void
+        {
+            $request = new PortfolioViewFakeRequest([], ['portfolio_id' => 7]);
+            $portfolioModel = new PortfolioViewFakePortfolioModel([
+                ['id' => 7, 'name' => 'Alpha Portfolio', 'description' => '', 'is_active' => 1],
+            ]);
+
+            $portfolioTaskModel = new PortfolioViewFakePortfolioTaskModel(
+                [],
+                [],
+                ['total' => 0, 'active' => 0, 'closed' => 0, 'blocked' => 0],
+                []
+            );
+
+            $services = $this->buildServices($portfolioModel, $portfolioTaskModel, $request);
+            $controller = new PortfolioViewController($services);
+            $html = $controller->show();
+
+            $this->assertStringContainsString('Recent Activity', $html);
+            $this->assertStringContainsString('No recent activity.', $html);
+            $this->assertStringNotContainsString('portfolio-activity-row', $html);
+        }
+
+        public function testWorkloadRendersTableWithUserMetricsAndOverloadIndicator(): void
+        {
+            $request = new PortfolioViewFakeRequest([], ['portfolio_id' => 5]);
+            $portfolioModel = new PortfolioViewFakePortfolioModel([
+                ['id' => 5, 'name' => 'Team Portfolio', 'description' => '', 'is_active' => 1],
+            ]);
+
+            $workload = [
+                'users' => [
+                    [
+                        'user_id'              => 1,
+                        'username'             => 'alice',
+                        'name'                 => 'Alice Smith',
+                        'task_count'           => 20,
+                        'active_task_count'    => 18,
+                        'overdue_task_count'   => 3,
+                        'blocked_task_count'   => 2,
+                        'total_score'          => 45,
+                        'total_estimated_hours' => 80,
+                        'total_spent_hours'    => 60,
+                        'projects'             => [],
+                    ],
+                    [
+                        'user_id'              => 2,
+                        'username'             => 'bob',
+                        'name'                 => 'Bob Jones',
+                        'task_count'           => 5,
+                        'active_task_count'    => 4,
+                        'overdue_task_count'   => 0,
+                        'blocked_task_count'   => 1,
+                        'total_score'          => 10,
+                        'total_estimated_hours' => 20,
+                        'total_spent_hours'    => 15,
+                        'projects'             => [],
+                    ],
+                ],
+                'unassigned' => [
+                    'task_count'           => 3,
+                    'active_task_count'    => 3,
+                    'overdue_task_count'   => 0,
+                    'blocked_task_count'   => 0,
+                    'total_score'          => 0,
+                    'total_estimated_hours' => 0,
+                    'total_spent_hours'    => 0,
+                    'projects'             => [],
+                ],
+            ];
+
+            // threshold=15: Alice (18 active) is overloaded; Bob (4 active) is not
+            $configModel = new PortfolioViewFakeConfigModel([
+                'portfolio_workload_threshold' => 15,
+            ]);
+
+            $portfolioTaskModel = new PortfolioViewFakePortfolioTaskModel(
+                [],
+                [],
+                ['total' => 0, 'active' => 0, 'closed' => 0, 'blocked' => 0],
+                [],
+                $workload
+            );
+
+            $services = $this->buildServices(
+                $portfolioModel,
+                $portfolioTaskModel,
+                $request,
+                null,
+                null,
+                $configModel
+            );
+
+            $controller = new PortfolioViewController($services);
+            $html = $controller->workload();
+
+            $this->assertSame('Portfolio:portfolio/workload', $services['helper']->layout->lastTemplate);
+            $this->assertStringContainsString('Portfolio Team Workload', $html);
+            $this->assertStringContainsString('Alice Smith', $html);
+            $this->assertStringContainsString('Bob Jones', $html);
+            $this->assertStringContainsString('portfolio-workload-row--overloaded', $html);
+            $this->assertStringContainsString('Unassigned', $html);
+            $this->assertStringContainsString('assignee_id=1', $html);
+            $this->assertStringContainsString('assignee_id=2', $html);
+            // Alice is overloaded — overload indicator should appear
+            $this->assertStringContainsString('portfolio-workload-overload-indicator', $html);
+
+            // Verify getWorkload was called with the correct portfolio_id
+            $this->assertSame([5], $portfolioTaskModel->workloadCalls);
+        }
+
+        public function testWorkloadRedirectsWhenPortfolioNotFound(): void
+        {
+            $request = new PortfolioViewFakeRequest([], ['portfolio_id' => 99]);
+            $portfolioModel = new PortfolioViewFakePortfolioModel();
+            $portfolioTaskModel = new PortfolioViewFakePortfolioTaskModel();
+
+            $services = $this->buildServices($portfolioModel, $portfolioTaskModel, $request);
+            $controller = new PortfolioViewController($services);
+
+            $controller->workload();
+
+            $this->assertSame(['Portfolio not found.'], $services['flash']->failureMessages);
+            $this->assertStringContainsString(
+                'controller=PortfolioListController',
+                (string) $services['response']->redirectUrl
+            );
+            $this->assertEmpty($portfolioTaskModel->workloadCalls);
+        }
+
+        public function testRoadmapRendersItemsWithCorrectDataStructure(): void
+        {
+            $request = new PortfolioViewFakeRequest([], ['portfolio_id' => 5]);
+            $portfolioModel = new PortfolioViewFakePortfolioModel([
+                ['id' => 5, 'name' => 'Q3 Portfolio', 'description' => '', 'is_active' => 1],
+            ]);
+
+            // One milestone with a far-future target_date (on_track), one without a date (excluded)
+            $milestoneModel = new PortfolioViewFakeMilestoneModel(
+                [
+                    5 => [
+                        ['id' => 10, 'name' => 'Phase 1', 'color_id' => 'green', 'target_date' => 1900000000],
+                        ['id' => 11, 'name' => 'No Date', 'color_id' => 'blue', 'target_date' => 0],
+                    ],
+                ],
+                [
+                    10 => ['percent' => 60.0, 'no_data' => false],
+                ]
+            );
+
+            $services = $this->buildServices(
+                $portfolioModel,
+                new PortfolioViewFakePortfolioTaskModel(),
+                $request,
+                null,
+                $milestoneModel
+            );
+            $controller = new PortfolioViewController($services);
+            $html = $controller->roadmap();
+
+            // Verify template rendered
+            $this->assertSame('Portfolio:portfolio/roadmap', $services['helper']->layout->lastTemplate);
+
+            // Verify roadmap_json contains exactly one item (milestone with date=0 excluded)
+            $roadmapJson = (string) ($services['helper']->layout->lastParams['roadmap_json'] ?? '[]');
+            $data = json_decode($roadmapJson, true);
+            $this->assertIsArray($data);
+            $this->assertCount(1, $data);
+
+            // Verify item structure
+            $item = $data[0];
+            $this->assertSame(10, $item['id']);
+            $this->assertSame('Phase 1', $item['name']);
+            $this->assertSame('green', $item['color_id']);
+            $this->assertEquals(60.0, $item['percent']); // assertEquals handles int/float from json_decode
+            $this->assertSame('on_track', $item['health']); // far-future target_date
+            $this->assertSame(0, $item['task_count']); // milestoneTaskModel returns []
+            $this->assertSame(1900000000, $item['end_date']);
+            $this->assertSame(1900000000, $item['start_date']); // falls back to target_date (no task due dates)
+
+            // Verify has_items is true
+            $this->assertTrue((bool) ($services['helper']->layout->lastParams['has_items'] ?? false));
+
+            // Verify getProgress was called for milestone 10
+            $this->assertContains(10, $milestoneModel->getProgressCalls);
+
+            // Verify rendered HTML contains chart container
+            $this->assertStringContainsString('portfolio-roadmap-chart', $html);
+            $this->assertStringContainsString('data-roadmap=', $html);
+            $this->assertStringContainsString('portfolio-gantt.js', $html);
+        }
+
+        public function testRoadmapRedirectsWhenPortfolioNotFound(): void
+        {
+            $request = new PortfolioViewFakeRequest([], ['portfolio_id' => 99]);
+            $portfolioModel = new PortfolioViewFakePortfolioModel();
+
+            $services = $this->buildServices($portfolioModel, new PortfolioViewFakePortfolioTaskModel(), $request);
+            $controller = new PortfolioViewController($services);
+
+            $controller->roadmap();
+
+            $this->assertSame(['Portfolio not found.'], $services['flash']->failureMessages);
+            $this->assertStringContainsString(
+                'controller=PortfolioListController',
+                (string) $services['response']->redirectUrl
+            );
+        }
+
+        public function testRoadmapShowsEmptyStateWhenNoMilestonesHaveTargetDates(): void
+        {
+            $request = new PortfolioViewFakeRequest([], ['portfolio_id' => 5]);
+            $portfolioModel = new PortfolioViewFakePortfolioModel([
+                ['id' => 5, 'name' => 'Empty Portfolio', 'description' => '', 'is_active' => 1],
+            ]);
+
+            // All milestones have target_date=0 → excluded
+            $milestoneModel = new PortfolioViewFakeMilestoneModel([
+                5 => [
+                    ['id' => 20, 'name' => 'No Date Milestone', 'color_id' => 'blue', 'target_date' => 0],
+                ],
+            ]);
+
+            $services = $this->buildServices(
+                $portfolioModel,
+                new PortfolioViewFakePortfolioTaskModel(),
+                $request,
+                null,
+                $milestoneModel
+            );
+            $controller = new PortfolioViewController($services);
+            $html = $controller->roadmap();
+
+            $this->assertFalse((bool) ($services['helper']->layout->lastParams['has_items'] ?? true));
+            $this->assertStringContainsString('No milestones with target dates found', $html);
+            $this->assertStringNotContainsString('portfolio-roadmap-chart', $html);
         }
     }
 }

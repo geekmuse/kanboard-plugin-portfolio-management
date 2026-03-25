@@ -18,6 +18,22 @@ return [
     'Comma-separated task link labels treated as dependencies.' =>
         'Comma-separated task link labels treated as dependencies.',
     'Default portfolio tasks per page' => 'Default portfolio tasks per page',
+    'Milestone Progress Weight' => 'Milestone Progress Weight',
+    'How milestone progress percentage is computed.' => 'How milestone progress percentage is computed.',
+    'Count' => 'Count',
+    'Story Points' => 'Story Points',
+    'Time Estimated' => 'Time Estimated',
+    'No score data available' => 'No score data available',
+    'No time estimates available' => 'No time estimates available',
+    'Progress Weight' => 'Progress Weight',
+    'Score' => 'Score',
+    'Est. Hours' => 'Est. Hours',
+    'Workload Overload Threshold (active tasks)' => 'Workload Overload Threshold (active tasks)',
+    'Active task count above which a user is considered overloaded.' =>
+        'Active task count above which a user is considered overloaded.',
+    'Recent Activity' => 'Recent Activity',
+    'No recent activity.' => 'No recent activity.',
+    'Event' => 'Event',
     'or' => 'or',
     'Portfolio Name' => 'Portfolio Name',
     'Portfolio Description' => 'Portfolio Description',
@@ -189,4 +205,19 @@ return [
         '✅ Dependency resolved: Task #%d "%s" in project "%s" has been completed. This task is no longer blocked.',
     'Task #%d "%s" is no longer blocked because task #%d "%s" in project "%s" was completed.' =>
         'Task #%d "%s" is no longer blocked because task #%d "%s" in project "%s" was completed.',
+
+    // Roadmap view
+    'Roadmap' => 'Roadmap',
+    'Portfolio Roadmap' => 'Portfolio Roadmap',
+    'No milestones with target dates found. Add a target date to a milestone to populate the roadmap.' =>
+        'No milestones with target dates found. Add a target date to a milestone to populate the roadmap.',
+    'Today' => 'Today',
+
+    // Workload view
+    'Team' => 'Team',
+    'Portfolio Team Workload' => 'Portfolio Team Workload',
+    'No tasks found for this portfolio.' => 'No tasks found for this portfolio.',
+    'Overloaded' => 'Overloaded',
+    'Overloaded: active tasks exceed threshold of %d' => 'Overloaded: active tasks exceed threshold of %d',
+    'Spent Hours' => 'Spent Hours',
 ];

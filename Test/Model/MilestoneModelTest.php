@@ -290,7 +290,9 @@ class MilestoneModelTest extends TestCase
             "CREATE TABLE tasks (
                 id INTEGER PRIMARY KEY,
                 project_id INTEGER NOT NULL DEFAULT 0,
-                is_active INTEGER NOT NULL DEFAULT 1
+                is_active INTEGER NOT NULL DEFAULT 1,
+                score INTEGER NOT NULL DEFAULT 0,
+                time_estimated INTEGER NOT NULL DEFAULT 0
             )"
         );
 
@@ -611,6 +613,135 @@ class MilestoneModelTest extends TestCase
         $this->assertFalse($overdueProgress['is_at_risk']);
     }
 
+    public function testGetProgressWeightByCountIsBackwardCompatible(): void
+    {
+        $this->insertPortfolio(1, 'Roadmap');
+        $this->insertProject(10, 'Site');
+
+        $milestoneId = $this->createMilestone(1, 'Weighted Count', 0);
+
+        // 2 completed, 1 active; scores set but should be ignored in count mode
+        $this->insertTask(601, 10, 0, 5, 4);
+        $this->insertTask(602, 10, 0, 3, 2);
+        $this->insertTask(603, 10, 1, 10, 8);
+
+        $this->insertMilestoneTask($milestoneId, 601, 1);
+        $this->insertMilestoneTask($milestoneId, 602, 2);
+        $this->insertMilestoneTask($milestoneId, 603, 3);
+
+        $progressDefault = $this->model->getProgress($milestoneId);
+        $progressCount = $this->model->getProgress($milestoneId, 'count');
+
+        $this->assertNotNull($progressDefault);
+        $this->assertNotNull($progressCount);
+
+        // Count mode: 2/3 = 66.67%
+        $this->assertSame(66.67, $progressDefault['percent']);
+        $this->assertSame(66.67, $progressCount['percent']);
+        $this->assertSame('count', $progressDefault['weight_by']);
+        $this->assertSame('count', $progressCount['weight_by']);
+        $this->assertFalse($progressDefault['no_data']);
+        $this->assertFalse($progressCount['no_data']);
+
+        // Score/time totals are still returned even in count mode
+        $this->assertSame(18, $progressCount['score_total']);
+        $this->assertSame(8, $progressCount['score_completed']);
+        $this->assertSame(14, $progressCount['time_total']);
+        $this->assertSame(6, $progressCount['time_completed']);
+    }
+
+    public function testGetProgressWeightByScore(): void
+    {
+        $this->insertPortfolio(1, 'Roadmap');
+        $this->insertProject(10, 'Site');
+
+        $milestoneId = $this->createMilestone(1, 'Score Weighted', 0);
+
+        // Completed task: score=8, time=4
+        $this->insertTask(701, 10, 0, 8, 4);
+        // Active tasks: score=2 and score=10
+        $this->insertTask(702, 10, 1, 2, 3);
+        $this->insertTask(703, 10, 1, 10, 5);
+
+        $this->insertMilestoneTask($milestoneId, 701, 1);
+        $this->insertMilestoneTask($milestoneId, 702, 2);
+        $this->insertMilestoneTask($milestoneId, 703, 3);
+
+        $progress = $this->model->getProgress($milestoneId, 'score');
+
+        $this->assertNotNull($progress);
+        $this->assertSame('score', $progress['weight_by']);
+        $this->assertFalse($progress['no_data']);
+        // score_total = 8+2+10 = 20, score_completed = 8
+        // percent = 8/20 * 100 = 40.0
+        $this->assertSame(20, $progress['score_total']);
+        $this->assertSame(8, $progress['score_completed']);
+        $this->assertSame(40.0, $progress['percent']);
+    }
+
+    public function testGetProgressWeightByTimeEstimated(): void
+    {
+        $this->insertPortfolio(1, 'Roadmap');
+        $this->insertProject(10, 'Site');
+
+        $milestoneId = $this->createMilestone(1, 'Time Weighted', 0);
+
+        // Completed tasks: time=6 and time=4 (total completed=10)
+        $this->insertTask(801, 10, 0, 3, 6);
+        $this->insertTask(802, 10, 0, 2, 4);
+        // Active task: time=10
+        $this->insertTask(803, 10, 1, 5, 10);
+
+        $this->insertMilestoneTask($milestoneId, 801, 1);
+        $this->insertMilestoneTask($milestoneId, 802, 2);
+        $this->insertMilestoneTask($milestoneId, 803, 3);
+
+        $progress = $this->model->getProgress($milestoneId, 'time_estimated');
+
+        $this->assertNotNull($progress);
+        $this->assertSame('time_estimated', $progress['weight_by']);
+        $this->assertFalse($progress['no_data']);
+        // time_total = 6+4+10 = 20, time_completed = 6+4 = 10
+        // percent = 10/20 * 100 = 50.0
+        $this->assertSame(20, $progress['time_total']);
+        $this->assertSame(10, $progress['time_completed']);
+        $this->assertSame(50.0, $progress['percent']);
+    }
+
+    public function testGetProgressNoDataFlagWhenWeightedTotalsAreZero(): void
+    {
+        $this->insertPortfolio(1, 'Roadmap');
+        $this->insertProject(10, 'Site');
+
+        $milestoneId = $this->createMilestone(1, 'No Data', 0);
+
+        // Tasks with score=0 and time_estimated=0
+        $this->insertTask(901, 10, 0, 0, 0);
+        $this->insertTask(902, 10, 1, 0, 0);
+
+        $this->insertMilestoneTask($milestoneId, 901, 1);
+        $this->insertMilestoneTask($milestoneId, 902, 2);
+
+        $scoreProgress = $this->model->getProgress($milestoneId, 'score');
+        $timeProgress = $this->model->getProgress($milestoneId, 'time_estimated');
+
+        $this->assertNotNull($scoreProgress);
+        $this->assertTrue($scoreProgress['no_data']);
+        $this->assertSame(0.0, $scoreProgress['percent']);
+        $this->assertSame('score', $scoreProgress['weight_by']);
+
+        $this->assertNotNull($timeProgress);
+        $this->assertTrue($timeProgress['no_data']);
+        $this->assertSame(0.0, $timeProgress['percent']);
+        $this->assertSame('time_estimated', $timeProgress['weight_by']);
+
+        // Count mode should NOT set no_data even when score/time are zero
+        $countProgress = $this->model->getProgress($milestoneId, 'count');
+        $this->assertNotNull($countProgress);
+        $this->assertFalse($countProgress['no_data']);
+        $this->assertSame(50.0, $countProgress['percent']);
+    }
+
     private function createMilestone(int $portfolioId, string $name, $targetDate): int
     {
         $milestoneId = $this->model->create([
@@ -648,14 +779,24 @@ class MilestoneModelTest extends TestCase
             ]);
     }
 
-    private function insertTask(int $taskId, int $projectId, int $isActive): void
-    {
+    private function insertTask(
+        int $taskId,
+        int $projectId,
+        int $isActive,
+        int $score = 0,
+        int $timeEstimated = 0
+    ): void {
         $this->pdo
-            ->prepare('INSERT INTO tasks (id, project_id, is_active) VALUES (:id, :project_id, :is_active)')
+            ->prepare(
+                'INSERT INTO tasks (id, project_id, is_active, score, time_estimated)
+                 VALUES (:id, :project_id, :is_active, :score, :time_estimated)'
+            )
             ->execute([
                 ':id' => $taskId,
                 ':project_id' => $projectId,
                 ':is_active' => $isActive,
+                ':score' => $score,
+                ':time_estimated' => $timeEstimated,
             ]);
     }
 

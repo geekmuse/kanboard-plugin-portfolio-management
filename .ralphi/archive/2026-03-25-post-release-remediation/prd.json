@@ -20,12 +20,9 @@
         "PHP lint passes, all existing tests pass"
       ],
       "priority": 1,
-      "status": "done",
+      "status": "open",
       "dependsOn": [],
-      "notes": "Pure backend — no template changes. This is the highest-value enhancement because it immediately enables agentic status reporting via the JSON-RPC API.",
-      "startedAt": "2026-03-25T18:16:46.023Z",
-      "updatedAt": "2026-03-25T18:33:11.262Z",
-      "completedAt": "2026-03-25T18:33:11.262Z"
+      "notes": "Pure backend — no template changes. This is the highest-value enhancement because it immediately enables agentic status reporting via the JSON-RPC API."
     },
     {
       "id": "US-002",
@@ -47,12 +44,9 @@
         "New translation strings added to Locale/en_US/translations.php"
       ],
       "priority": 2,
-      "status": "done",
+      "status": "open",
       "dependsOn": [],
-      "notes": "Backend-focused but includes config UI. The template milestone views (show.php, portfolio/show.php) are updated in US-003.",
-      "startedAt": "2026-03-25T18:33:11.526Z",
-      "updatedAt": "2026-03-25T18:44:58.276Z",
-      "completedAt": "2026-03-25T18:44:58.276Z"
+      "notes": "Backend-focused but includes config UI. The template milestone views (show.php, portfolio/show.php) are updated in US-003."
     },
     {
       "id": "US-003",
@@ -70,14 +64,9 @@
         "PHP lint passes, all existing tests pass"
       ],
       "priority": 3,
-      "status": "done",
-      "dependsOn": [
-        "US-002"
-      ],
-      "notes": "Template-only changes. Depends on US-002 for the weighted getProgress() model method and config setting.",
-      "startedAt": "2026-03-25T18:44:58.601Z",
-      "updatedAt": "2026-03-25T18:56:41.164Z",
-      "completedAt": "2026-03-25T18:56:41.164Z"
+      "status": "open",
+      "dependsOn": ["US-002"],
+      "notes": "Template-only changes. Depends on US-002 for the weighted getProgress() model method and config setting."
     },
     {
       "id": "US-004",
@@ -95,12 +84,9 @@
         "PHP lint passes, all existing tests pass"
       ],
       "priority": 4,
-      "status": "done",
+      "status": "open",
       "dependsOn": [],
-      "notes": "Backend only. The dashboard template integration is in US-005.",
-      "startedAt": "2026-03-25T18:56:41.389Z",
-      "updatedAt": "2026-03-25T19:11:34.975Z",
-      "completedAt": "2026-03-25T19:11:34.975Z"
+      "notes": "Backend only. The dashboard template integration is in US-005."
     },
     {
       "id": "US-005",
@@ -119,14 +105,9 @@
         "PHP lint passes, all existing tests pass"
       ],
       "priority": 5,
-      "status": "done",
-      "dependsOn": [
-        "US-004"
-      ],
-      "notes": "Template + controller changes. Depends on US-004 for the getActivity() model method.",
-      "startedAt": "2026-03-25T19:11:35.297Z",
-      "updatedAt": "2026-03-25T19:35:14.279Z",
-      "completedAt": "2026-03-25T19:35:14.279Z"
+      "status": "open",
+      "dependsOn": ["US-004"],
+      "notes": "Template + controller changes. Depends on US-004 for the getActivity() model method."
     },
     {
       "id": "US-006",
@@ -148,12 +129,9 @@
         "New translation strings added to Locale/en_US/translations.php"
       ],
       "priority": 6,
-      "status": "done",
+      "status": "open",
       "dependsOn": [],
-      "notes": "Backend + config. The workload view template is in US-007.",
-      "startedAt": "2026-03-25T19:35:14.637Z",
-      "updatedAt": "2026-03-25T19:47:46.711Z",
-      "completedAt": "2026-03-25T19:47:46.711Z"
+      "notes": "Backend + config. The workload view template is in US-007."
     },
     {
       "id": "US-007",
@@ -175,14 +153,9 @@
         "PHP lint passes, all existing tests pass"
       ],
       "priority": 7,
-      "status": "done",
-      "dependsOn": [
-        "US-006"
-      ],
-      "notes": "Template + controller + route + CSS. Depends on US-006 for the getWorkload() model method.",
-      "startedAt": "2026-03-25T19:47:47.074Z",
-      "updatedAt": "2026-03-25T19:55:35.937Z",
-      "completedAt": "2026-03-25T19:55:35.937Z"
+      "status": "open",
+      "dependsOn": ["US-006"],
+      "notes": "Template + controller + route + CSS. Depends on US-006 for the getWorkload() model method."
     },
     {
       "id": "US-008",
@@ -201,12 +174,9 @@
         "PHP lint passes, all existing tests pass"
       ],
       "priority": 8,
-      "status": "done",
+      "status": "open",
       "dependsOn": [],
-      "notes": "Controller + route + template shell. The D3 rendering is in US-009.",
-      "startedAt": "2026-03-25T19:55:36.194Z",
-      "updatedAt": "2026-03-25T20:05:50.789Z",
-      "completedAt": "2026-03-25T20:05:50.789Z"
+      "notes": "Controller + route + template shell. The D3 rendering is in US-009."
     },
     {
       "id": "US-009",
@@ -228,14 +198,9 @@
         "PHP lint passes, all existing tests pass"
       ],
       "priority": 9,
-      "status": "done",
-      "dependsOn": [
-        "US-008"
-      ],
-      "notes": "Client-side JS + CSS. Depends on US-008 for the controller/template that provides the data. Follows the same pattern as renderGantt() — D3 v7 is already bundled.",
-      "startedAt": "2026-03-25T20:05:51.050Z",
-      "updatedAt": "2026-03-25T20:09:00.000Z",
-      "completedAt": "2026-03-25T20:09:00.000Z"
+      "status": "open",
+      "dependsOn": ["US-008"],
+      "notes": "Client-side JS + CSS. Depends on US-008 for the controller/template that provides the data. Follows the same pattern as renderGantt() — D3 v7 is already bundled."
     }
   ]
 }

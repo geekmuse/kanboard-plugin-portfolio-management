@@ -21,6 +21,8 @@ class ConfigController extends BaseController
             'portfolio_dashboard_widget_enabled' => 1,
             'portfolio_dependency_link_types' => 'blocks',
             'portfolio_tasks_per_page' => 50,
+            'portfolio_milestone_weight_by' => 'count',
+            'portfolio_workload_threshold' => 15,
         ];
     }
 
@@ -130,6 +132,15 @@ class ConfigController extends BaseController
                 500,
                 50
             ),
+            'portfolio_milestone_weight_by' => $this->normalizeWeightBy(
+                $this->request->getValue('portfolio_milestone_weight_by', 'count')
+            ),
+            'portfolio_workload_threshold' => $this->normalizeInteger(
+                $this->request->getValue('portfolio_workload_threshold', 15),
+                1,
+                500,
+                15
+            ),
         ];
     }
 
@@ -157,6 +168,14 @@ class ConfigController extends BaseController
         $normalizedValue = strtolower(trim((string) $value));
 
         return in_array($normalizedValue, ['1', 'true', 'yes', 'on'], true);
+    }
+
+    private function normalizeWeightBy(mixed $value): string
+    {
+        $allowed = ['count', 'score', 'time_estimated'];
+        $normalized = strtolower(trim((string) $value));
+
+        return in_array($normalized, $allowed, true) ? $normalized : 'count';
     }
 
     private function normalizeLinkTypeList(mixed $value): string

@@ -55,7 +55,9 @@ class Plugin extends Base
         $this->route->addRoute('/portfolio/:portfolio_id/board', 'PortfolioViewController', 'board', 'Portfolio');
         $this->route->addRoute('/portfolio/:portfolio_id/board/move-task', 'PortfolioViewController', 'moveTask', 'Portfolio');
         $this->route->addRoute('/portfolio/:portfolio_id/timeline', 'PortfolioViewController', 'timeline', 'Portfolio');
+        $this->route->addRoute('/portfolio/:portfolio_id/roadmap', 'PortfolioViewController', 'roadmap', 'Portfolio');
         $this->route->addRoute('/portfolio/:portfolio_id/gantt', 'PortfolioViewController', 'gantt', 'Portfolio');
+        $this->route->addRoute('/portfolio/:portfolio_id/workload', 'PortfolioViewController', 'workload', 'Portfolio');
         $this->route->addRoute('/portfolio/:portfolio_id/milestones', 'MilestoneController', 'index', 'Portfolio');
         $this->route->addRoute('/portfolio/:portfolio_id/settings', 'PortfolioModificationController', 'settings', 'Portfolio');
         $this->route->addRoute('/portfolio/:portfolio_id/edit', 'PortfolioModificationController', 'edit', 'Portfolio');
@@ -288,8 +290,8 @@ class Plugin extends Base
             ->withCallback('getTaskMilestones', function ($task_id) {
                 return $this->milestoneTaskModel->getMilestones((int) $task_id);
             })
-            ->withCallback('getMilestoneProgress', function ($milestone_id) {
-                return $this->milestoneModel->getProgress((int) $milestone_id);
+            ->withCallback('getMilestoneProgress', function ($milestone_id, $weight_by = 'count') {
+                return $this->milestoneModel->getProgress((int) $milestone_id, (string) $weight_by);
             })
             ->withCallback('getPortfolioDependencies', function ($portfolio_id, $cross_project_only = true) {
                 return $this->dependencyModel->getDependencies((int) $portfolio_id, (bool) $cross_project_only);
@@ -330,6 +332,15 @@ class Plugin extends Base
             })
             ->withCallback('getPortfolioOverview', function ($portfolio_id) {
                 return $this->portfolioTaskModel->getOverview((int) $portfolio_id);
+            })
+            ->withCallback('getPortfolioStatusReport', function ($portfolio_id, $period_days = 7) {
+                return $this->portfolioTaskModel->getStatusReport((int) $portfolio_id, (int) $period_days);
+            })
+            ->withCallback('getPortfolioActivity', function ($portfolio_id, $limit = 25, $offset = 0) {
+                return $this->portfolioTaskModel->getActivity((int) $portfolio_id, (int) $limit, (int) $offset);
+            })
+            ->withCallback('getPortfolioWorkload', function ($portfolio_id) {
+                return $this->portfolioTaskModel->getWorkload((int) $portfolio_id);
             });
 
         $this->apiAccessMap->add('PortfolioProcedure', ['createPortfolio', 'updatePortfolio', 'removePortfolio'], Role::APP_MANAGER);

@@ -771,3 +771,197 @@
 .portfolio-gantt-arrow-head--resolved {
     fill: #d1d5db;
 }
+
+/* =========================================================
+   Portfolio Workload View
+   ========================================================= */
+
+.portfolio-workload-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.portfolio-workload-header th {
+    background: #f3f4f6;
+    border-bottom: 2px solid #d1d5db;
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.portfolio-workload-row td {
+    border-bottom: 1px solid #e5e7eb;
+    padding: 0.5rem 0.75rem;
+    vertical-align: middle;
+    font-size: 0.875rem;
+}
+
+.portfolio-workload-row--overloaded td {
+    background-color: #fef2f2;
+}
+
+.portfolio-workload-row--unassigned td {
+    background-color: #f9fafb;
+    font-style: italic;
+    color: #6b7280;
+}
+
+.portfolio-workload-user a {
+    color: #2563eb;
+    text-decoration: none;
+}
+
+.portfolio-workload-user a:hover {
+    text-decoration: underline;
+}
+
+.portfolio-workload-overload-indicator {
+    color: #ef4444;
+    font-size: 1rem;
+    margin-left: 0.25rem;
+    cursor: default;
+}
+
+.portfolio-workload-unassigned-label {
+    color: #6b7280;
+}
+
+.portfolio-workload-empty {
+    color: #6b7280;
+    margin-top: 1rem;
+}
+
+.portfolio-workload-legend {
+    margin-top: 0.75rem;
+    font-size: 0.8rem;
+    color: #6b7280;
+}
+
+/* =========================================================
+   Portfolio Roadmap View
+   ========================================================= */
+
+.portfolio-roadmap-chart {
+    margin: 1rem 0;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    background: #fff;
+    overflow-x: auto;
+}
+
+.portfolio-roadmap-svg {
+    display: block;
+    font-size: 0.8rem;
+    font-family: inherit;
+}
+
+.portfolio-roadmap-grid-line {
+    stroke: #e5e7eb;
+    stroke-width: 1px;
+}
+
+.portfolio-roadmap-axis path,
+.portfolio-roadmap-axis line {
+    stroke: #9ca3af;
+}
+
+.portfolio-roadmap-axis text {
+    fill: #374151;
+    font-size: 0.75rem;
+}
+
+.portfolio-roadmap-today-line {
+    stroke: #ef4444;
+    stroke-width: 2px;
+    stroke-dasharray: 5 4;
+    opacity: 0.8;
+}
+
+.portfolio-roadmap-today-label {
+    fill: #ef4444;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.portfolio-roadmap-bar {
+    /* fill / opacity set inline by JS */
+}
+
+.portfolio-roadmap-bar-progress {
+    /* fill / opacity set inline by JS */
+}
+
+.portfolio-roadmap-bar-border {
+    /* stroke / stroke-width set inline by JS */
+}
+
+.portfolio-roadmap-bar-label {
+    fill: #1f2937;
+    font-size: 0.74rem;
+    font-weight: 600;
+    pointer-events: none;
+}
+
+.portfolio-roadmap-bar-hit {
+    /* transparent click target — no visual style needed */
+}
+
+.portfolio-roadmap-row-label {
+    font-size: 0.78rem;
+    fill: #1f2937;
+}
+
+.portfolio-roadmap-health-dot {
+    /* fill set inline by JS */
+}
+
+/* Roadmap legend */
+.portfolio-roadmap-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.25rem;
+    margin-top: 0.75rem;
+    font-size: 0.82rem;
+    color: #374151;
+    align-items: center;
+}
+
+.portfolio-roadmap-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.portfolio-roadmap-legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.portfolio-roadmap-legend-dot--on-track {
+    background: #22c55e;
+}
+
+.portfolio-roadmap-legend-dot--at-risk {
+    background: #eab308;
+}
+
+.portfolio-roadmap-legend-dot--overdue {
+    background: #ef4444;
+}
+
+.portfolio-roadmap-legend-today {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.portfolio-roadmap-legend-today-line {
+    width: 22px;
+    height: 0;
+    border-top: 2px dashed #ef4444;
+    flex-shrink: 0;
+}

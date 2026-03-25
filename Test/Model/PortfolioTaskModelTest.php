@@ -236,6 +236,35 @@ final class PortfolioTaskConfigModelStub
     }
 }
 
+final class PortfolioTaskDependencyModelStub
+{
+    /**
+     * @param array<int, array<string, mixed>> $dependencies
+     * @param array<int, array<string, mixed>> $criticalPath
+     */
+    public function __construct(
+        private array $dependencies = [],
+        private array $criticalPath = []
+    ) {
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function getDependencies(int $portfolioId, bool $crossProjectOnly = true): array
+    {
+        return $this->dependencies;
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function getCriticalPath(int $portfolioId): array
+    {
+        return $this->criticalPath;
+    }
+}
+
 class PortfolioTaskModelTest extends TestCase
 {
     private PDO $pdo;
@@ -281,9 +310,13 @@ class PortfolioTaskModelTest extends TestCase
                 owner_id INTEGER NOT NULL DEFAULT 0,
                 is_active INTEGER NOT NULL DEFAULT 1,
                 date_due INTEGER NOT NULL DEFAULT 0,
+                date_started INTEGER NOT NULL DEFAULT 0,
                 date_creation INTEGER NOT NULL DEFAULT 0,
+                date_completed INTEGER NOT NULL DEFAULT 0,
                 priority INTEGER NOT NULL DEFAULT 0,
                 score INTEGER NOT NULL DEFAULT 0,
+                time_estimated INTEGER NOT NULL DEFAULT 0,
+                time_spent INTEGER NOT NULL DEFAULT 0,
                 color_id TEXT NOT NULL DEFAULT '',
                 category_id INTEGER NOT NULL DEFAULT 0,
                 swimlane_id INTEGER NOT NULL DEFAULT 0
@@ -304,6 +337,18 @@ class PortfolioTaskModelTest extends TestCase
                 task_id INTEGER NOT NULL,
                 opposite_task_id INTEGER NOT NULL,
                 link_id INTEGER NOT NULL
+            )"
+        );
+
+        $this->pdo->exec(
+            "CREATE TABLE project_activities (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                project_id INTEGER NOT NULL DEFAULT 0,
+                task_id INTEGER NOT NULL DEFAULT 0,
+                event_name TEXT NOT NULL DEFAULT '',
+                creator_id INTEGER NOT NULL DEFAULT 0,
+                date_creation INTEGER NOT NULL DEFAULT 0,
+                data TEXT NOT NULL DEFAULT ''
             )"
         );
 
@@ -466,6 +511,338 @@ class PortfolioTaskModelTest extends TestCase
         $this->assertSame(4, (int) $overview['critical_path_length']);
     }
 
+    public function testGetStatusReportReturnsZeroCountsForEmptyPortfolio(): void
+    {
+        $this->insertPortfolio(1, 'Empty Portfolio');
+
+        $report = $this->model->getStatusReport(1);
+
+        $this->assertIsArray($report['portfolio']);
+        $this->assertSame('1', (string) $report['portfolio']['id']);
+        $this->assertSame(['total' => 0, 'active' => 0, 'closed' => 0, 'blocked' => 0], $report['task_summary']);
+        $this->assertSame([], $report['completed_tasks']);
+        $this->assertSame([], $report['critical_blockers']);
+        $this->assertSame([], $report['at_risk_items']);
+        $this->assertSame([], $report['milestones']);
+        $this->assertSame(0, $report['dependency_health']['total_edges']);
+        $this->assertSame(0, $report['dependency_health']['resolved']);
+        $this->assertSame(0, $report['dependency_health']['unresolved']);
+        $this->assertSame(0, $report['dependency_health']['critical_path_length']);
+        $this->assertGreaterThan(0, $report['generated_at']);
+        $this->assertLessThan($report['period_end'], $report['period_start']);
+    }
+
+    public function testGetStatusReportFiltersCompletedTasksByPeriod(): void
+    {
+        $now = time();
+
+        $this->insertPortfolio(1, 'Report Portfolio');
+        $this->insertProject(10, 'Project Alpha');
+        $this->insertPortfolioProject(1, 10, 1);
+        $this->insertColumn(100, 10, 'Done');
+        $this->insertUser(5, 'alice', 'Alice Adams');
+
+        // Active task — never completed
+        $this->insertTask(101, 'Active Task', 10, 100, 5, 1, 0, $now - 86400, 1, 'blue');
+
+        // Closed task completed 2 days ago — within the 7-day window
+        $this->insertTask(102, 'Recent Closed', 10, 100, 5, 0, 0, $now - (3 * 86400), 1, 'green', $now - (2 * 86400));
+
+        // Closed task completed 10 days ago — outside the 7-day window
+        $this->insertTask(103, 'Old Closed', 10, 100, 5, 0, 0, $now - (11 * 86400), 1, 'red', $now - (10 * 86400));
+
+        $report = $this->model->getStatusReport(1, 7);
+
+        // Only task 102 falls within the 7-day period
+        $this->assertCount(1, $report['completed_tasks']);
+        $this->assertSame(102, (int) $report['completed_tasks'][0]['id']);
+        $this->assertSame('Recent Closed', $report['completed_tasks'][0]['title']);
+        $this->assertSame('Project Alpha', $report['completed_tasks'][0]['project_name']);
+
+        // Task summary: 1 active, 2 closed (total 3 tasks)
+        $this->assertSame(3, $report['task_summary']['total']);
+        $this->assertSame(1, $report['task_summary']['active']);
+        $this->assertSame(2, $report['task_summary']['closed']);
+
+        // Portfolio present
+        $this->assertIsArray($report['portfolio']);
+        $this->assertSame('1', (string) $report['portfolio']['id']);
+    }
+
+    public function testGetStatusReportCustomPeriodDaysFiltersCorrectly(): void
+    {
+        $now = time();
+
+        $this->insertPortfolio(1, 'Custom Period Portfolio');
+        $this->insertProject(10, 'Project Alpha');
+        $this->insertPortfolioProject(1, 10, 1);
+        $this->insertColumn(100, 10, 'Done');
+        $this->insertUser(5, 'alice', 'Alice Adams');
+
+        // Closed 2 days ago — within both 3-day and 7-day windows
+        $this->insertTask(101, 'Within 3 Days', 10, 100, 5, 0, 0, $now - (3 * 86400), 1, 'blue', $now - (2 * 86400));
+
+        // Closed 5 days ago — within 7-day window only, NOT within 3-day window
+        $this->insertTask(102, 'Within 7 Days', 10, 100, 5, 0, 0, $now - (6 * 86400), 1, 'green', $now - (5 * 86400));
+
+        // 3-day window: only task 101
+        $report3 = $this->model->getStatusReport(1, 3);
+        $this->assertCount(1, $report3['completed_tasks']);
+        $this->assertSame(101, (int) $report3['completed_tasks'][0]['id']);
+
+        // 7-day window: both tasks (sorted newest first)
+        $report7 = $this->model->getStatusReport(1, 7);
+        $this->assertCount(2, $report7['completed_tasks']);
+        $this->assertSame(101, (int) $report7['completed_tasks'][0]['id']);
+        $this->assertSame(102, (int) $report7['completed_tasks'][1]['id']);
+    }
+
+    public function testGetStatusReportDependencyHealthFromStub(): void
+    {
+        $this->insertPortfolio(1, 'Dep Health Portfolio');
+        $this->insertProject(10, 'Project Alpha');
+        $this->insertPortfolioProject(1, 10, 1);
+
+        $dependencies = [
+            ['is_resolved' => false],
+            ['is_resolved' => true],
+            ['is_resolved' => false],
+        ];
+
+        $this->model = $this->createModel([
+            'dependencyModel' => new PortfolioTaskDependencyModelStub(
+                $dependencies,
+                [['id' => 1], ['id' => 2]]
+            ),
+        ]);
+
+        $report = $this->model->getStatusReport(1);
+
+        $this->assertSame(3, $report['dependency_health']['total_edges']);
+        $this->assertSame(1, $report['dependency_health']['resolved']);
+        $this->assertSame(2, $report['dependency_health']['unresolved']);
+        $this->assertSame(2, $report['dependency_health']['critical_path_length']);
+    }
+
+    public function testGetActivityReturnsEmptyArrayForPortfolioWithNoProjects(): void
+    {
+        $this->insertPortfolio(1, 'Empty Portfolio');
+        // No projects added to portfolio — getPortfolioProjectIds returns []
+
+        $activities = $this->model->getActivity(1);
+
+        $this->assertSame([], $activities);
+    }
+
+    public function testGetActivityReturnsActivitiesEnrichedWithProjectName(): void
+    {
+        $now = time();
+
+        $this->insertPortfolio(1, 'Activity Portfolio');
+        $this->insertProject(10, 'Alpha');
+        $this->insertProject(20, 'Beta');
+        $this->insertProject(30, 'Gamma');
+        $this->insertPortfolioProject(1, 10, 1);
+        $this->insertPortfolioProject(1, 20, 2);
+        // project 30 is NOT in portfolio
+
+        $this->insertActivity(1, 10, 101, 'task.create', 5, $now - 300, 'data-a');
+        $this->insertActivity(2, 20, 201, 'task.close', 6, $now - 200, 'data-b');
+        $this->insertActivity(3, 30, 301, 'task.open', 7, $now - 100, 'data-c'); // excluded
+
+        $activities = $this->model->getActivity(1);
+
+        $this->assertCount(2, $activities);
+
+        // Ordered newest-first: activity 2 (now-200) before activity 1 (now-300)
+        $this->assertSame(2, (int) $activities[0]['id']);
+        $this->assertSame('Beta', $activities[0]['project_name']);
+        $this->assertSame('task.close', $activities[0]['event_name']);
+        $this->assertSame(6, (int) $activities[0]['creator_id']);
+        $this->assertSame(201, (int) $activities[0]['task_id']);
+        $this->assertSame('data-b', $activities[0]['data']);
+
+        $this->assertSame(1, (int) $activities[1]['id']);
+        $this->assertSame('Alpha', $activities[1]['project_name']);
+        $this->assertSame('task.create', $activities[1]['event_name']);
+    }
+
+    public function testGetActivityPaginatesResults(): void
+    {
+        $now = time();
+
+        $this->insertPortfolio(1, 'Paged Portfolio');
+        $this->insertProject(10, 'Alpha');
+        $this->insertPortfolioProject(1, 10, 1);
+
+        // Insert 5 activities at different timestamps
+        for ($i = 1; $i <= 5; $i++) {
+            $this->insertActivity($i, 10, 100 + $i, 'task.move', 5, $now - (600 - ($i * 100)), '');
+        }
+        // Activities ordered newest-first: id 5 (now-100), 4 (now-200), 3 (now-300), 2 (now-400), 1 (now-500)
+
+        // Default limit=25, offset=0 returns all 5
+        $all = $this->model->getActivity(1);
+        $this->assertCount(5, $all);
+        $this->assertSame(5, (int) $all[0]['id']);
+        $this->assertSame(1, (int) $all[4]['id']);
+
+        // limit=2, offset=0 returns top 2 newest
+        $page1 = $this->model->getActivity(1, 2, 0);
+        $this->assertCount(2, $page1);
+        $this->assertSame(5, (int) $page1[0]['id']);
+        $this->assertSame(4, (int) $page1[1]['id']);
+
+        // limit=2, offset=2 returns items 3 and 4 (by newest-first rank)
+        $page2 = $this->model->getActivity(1, 2, 2);
+        $this->assertCount(2, $page2);
+        $this->assertSame(3, (int) $page2[0]['id']);
+        $this->assertSame(2, (int) $page2[1]['id']);
+
+        // limit clamped to 100 max: passing 200 still returns all 5
+        $clamped = $this->model->getActivity(1, 200, 0);
+        $this->assertCount(5, $clamped);
+
+        // limit clamped to minimum 1
+        $minLimit = $this->model->getActivity(1, 0, 0);
+        $this->assertCount(1, $minLimit);
+    }
+
+    public function testGetWorkloadReturnsEmptyResultForPortfolioWithNoProjects(): void
+    {
+        $this->insertPortfolio(1, 'Empty Portfolio');
+        // No projects added — getPortfolioProjectIds returns []
+
+        $result = $this->model->getWorkload(1);
+
+        $this->assertSame([], $result['users']);
+        $this->assertSame(0, (int) $result['unassigned']['task_count']);
+        $this->assertSame(0, (int) $result['unassigned']['active_task_count']);
+        $this->assertSame(0, (int) $result['unassigned']['overdue_task_count']);
+        $this->assertSame(0, (int) $result['unassigned']['blocked_task_count']);
+        $this->assertSame(0, (int) $result['unassigned']['total_score']);
+        $this->assertSame(0, (int) $result['unassigned']['total_estimated_hours']);
+        $this->assertSame(0, (int) $result['unassigned']['total_spent_hours']);
+        $this->assertSame([], $result['unassigned']['projects']);
+    }
+
+    public function testGetWorkloadAggregatesMetricsPerUserWithOverdueAndBlocked(): void
+    {
+        $now = time();
+
+        $this->insertPortfolio(1, 'Workload Portfolio');
+        $this->insertProject(10, 'Alpha');
+        $this->insertProject(20, 'Beta');
+        $this->insertProject(30, 'Gamma');
+        $this->insertPortfolioProject(1, 10, 1);
+        $this->insertPortfolioProject(1, 20, 2);
+        // project 30 is NOT in portfolio
+
+        $this->insertColumn(100, 10, 'Backlog');
+        $this->insertColumn(200, 20, 'Doing');
+
+        $this->insertUser(5, 'alice', 'Alice Adams');
+        $this->insertUser(6, 'bob', 'Bob Brown');
+
+        // Alice: 2 active tasks in Alpha, 1 overdue (date_due in past)
+        $this->insertTask(101, 'Alice A1', 10, 100, 5, 1, $now - 86400, $now - 3600, 1, 'blue'); // overdue
+        $this->insertTask(102, 'Alice A2', 10, 100, 5, 1, $now + 86400, $now - 1800, 2, 'green'); // not overdue
+
+        // Bob: 1 active task in Beta, 1 closed task in Alpha; Bob task 201 is blocked by Alice task 101
+        $this->insertTask(201, 'Bob B1', 20, 200, 6, 1, $now + 86400, $now - 900, 1, 'red'); // active
+        $this->insertTask(202, 'Bob A1 closed', 10, 100, 6, 0, 0, $now - 7200, 1, 'yellow'); // closed
+
+        // Task in project 30 (outside portfolio) — must not appear
+        $this->insertTask(301, 'Outside', 30, 0, 5, 1, 0, $now - 100, 1, 'blue');
+
+        // Alice task 101 blocks Bob task 201
+        $this->insertLink(77, 'blocks', 'is blocked by');
+        $this->insertTaskLink(101, 201, 77);
+
+        $result = $this->model->getWorkload(1);
+
+        $this->assertIsArray($result['users']);
+        $this->assertCount(2, $result['users']);
+
+        // Users sorted by name: Alice Adams < Bob Brown
+        $alice = $result['users'][0];
+        $bob = $result['users'][1];
+
+        $this->assertSame(5, (int) $alice['user_id']);
+        $this->assertSame('alice', (string) $alice['username']);
+        $this->assertSame('Alice Adams', (string) $alice['name']);
+        $this->assertSame(2, (int) $alice['task_count']);         // 101, 102
+        $this->assertSame(2, (int) $alice['active_task_count']);
+        $this->assertSame(1, (int) $alice['overdue_task_count']); // 101 is overdue
+        $this->assertSame(0, (int) $alice['blocked_task_count']); // Alice tasks not blocked
+
+        $this->assertSame(6, (int) $bob['user_id']);
+        $this->assertSame('Bob Brown', (string) $bob['name']);
+        $this->assertSame(2, (int) $bob['task_count']);            // 201, 202
+        $this->assertSame(1, (int) $bob['active_task_count']);     // only 201 is active
+        $this->assertSame(0, (int) $bob['overdue_task_count']);    // 201 not overdue
+        $this->assertSame(1, (int) $bob['blocked_task_count']);    // 201 blocked by 101
+
+        // Alice has tasks in project Alpha only
+        $aliceProjects = $alice['projects'];
+        $this->assertCount(1, $aliceProjects);
+        $this->assertSame(10, (int) $aliceProjects[0]['project_id']);
+        $this->assertSame('Alpha', (string) $aliceProjects[0]['project_name']);
+        $this->assertSame(2, (int) $aliceProjects[0]['task_count']);
+        $this->assertSame(2, (int) $aliceProjects[0]['active_task_count']);
+
+        // Bob has tasks in both Alpha (closed) and Beta (active)
+        $bobProjectIds = array_map(static fn (array $p): int => (int) $p['project_id'], $bob['projects']);
+        sort($bobProjectIds);
+        $this->assertSame([10, 20], $bobProjectIds);
+
+        // Unassigned bucket should be empty
+        $this->assertSame(0, (int) $result['unassigned']['task_count']);
+    }
+
+    public function testGetWorkloadGroupsUnassignedTasksSeparately(): void
+    {
+        $now = time();
+
+        $this->insertPortfolio(1, 'Unassigned Portfolio');
+        $this->insertProject(10, 'Alpha');
+        $this->insertPortfolioProject(1, 10, 1);
+        $this->insertColumn(100, 10, 'Backlog');
+        $this->insertUser(5, 'alice', 'Alice Adams');
+
+        // Assigned task (owner_id=5)
+        $this->insertTask(101, 'Assigned', 10, 100, 5, 1, 0, $now - 3600, 1, 'blue');
+
+        // Unassigned tasks (owner_id=0): 1 active, 1 overdue
+        $this->insertTask(102, 'Unassigned active', 10, 100, 0, 1, $now + 86400, $now - 1800, 1, 'green');
+        $this->insertTask(103, 'Unassigned overdue', 10, 100, 0, 1, $now - 86400, $now - 900, 1, 'red');
+
+        $result = $this->model->getWorkload(1);
+
+        // Users list has only Alice; no entry for owner_id=0
+        $this->assertCount(1, $result['users']);
+        $this->assertSame(5, (int) $result['users'][0]['user_id']);
+        $this->assertSame(1, (int) $result['users'][0]['task_count']);
+
+        // Unassigned bucket has both tasks
+        $unassigned = $result['unassigned'];
+        $this->assertSame(2, (int) $unassigned['task_count']);
+        $this->assertSame(2, (int) $unassigned['active_task_count']);
+        $this->assertSame(1, (int) $unassigned['overdue_task_count']); // task 103 is overdue
+        $this->assertSame(0, (int) $unassigned['blocked_task_count']);
+
+        // Unassigned has project breakdown
+        $this->assertCount(1, $unassigned['projects']);
+        $this->assertSame(10, (int) $unassigned['projects'][0]['project_id']);
+        $this->assertSame('Alpha', (string) $unassigned['projects'][0]['project_name']);
+        $this->assertSame(2, (int) $unassigned['projects'][0]['task_count']);
+
+        // user_id/username/name keys must NOT be present in unassigned bucket
+        $this->assertArrayNotHasKey('user_id', $unassigned);
+        $this->assertArrayNotHasKey('username', $unassigned);
+        $this->assertArrayNotHasKey('name', $unassigned);
+    }
+
     /**
      * @param array<string, mixed> $overrides
      */
@@ -622,7 +999,8 @@ class PortfolioTaskModelTest extends TestCase
         int $dateDue,
         int $dateCreation,
         int $priority,
-        string $colorId
+        string $colorId,
+        int $dateCompleted = 0
     ): void {
         $this->pdo->prepare(
             'INSERT INTO tasks (
@@ -638,7 +1016,8 @@ class PortfolioTaskModelTest extends TestCase
                 score,
                 color_id,
                 category_id,
-                swimlane_id
+                swimlane_id,
+                date_completed
             ) VALUES (
                 :id,
                 :title,
@@ -652,7 +1031,8 @@ class PortfolioTaskModelTest extends TestCase
                 :score,
                 :color_id,
                 :category_id,
-                :swimlane_id
+                :swimlane_id,
+                :date_completed
             )'
         )->execute([
             ':id' => $id,
@@ -668,6 +1048,7 @@ class PortfolioTaskModelTest extends TestCase
             ':color_id' => $colorId,
             ':category_id' => 0,
             ':swimlane_id' => 0,
+            ':date_completed' => $dateCompleted,
         ]);
     }
 
@@ -744,6 +1125,29 @@ class PortfolioTaskModelTest extends TestCase
             ':task_id' => $taskId,
             ':opposite_task_id' => $oppositeTaskId,
             ':link_id' => $linkId,
+        ]);
+    }
+
+    private function insertActivity(
+        int $id,
+        int $projectId,
+        int $taskId,
+        string $eventName,
+        int $creatorId,
+        int $dateCreation,
+        string $data
+    ): void {
+        $this->pdo->prepare(
+            'INSERT INTO project_activities (id, project_id, task_id, event_name, creator_id, date_creation, data)
+             VALUES (:id, :project_id, :task_id, :event_name, :creator_id, :date_creation, :data)'
+        )->execute([
+            ':id' => $id,
+            ':project_id' => $projectId,
+            ':task_id' => $taskId,
+            ':event_name' => $eventName,
+            ':creator_id' => $creatorId,
+            ':date_creation' => $dateCreation,
+            ':data' => $data,
         ]);
     }
 }

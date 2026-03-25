@@ -1,0 +1,185 @@
+{
+  "project": "Kanboard Portfolio Plugin — Post-Release Remediation",
+  "branchName": "ralph/post-release-remediation",
+  "description": "Fix bugs, UX defects, and add features identified during initial production testing of the Portfolio plugin (v1.17.0). Covers critical flag persistence, board layout, filter/dashboard compactness, critical path flow, timeline improvements, movable board cards, and Gantt view.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Fix critical flag and position not persisted when adding task to milestone",
+      "description": "MilestoneController::addTask() calls Request::getValue() multiple times, but Kanboard's getValue() internally calls getValues() which consumes the CSRF token on the first call. Subsequent calls return null. Change to call getValues() once and read all fields from the result. Apply same pattern to removeTask().",
+      "acceptanceCriteria": [
+        "addTask() calls getValues() once and reads task_id, is_critical, position from the result array",
+        "removeTask() calls getValues() once and reads task_id from the result array",
+        "Adding a task with 'Mark as Critical' checked shows 'Yes' in the Critical column on the milestone detail page",
+        "Position value is correctly persisted when specified",
+        "PHP lint passes and all existing tests pass"
+      ],
+      "priority": 1,
+      "status": "done",
+      "dependsOn": [],
+      "notes": "Root cause: Kanboard Request::getValues() validates+consumes CSRF token on first call. Files: Controller/MilestoneController.php lines 231-233, 252.",
+      "startedAt": "2026-03-23T22:20:35.963Z",
+      "updatedAt": "2026-03-23T22:38:42.914Z",
+      "completedAt": "2026-03-23T22:38:42.914Z"
+    },
+    {
+      "id": "US-002",
+      "title": "Update Plugin.php homepage URL to match actual repository",
+      "description": "getPluginHomepage() returns 'https://github.com/geekmuse/kanboard-plugin-portfolio' but the actual repository is 'kanboard-plugin-portfolio-management'. Update to correct URL.",
+      "acceptanceCriteria": [
+        "getPluginHomepage() returns the correct GitHub repository URL matching the git remote origin",
+        "PHP lint passes"
+      ],
+      "priority": 2,
+      "status": "done",
+      "dependsOn": [],
+      "notes": "Files: Plugin.php line 371.",
+      "startedAt": "2026-03-23T22:38:43.372Z",
+      "updatedAt": "2026-03-23T22:42:24.616Z",
+      "completedAt": "2026-03-23T22:42:24.616Z"
+    },
+    {
+      "id": "US-003",
+      "title": "Make task list filters display in a horizontal grid layout",
+      "description": "The filter form on the portfolio tasks page stacks each filter vertically (one per row), consuming 2/3 of the page before the task table. Change to a responsive CSS grid so filters flow left-to-right and wrap naturally.",
+      "acceptanceCriteria": [
+        "The .portfolio-task-filter-form uses CSS grid with repeat(auto-fill, minmax(180px, 1fr))",
+        "Filters occupy 2-3 rows maximum on a 1280px-wide screen instead of 8+ rows",
+        "Filter labels and inputs remain properly associated and usable",
+        "Layout degrades gracefully on narrow screens (fewer columns)",
+        "The submit button row spans the full width below the filter grid",
+        "PHP lint passes and all existing tests pass"
+      ],
+      "priority": 3,
+      "status": "done",
+      "dependsOn": [],
+      "notes": "Files: Template/portfolio/tasks.php, Asset/css/portfolio.css.",
+      "startedAt": "2026-03-23T22:42:25.226Z",
+      "updatedAt": "2026-03-23T22:50:24.166Z",
+      "completedAt": "2026-03-23T22:50:24.166Z"
+    },
+    {
+      "id": "US-004",
+      "title": "Make dashboard overview metrics display as a compact grid",
+      "description": "The portfolio dashboard renders overview metrics as a vertical <ul> list with one metric per line. Replace with a responsive grid of stat cards showing label and value compactly.",
+      "acceptanceCriteria": [
+        "Overview metrics render as a CSS grid with repeat(auto-fill, minmax(150px, 1fr))",
+        "Each metric is a compact card showing label and bold value",
+        "Metrics occupy 2 rows maximum on a typical screen instead of 8 lines",
+        "Layout remains readable on narrow screens",
+        "PHP lint passes and all existing tests pass"
+      ],
+      "priority": 4,
+      "status": "done",
+      "dependsOn": [],
+      "notes": "Files: Template/portfolio/show.php, Asset/css/portfolio.css.",
+      "startedAt": "2026-03-23T22:50:24.752Z",
+      "updatedAt": "2026-03-23T22:55:30.892Z",
+      "completedAt": "2026-03-23T22:55:30.892Z"
+    },
+    {
+      "id": "US-005",
+      "title": "Show portfolio name for milestones in the timeline Project column",
+      "description": "Milestones are scoped to portfolios, not projects. The timeline table has a 'Project' column but milestone rows show a blank cell because project_name is set to empty string. Display the portfolio name for milestone items instead.",
+      "acceptanceCriteria": [
+        "Milestone rows in the timeline table show the portfolio name in the Project column",
+        "Task rows continue to show their project name",
+        "The buildTimelineData() method receives and uses the portfolio name for milestone items",
+        "PHP lint passes and all existing tests pass"
+      ],
+      "priority": 5,
+      "status": "done",
+      "dependsOn": [],
+      "notes": "Files: Controller/PortfolioViewController.php buildTimelineData(), Template/portfolio/timeline.php.",
+      "startedAt": "2026-03-23T22:55:31.384Z",
+      "updatedAt": "2026-03-23T22:59:45.449Z",
+      "completedAt": "2026-03-23T22:59:45.449Z"
+    },
+    {
+      "id": "US-006",
+      "title": "Fix board view to stack cards vertically within swimlane columns",
+      "description": "The board view renders columns (Backlog, In Progress, Done) correctly side-by-side, but cards within each column stack horizontally instead of vertically. Fix CSS so cards stack top-to-bottom within each column like a standard Kanban board.",
+      "acceptanceCriteria": [
+        "Board columns display side-by-side (left-to-right) as a Kanban layout",
+        "Cards within each column stack vertically (top-to-bottom)",
+        "Each card is full-width within its column",
+        "Cards have visible separation (margin/gap between them)",
+        "Layout is responsive — columns wrap on narrow screens",
+        "PHP lint passes and all existing tests pass"
+      ],
+      "priority": 6,
+      "status": "done",
+      "dependsOn": [],
+      "notes": "Files: Asset/css/portfolio.css (.portfolio-board, .portfolio-board-column, .portfolio-board-card), Template/portfolio/board.php.",
+      "startedAt": "2026-03-23T22:59:46.145Z",
+      "updatedAt": "2026-03-23T23:05:25.945Z",
+      "completedAt": "2026-03-23T23:05:25.945Z"
+    },
+    {
+      "id": "US-007",
+      "title": "Render critical path as horizontal left-to-right flow with wrapping",
+      "description": "The critical path currently renders as a vertical ordered list with down-arrow connectors. Change to a horizontal flex layout where nodes flow left-to-right with right-arrow connectors, wrapping to the next row when the line fills.",
+      "acceptanceCriteria": [
+        "Critical path items display left-to-right with → connectors between them",
+        "Items wrap to the next row naturally when the container width is exceeded",
+        "Each item is a compact card showing position, task ID, title, project, and status",
+        "Connectors are not shown after the last item on each row",
+        "Closed tasks are visually distinguished (dimmed or strikethrough)",
+        "PHP lint passes and all existing tests pass"
+      ],
+      "priority": 7,
+      "status": "done",
+      "dependsOn": [],
+      "notes": "Files: Template/dependency/critical_path.php, Asset/css/portfolio.css.",
+      "startedAt": "2026-03-23T23:05:26.754Z",
+      "updatedAt": "2026-03-23T23:11:41.261Z",
+      "completedAt": "2026-03-23T23:11:41.261Z"
+    },
+    {
+      "id": "US-008",
+      "title": "Add drag-and-drop card movement between board columns",
+      "description": "Add the ability to drag task cards between board columns to change their Kanboard column assignment. Use HTML5 drag-and-drop or a lightweight library. Create an AJAX endpoint that calls taskModificationModel->update() to persist the column change through Kanboard's core API.",
+      "acceptanceCriteria": [
+        "Task cards are draggable between board columns using mouse drag",
+        "Dropping a card on a different column moves it visually and persists the column change",
+        "A new AJAX endpoint in PortfolioViewController or a dedicated controller handles the column update",
+        "Column changes go through Kanboard's taskModificationModel->update() to trigger events and respect permissions",
+        "Cards that fail to update show an error flash message and revert to original position",
+        "The board re-renders column task counts after a successful move",
+        "PHP lint passes and all existing tests pass"
+      ],
+      "priority": 8,
+      "status": "done",
+      "dependsOn": [
+        "US-006"
+      ],
+      "notes": "Uses Kanboard's taskModificationModel->update() which writes to core tasks table through the proper API. Requires JS for drag-and-drop + PHP AJAX endpoint. Files: Controller/PortfolioViewController.php (new moveTask action), Template/portfolio/board.php, Asset/js/ (new or updated board JS), Plugin.php (new route).",
+      "startedAt": "2026-03-23T23:11:41.877Z",
+      "updatedAt": "2026-03-23T23:25:02.539Z",
+      "completedAt": "2026-03-23T23:25:02.539Z"
+    },
+    {
+      "id": "US-009",
+      "title": "Build Gantt chart view with D3.js duration bars and dependency arrows",
+      "description": "Replace the current dot-marker timeline with a proper Gantt chart using the bundled D3.js library. Render horizontal bars representing task duration (date_started or date_creation → date_due) and milestone target dates. Show dependency arrows between linked tasks.",
+      "acceptanceCriteria": [
+        "A new Gantt view is accessible from the portfolio sidebar navigation",
+        "Tasks render as horizontal bars spanning from start date to due date",
+        "Milestones render as diamond markers at their target date",
+        "Task dependency links are shown as arrows between bars",
+        "The chart has a horizontal time axis with date labels",
+        "Items are grouped or colored by project for cross-project visibility",
+        "The existing timeline table view is preserved as a separate view or tab",
+        "D3.js is used for rendering (already bundled)",
+        "PHP lint passes and all existing tests pass"
+      ],
+      "priority": 9,
+      "status": "done",
+      "dependsOn": [],
+      "notes": "Large feature. Controller needs to supply start dates (date_started or date_creation) and dependency edges alongside existing timeline data. New JS file for Gantt rendering. Files: Controller/PortfolioViewController.php (new gantt action or extended timeline), Template/portfolio/gantt.php (new), Asset/js/portfolio-gantt.js (rewrite), Asset/css/portfolio.css, Plugin.php (new route + sidebar).",
+      "startedAt": "2026-03-23T23:25:03.168Z",
+      "updatedAt": "2026-03-23T23:37:02.680Z",
+      "completedAt": "2026-03-23T23:37:02.680Z"
+    }
+  ]
+}

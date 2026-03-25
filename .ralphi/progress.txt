@@ -1,182 +1,278 @@
-## 2026-03-23 — US-003
-Session: iter-5f381b80 / loop-9e860edc iteration 3
-Review Outcome: PASS
-Trajectory: ON_TRACK
-Trajectory Notes: N/A
-Corrective Plan: N/A
-- Added CSS grid layout to `.portfolio-task-filter-form` so the 8 filter rows flow left-to-right using `repeat(auto-fill, minmax(180px, 1fr))`, collapsing to fewer columns on narrow screens.
-- Added `.portfolio-form-row` styles (flex column direction, label + input stacking) and `.portfolio-form-actions` with `grid-column: 1 / -1` to span the submit button row full width.
-- No template changes were needed — existing `<div class="portfolio-form-row">` wrappers in `tasks.php` already provided correct grid-cell granularity; `<input type="hidden">` is `display:none` and does not create a visual grid cell.
-- Files changed: `Asset/css/portfolio.css`, `.ralphi/prd.json`, `.ralphi/progress.txt`
-- **Learnings for future iterations:**
-  - CSS-only layout fixes (no PHP behavior change) require no new tests.
-  - `input[type="hidden"]` elements have `display:none` from the user-agent stylesheet and are therefore not grid items — safe to leave in-form without wrapping.
-  - Pre-existing PHPCS line-length warnings across many files do not block commits.
----
-
-## 2026-03-23 — US-004
-Session: iter-e0de97ae / loop-9e860edc iteration 4
-Review Outcome: PASS
-Trajectory: ON_TRACK
-Trajectory Notes: N/A
-Corrective Plan: N/A
-- Replaced the vertical `<ul>/<li>` metrics list in `Template/portfolio/show.php` with a `<div class="portfolio-metrics-grid">` containing 8 `<div class="portfolio-metric-card">` cards, each with a `portfolio-metric-label` span and `portfolio-metric-value` bold value.
-- Added `.portfolio-metrics-grid` (CSS grid, `repeat(auto-fill, minmax(150px, 1fr))`, 0.75rem gap) and `.portfolio-metric-card`, `.portfolio-metric-label`, `.portfolio-metric-value` rules to `Asset/css/portfolio.css`.
-- 8 cards fit in 1 row at 1280px (≥150px × 8 = 1200px); at worst 2 rows — satisfies "2 rows max" criterion.
-- No PHP behavior change; no new tests needed (CSS-only layout, same pattern as US-003).
-- Files changed: `Template/portfolio/show.php`, `Asset/css/portfolio.css`, `.ralphi/prd.json`, `.ralphi/progress.txt`
-- **Learnings for future iterations:**
-  - CSS-only layout refactors (no PHP logic change) need no new tests — confirmed again here.
-  - `repeat(auto-fill, minmax(150px, 1fr))` with 8 items fits comfortably in 1–2 rows on standard 1280px screens.
----
-
-## 2026-03-23 — US-005
-Session: iter-0a257061 / loop-9e860edc iteration 5
-Review Outcome: PASS
-Trajectory: ON_TRACK
-Trajectory Notes: N/A
-Corrective Plan: N/A
-- Changed `buildTimelineData()` to accept a third `string $portfolioName = ''` parameter.
-- In `timeline()`, extracted `$portfolioName = (string) ($portfolio['name'] ?? '')` and passed it to `buildTimelineData()`.
-- Milestone items now populate `'project_name' => $portfolioName` instead of the previous empty string.
-- Task items remain unchanged: `'project_name' => (string) ($task['project_name'] ?? '')`.
-- Template (`Template/portfolio/timeline.php`) required no changes — it already rendered `$item['project_name']` for both types.
-- Added two assertions to the timeline controller test: one asserting the escaped portfolio name appears in rendered HTML (milestone Project column), one asserting the task's project name still appears.
-- Files changed: `Controller/PortfolioViewController.php`, `Test/Controller/PortfolioViewControllerTest.php`, `.ralphi/prd.json`, `.ralphi/progress.txt`
-- **Learnings for future iterations:**
-  - When `buildTimelineData()` already renders both item types through the same template field, the fix is entirely in the controller — no template change needed.
-  - Default parameter values (`string $portfolioName = ''`) are PHPStan-clean for optional enrichment parameters with backward-compatible call sites.
----
-
-## 2026-03-23 — US-006
-Session: iter-984d76a0 / loop-9e860edc iteration 6
-Review Outcome: PASS
-Trajectory: ON_TRACK
-Trajectory Notes: N/A
-Corrective Plan: N/A
-- Root cause: `.portfolio-board-column` had no explicit flex display, so the browser fell back to whatever formatting Kanboard's base CSS applied — causing cards to stack horizontally in some contexts.
-- Fix: added `display: flex; flex-direction: column; gap: 0.5rem;` to `.portfolio-board-column`, making each column an explicit flex column container so cards always stack vertically.
-- Removed the now-redundant `margin-bottom: 0.5rem;` from `.portfolio-board-card` — `gap` on the column handles spacing cleanly between all flex items (h3, p, articles).
-- No PHP behavior change, no template changes needed, no new tests required (CSS-only layout fix, same pattern as US-003 and US-004).
-- Files changed: `Asset/css/portfolio.css`, `.ralphi/prd.json`, `.ralphi/progress.txt`
-- **Learnings for future iterations:**
-  - When a parent is `display: flex`, its children become flex items, but those children are NOT automatically flex containers themselves — always add `display: flex; flex-direction: column;` to a column container explicitly to guarantee vertical card stacking.
-  - Replacing `margin-bottom` on cards with `gap` on the container is cleaner — it avoids trailing space after the last item and centralises spacing control in the column rule.
----
-
-## 2026-03-23 — US-007
-Session: iter-d9fae084 / loop-9e860edc iteration 7
-Review Outcome: PASS
-Trajectory: ON_TRACK
-Trajectory Notes: N/A
-Corrective Plan: N/A
-- Replaced the vertical `<ol>/<li>` critical-path layout with a horizontal `<div class="portfolio-critical-path-flow">` flex container (`display:flex; flex-wrap:wrap; align-items:center; gap:0.5rem`).
-- Each task is now a compact `<div class="portfolio-critical-path-node">` card showing: step position badge, `#id title` (bold, strikethrough when closed), and a meta line with project, assignee, and "Closed"/"N downstream" annotations.
-- `→` arrow spans are emitted between consecutive nodes in PHP (`$index < $lastIndex`), so the last node has no trailing arrow.
-- Closed nodes use `portfolio-critical-path-node--closed` modifier: `opacity:0.65` (dimmed) + `text-decoration:line-through; color:#6b7280` on title.
-- Old CSS classes removed: `.portfolio-critical-path-list`, `.portfolio-critical-path-item`, `.portfolio-critical-path-item--closed`, `.portfolio-critical-path-item-header`, `.portfolio-critical-path-position`, `.portfolio-critical-path-task-title`, `.portfolio-critical-path-item-meta`, `.portfolio-critical-path-connector`.
-- New CSS classes added: `.portfolio-critical-path-flow`, `.portfolio-critical-path-node`, `.portfolio-critical-path-node--closed`, `.portfolio-critical-path-pos`, `.portfolio-critical-path-node-body`, `.portfolio-critical-path-node-title`, `.portfolio-critical-path-node-meta`, `.portfolio-critical-path-arrow`.
-- No PHP behavior change; no new tests needed (CSS-only layout refactor, same pattern as US-003/004/006).
-- Files changed: `Template/dependency/critical_path.php`, `Asset/css/portfolio.css`, `.ralphi/prd.json`, `.ralphi/progress.txt`
-- **Learnings for future iterations:**
-  - Pure CSS flex-wrap cannot detect which flex item is last on a given wrapped row — hiding connectors "after the last item on each row" requires JS or accepting that trailing-row arrows show only on the last item overall (PHP-side guard: `$index < $lastIndex`).
-  - `t('%d downstream', $downstreamCount)` is the correct pattern for numeric interpolation in Kanboard's `t()` (passes through sprintf; `%d` is a valid format specifier).
-  - BEM modifier pattern for closed/inactive items: `portfolio-xxx--closed` on the node, then target the title with `.portfolio-xxx--closed .portfolio-xxx-title { text-decoration: line-through; }` — keeps the modifier and sub-element rules cleanly separated.
----
-
-## 2026-03-23 — US-008
-Session: iter-bbff2e52 / loop-9e860edc iteration 8
-Review Outcome: PASS
-Trajectory: ON_TRACK
-Trajectory Notes: N/A
-Corrective Plan: N/A
-- Added `moveTask()` AJAX endpoint to `PortfolioViewController` that reads `task_id`+`column_id` from `getValues()`, validates portfolio existence, and calls `taskModificationModel->update()` to persist the column change through Kanboard's core API.
-- Registered `/portfolio/:portfolio_id/board/move-task` route in `Plugin.php`.
-- Updated `Template/portfolio/board.php`: added `draggable="true"` + `data-task-id` on cards; `data-column-id` on columns; `data-move-task-url` + `data-move-error-label` on the board container; hidden `portfolio-board-csrf` div with `$this->form->csrf()` for AJAX; `.portfolio-board-column-count` span for JS count updates; per-page `$this->asset->js(...)` loading of `portfolio-board.js`.
-- Created `Asset/js/portfolio-board.js`: pure HTML5 drag-and-drop (ES5-compatible), optimistic DOM move on drop, XHR POST with CSRF token + FormData, revert to source column on failure, 5-second error banner injected above the board.
-- Added CSS for drag-and-drop visual states: `.portfolio-board-card--dragging` (opacity+shadow), `.portfolio-board-column--drop-target` (blue dashed border + tinted background), `.portfolio-board-error` margin.
-- Updated `ApiRegistrationTest.php` to add the new route to expected array and bump slice count from 16→17.
-- Added 5 new tests to `PortfolioViewControllerTest.php`: `testMoveTaskSuccessfullyUpdatesColumnViaTaskModificationModel`, `testMoveTaskReturnsErrorForInvalidTaskId`, `testMoveTaskReturnsErrorWhenPortfolioNotFound`, `testMoveTaskReturnsErrorWhenModelUpdateFails`, `testBoardTemplateRendersWithDragAndDropAttributes`.
-- Files changed: `Controller/PortfolioViewController.php`, `Plugin.php`, `Template/portfolio/board.php`, `Asset/js/portfolio-board.js` (new), `Asset/css/portfolio.css`, `Test/Controller/PortfolioViewControllerTest.php`, `Test/Plugin/ApiRegistrationTest.php`, `.ralphi/prd.json`, `.ralphi/progress.txt`
-- **Learnings for future iterations:**
-  - `$this->response->json(array $data)` is valid on Kanboard's Response object — used in `DependencyController::graphData()` — safe to use in other AJAX endpoints.
-  - For AJAX CSRF: `$this->request->getValues()` validates CSRF internally; if the CSRF token is missing or invalid, `getValues()` returns an empty array. The `task_id`/`column_id` validation then catches the empty array, so no explicit CSRF check is needed in AJAX handlers.
-  - HTML5 DnD + XHR + FormData is the cleanest ES5-compatible AJAX approach — no jQuery AJAX, no fetch(), no build step required.
-  - To expose a translated PHP error string to JS without a build step, put it as a `data-*` attribute on the container element in the template (e.g., `data-move-error-label="<?= $this->text->e(t('...')) ?>"`).
-  - `NodeList.forEach()` is NOT ES5 — use indexed for-loop over querySelectorAll results.
-  - Route registration tests (`ApiRegistrationTest::testRegistersPortfolioCrudRoutes`) assert the exact ordered route list with `array_slice()`; adding a route requires updating both the expected array AND the slice count.
----
-
-## 2026-03-23 — US-009
-Session: iter-67c4bccb / loop-9e860edc iteration 9
-Review Outcome: PASS
-Trajectory: ON_TRACK
-Trajectory Notes: N/A
-Corrective Plan: N/A
-- Added `gantt()` controller action to `PortfolioViewController` that fetches tasks (all statuses), milestones, and dependency edges, builds a structured JSON payload, and renders a new `Portfolio:portfolio/gantt` template.
-- Added private `buildGanttData()` method: processes tasks (using `date_started` → `date_creation` → `date_due` fallback for start date), milestones (with portfolio_name populated), dependency edges (from `dependencyModel->getDependencies()`), and unique sorted project names.
-- Added private `getPortfolioDependencies()` helper with defensive `is_object`/`method_exists` guards and `Throwable` catch.
-- Created `Template/portfolio/gantt.php`: shows empty-state message when `has_items` is false; otherwise renders `<div data-gantt="...">` and loads D3 + portfolio-gantt.js per-page via `$this->asset->js()`, then calls `window.PortfolioGantt.renderGantt(...)`.
-- Added "Gantt Chart" sidebar link (`$active === 'gantt'`) to `Template/portfolio/_sidebar.php` immediately after Timeline.
-- Rewrote `Asset/js/portfolio-gantt.js`: kept existing `render()` dot-marker function intact (used by timeline.php); added new `renderGantt(container, data)` D3 v7 function that renders horizontal task bars, diamond milestone markers, cubic Bézier dependency arrows with arrowhead markers, per-row labels, and a bottom time axis. Colors assigned per project using a 10-color fixed palette.
-- Added Gantt CSS to `Asset/css/portfolio.css`: `.portfolio-gantt-chart`, `.portfolio-gantt-svg`, `.portfolio-gantt-grid-line`, `.portfolio-gantt-axis`, `.portfolio-gantt-row-label`, `.portfolio-gantt-bar`, `.portfolio-gantt-milestone-diamond`, `.portfolio-gantt-milestone-marker`, `.portfolio-gantt-dep-edge`, `.portfolio-gantt-arrow-head`.
-- Added route `/portfolio/:portfolio_id/gantt` → `PortfolioViewController::gantt()` in `Plugin.php`.
-- Updated `ApiRegistrationTest::testRegistersPortfolioCrudRoutes` to include the new gantt route and bump `array_slice(..., 0, 18)`.
-- Added `PortfolioViewFakeDependencyModel` stub to test harness; updated `buildServices()` with an optional `$dependencyModel` parameter.
-- Added 4 new controller tests: `testPortfolioGanttRendersChartWithD3Assets`, `testPortfolioGanttBuildsJsonWithTasksAndMilestonesAndEdges`, `testPortfolioGanttRedirectsWhenPortfolioNotFound`, `testPortfolioGanttShowsEmptyStateWhenNoItemsHaveDueDates`.
-- Files changed: `Controller/PortfolioViewController.php`, `Template/portfolio/gantt.php` (new), `Template/portfolio/_sidebar.php`, `Asset/js/portfolio-gantt.js`, `Asset/css/portfolio.css`, `Plugin.php`, `Test/Controller/PortfolioViewControllerTest.php`, `Test/Plugin/ApiRegistrationTest.php`, `.ralphi/prd.json`, `.ralphi/progress.txt`
-- **Learnings for future iterations:**
-  - JSON_HEX_TAG encodes `<` as `\u003C` and `>` as `\u003E` in the JSON string. When that JSON string is then HTML-attribute-escaped by `$this->text->e()`, the backslash and `u003C` are not HTML special chars — they remain as-is. So XSS tests should check for `\u003C` NOT for `&lt;` inside data attributes.
-  - D3 is loaded as a global `d3` object from the bundled `d3.v7.min.js` — no import/require needed; just load the script before the consuming script.
-  - Load D3 per-page via `$this->asset->js()` in the specific template (not globally via `hook->on`) to avoid double-execution on every Kanboard page.
-  - The `dependencyModel->getDependencies($portfolioId, false)` call with `$crossProjectOnly = false` returns all dependency edges including same-project ones — better for Gantt arrows.
-  - For start-date fallback logic (date_started → date_creation → date_due), always clamp `$startDate = min($startDate, $dueDate)` to avoid reversed bars.
-  - When reusing a JS module's public API, add new methods to the IIFE's `window.X = { ... }` export object rather than duplicating the IIFE — keeps the dot-marker legacy `render()` intact while adding `renderGantt()`.
----
-
 ## Codebase Patterns
-- **REQUIRED READING**: Before writing any code each iteration, read `docs/references/kanboard-plugin-development-guidelines.md`. It contains authoritative agent feedback, known pitfalls, and hard-won patterns from previous work on this project. Do NOT commit or modify this file.
-- **POST forms — always use `getValues()` once**: `Request::getValue()` internally calls `getValues()` which validates and strips the CSRF token. Calling it multiple times means only the first call returns real data. Pattern: `$values = $this->request->getValues(); $field = (int)($values['field'] ?? 0);`
-- **PHPStan stubs** — `phpstan-kanboard-stubs.php` must declare `Kanboard\Controller\BaseController`, `Kanboard\Filter\BaseFilter`, and `Kanboard\Core\Filter\FilterInterface` for PHPStan to resolve the full type graph. Without them, every controller and filter file emits "unknown class" errors.
-- **Filter private properties** — never name a property `$container` in a class that extends `Kanboard\Core\Base`; it shadows the protected `$container` property. Use a distinct name like `$serviceContainer`.
-- **PHPCBF + manual** — PHPCBF auto-fixes multi-line-call indentation issues but cannot fix one-liner anonymous classes. Expand them to PSR-12 multi-line format manually before committing.
-- Add reusable, project-wide implementation patterns here.
+- Roadmap controller pattern: use `getPortfolioMilestones()` (milestoneModel) + `milestoneTaskModel->getTasks()` per milestone for start_date (min date_due). Delegate progress to `milestoneModel->getProgress()`. Compute health inline in `computeMilestoneHealth()` with fixed 7-day/80% thresholds (no config needed for roadmap health).
+- `json_encode(60.0)` without `JSON_PRESERVE_ZERO_FRACTION` produces `60` (integer) in JSON. `json_decode` then returns `int(60)`. In tests: use `assertEquals` (type-flexible) not `assertSame` when asserting percent/float values decoded from JSON.
+- Route registration test (`testRegistersPortfolioCrudRoutes`) uses `array_slice(..., 0, N)` — update N when adding routes. After US-008: N=20. roadmap route is at index 9 (after timeline, before gantt).
+- `PortfolioViewFakeMilestoneModel` now has a 2nd constructor param `$progressByMilestone = []` and a `getProgress(int $milestoneId, string $weightBy = 'count'): ?array` method. All existing tests omit the 2nd param safely.
+- `getWorkload()` uses the same accumulator-style pattern as `buildTaskDependencyStats()`: initialize per-owner_id sub-arrays once, then mutate with `++$accumulators[$ownerId]['field']`. PHPStan level 5 allows `++` on inferred-int fields in such arrays without explicit `@var` annotation.
+- For per-user project breakdowns in workload accumulators: extract `$ownerProjects = (array) $accumulators[$ownerId]['projects']`, modify it, then reassign back. PHPStan flags `is_array(...) ? ... : []` as always-true when the value was initialized as `[]` — use `(array) $value` cast instead.
+- API registration test name after US-006: `testRegistersAllThirtyOneJsonRpcMethods` (31 methods). Update name + expected array when adding new JSON-RPC methods.
+- `time_spent INTEGER NOT NULL DEFAULT 0` must be in the test tasks table DDL for workload tests that check `total_spent_hours`. `insertTask()` omits it (defaults to 0 from schema).
+- Workload unassigned bucket: after extracting from `$accumulators[0]`, unset `user_id`, `username`, `name` keys before returning — the API contract for unassigned omits user identity fields.
+- `buildEmptyWorkloadResult()` helper returns the canonical empty workload structure — reuse it in all early-return paths of `getWorkload()`.
+
+
+- For `git commit` to succeed when the pre-commit hook runs `ralphi check` + phpstan Docker (which takes ~46s), call `git commit` with `timeout: 300` in the Bash tool. Using the default 30s timeout causes the tool to report "Command timed out" even though the commit may be in progress.
+
+- `docker-phpstan.sh` requires `--memory-limit=512M` flag; the default 128M container limit causes a crash/timeout. Fixed in scripts/docker-phpstan.sh — always use the updated script.
+- `project_activities` table schema for tests: `id INTEGER PRIMARY KEY AUTOINCREMENT, project_id, task_id, event_name TEXT, creator_id INTEGER, date_creation INTEGER, data TEXT`. The defensive try/catch in `getActivity()` handles both missing-table and wrong-table-name cases.
+- `getActivity()` follows the same in-memory scan pattern as `buildFilteredTaskRows()`: fetch all rows from the table, filter by projectScope map, then sort/paginate. This is consistent cross-driver behavior without raw SQL JOINs or IN clauses.
+- API registration test name tracks method count: after US-004 it is `testRegistersAllThirtyJsonRpcMethods` (30 methods). Update name + expected array when adding new JSON-RPC methods.
+- GET forms in templates use `$this->url->href(...)` as action; in real Kanboard path-based routing preserves controller/action/plugin in the URL path, so form fields only need to carry non-routing params. Follow the same pattern as `Template/portfolio/tasks.php` filter form.
+- For MilestoneControllerFakeMilestoneModel: when extending `getProgress()` to accept `$weightBy`, add a separate `getProgressWeightByCalls: array<int, string>` so existing tests that assert `getProgressCalls` (milestone IDs) still pass.
+- `MilestoneController::getMilestoneProgress()` fallback array should mirror all keys returned by `MilestoneModel::getProgress()` (incl. `no_data`, `weight_by`, `score_*`, `time_*`) so `array_merge($fallback, $progress)` always produces a complete result regardless of what the model returns.
+- All model methods that delegate to dependencyModel use `resolveContainerService('dependencyModel')` + `is_object() && method_exists()` guard + `try/catch Throwable`. PHPStan level 5 is satisfied because `is_object()` narrows `mixed` to `object`.
+- The test harness for PortfolioTaskModel: create stub classes in the same file (PSR1.Classes.ClassDeclaration is relaxed for Test/), use in-memory SQLite with manual DDL in setUp(). Pass overrides via `createModel(['serviceKey' => $stub])`.
+- `insertTask()` in PortfolioTaskModelTest has an optional `$dateCompleted = 0` final parameter. All existing callers omit it safely (defaults to 0 via column DEFAULT 0).
+- Pre-existing PHPCS error in PortfolioViewControllerTest.php line 933 (inline anonymous class brace formatting) — fix on sight when editing that file.
+- API registration test is named `testRegistersAllTwentyNineJsonRpcMethods` (updated from 28). Update name + expected array when adding new JSON-RPC methods.
+- MilestoneModelTest tasks table needs `score INTEGER NOT NULL DEFAULT 0` and `time_estimated INTEGER NOT NULL DEFAULT 0` for weighted progress tests. PortfolioTaskModelTest tasks table needs `time_estimated INTEGER NOT NULL DEFAULT 0` for calculateMilestoneHealth to return time fields.
+- When extending MilestoneModel::getProgress() return array with new fields, all existing tests still pass because they check specific keys — new keys in the return array don't break assertions.
+- ConfigController getDefaultSettings/normalizeSubmittedSettings/getCurrentSettings follow a consistent pattern: add key to getDefaultSettings (int or string), getCurrentSettings handles generically, normalizeSubmittedSettings needs explicit normalization per key type.
+- Multi-line function declarations in PSR-12: `)` closing paren must be on the same line as `): ReturnType {` (i.e., `): void {` not `): void\n    {`).
 ---
+
+---
+
+## 2026-03-25 - US-009
+Session: iter-d0c9d6c3 / loop-cfe4d683
+Review Outcome: PASS
+Trajectory: ON_TRACK
+Trajectory Notes: N/A
+Corrective Plan: N/A
+- Added `renderRoadmap(container, data)` to `Asset/js/portfolio-gantt.js` — D3 v7 based, ES5-compatible
+- Each milestone renders as a horizontal bar from `start_date` to `end_date` on a time scale
+- Bar rendering: background rect (22% opacity), progress fill rect (75% opacity), border outline, percent label inside when wide enough
+- Health colors: `#22c55e` on_track, `#eab308` at_risk, `#ef4444` overdue
+- Left label panel: milestone name (truncated at 24 chars with ellipsis) + health status dot per row
+- Vertical today line (dashed red, `stroke-dasharray: 5 4`) + "Today" text label
+- Click navigation via `.datum({ id })` binding on transparent hit rect → `?controller=MilestoneController&action=show&milestone_id=X&plugin=Portfolio`
+- D3 `axisBottom(xScale)` with auto-tick density (`Math.min(8, floor(innerW / 80))`) for month/week labels
+- Responsive: `Math.max(container.offsetWidth || 900, 500)` sets container width
+- DOMContentLoaded handler added: reads `portfolio-roadmap-chart` element, parses `data-roadmap` attribute, calls `renderRoadmap()`
+- `window.PortfolioGantt.renderRoadmap` exposed in public API
+- Added roadmap legend HTML to `Template/portfolio/roadmap.php`: On Track / At Risk / Overdue dots + Today dashed line indicator
+- Added `portfolio-roadmap-` CSS classes to `Asset/css/portfolio.css`: chart, SVG, grid lines, axis, today line/label, bar variants, label, health dot, legend/legend-item/legend-dot/legend-today
+- Added `'Today' => 'Today'` to `Locale/en_US/translations.php` (legend label)
+- Test count: 172 (unchanged — US-009 is client-side only, no PHP changes); all 172 pass, 978 assertions
+- Files changed: `Asset/js/portfolio-gantt.js`, `Asset/css/portfolio.css`, `Template/portfolio/roadmap.php`, `Locale/en_US/translations.php`
+- **Learnings for future iterations:**
+  - ES5 click handlers in D3 for-loops: use `.datum({ id: ms.id, ... })` on the hit element and `function(event, d) { ... d.id ... }` in the handler — avoids closure-captured var issues from loop variables
+  - D3 v7 event handlers: `(event, datum)` signature; `event` is first, `datum` is second
+  - Clip path IDs in SVG must be unique per page — use element-specific IDs (e.g., `roadmap-clip` vs `gantt-clip`) when multiple D3 charts coexist on the same page
+  - For transparent click areas on top of visual elements: use `attr('fill', 'transparent')` (not `attr('opacity', 0)`) so the element still captures mouse events
+  - Legend HTML in templates: use `<span>` elements with CSS dots (not SVG) for simpler portable markup; translate label text via `t()` in PHP
+---
+
+## 2026-03-25 - US-008
+Session: iter-edcd8a54 / loop-cfe4d683
+Review Outcome: PASS
+Trajectory: ON_TRACK
+Trajectory Notes: N/A
+Corrective Plan: N/A
+- Added `roadmap()` public action to `PortfolioViewController` — fetches portfolio, calls `getPortfolioMilestones()`, builds roadmap items, renders template
+- Added `buildRoadmapItems(array $milestones): array` private method — filters milestones without target_date, queries milestoneTaskModel for each (start_date = min date_due, task_count = count), gets percent from `milestoneModel->getProgress()`, computes health via `computeMilestoneHealth()`
+- Added `computeMilestoneHealth(float $percent, int $targetDate, int $now): string` private method — returns 'overdue', 'at_risk', or 'on_track' using fixed 7-day/80% thresholds
+- Each roadmap item: id, name, color_id, start_date (earliest task due date or falls back to target_date), end_date (target_date), percent, health, task_count
+- Registered route `/portfolio/:portfolio_id/roadmap` → `PortfolioViewController::roadmap()` in Plugin.php (after timeline, before gantt; index 9)
+- Access covered by existing `'PortfolioViewController', '*', Role::APP_USER` — no new access map entry
+- Added 'Roadmap' link to `Template/portfolio/_sidebar.php` after Timeline entry (active when `$sidebar_active === 'roadmap'`)
+- Created `Template/portfolio/roadmap.php`: chart container with `data-roadmap` attribute (same pattern as gantt.php), loads D3 + portfolio-gantt.js, empty state when `$has_items` is false
+- Added 3 translation strings: 'Roadmap', 'Portfolio Roadmap', empty-state message
+- Extended `PortfolioViewFakeMilestoneModel` with 2nd constructor param `$progressByMilestone = []` and `getProgress(int $milestoneId, string $weightBy = 'count'): ?array` method + `getProgressCalls` tracker
+- Added 3 controller tests: `testRoadmapRendersItemsWithCorrectDataStructure` (verifies JSON structure, fields, health, start_date fallback, template rendered), `testRoadmapRedirectsWhenPortfolioNotFound` (redirect + flash), `testRoadmapShowsEmptyStateWhenNoMilestonesHaveTargetDates` (empty state)
+- Updated `ApiRegistrationTest::testRegistersPortfolioCrudRoutes` to include roadmap route and changed `array_slice(..., 0, 19)` to `array_slice(..., 0, 20)`
+- Test count: 172 (169 from US-007 + 3 new); 978 assertions; 0 errors; 1 pre-existing deprecation
+- Fixed test assertion: used `assertEquals` (not `assertSame`) for percent float decoded from JSON (PHP json_encode without JSON_PRESERVE_ZERO_FRACTION outputs `60` not `60.0`)
+- Files changed: `Controller/PortfolioViewController.php`, `Plugin.php`, `Template/portfolio/_sidebar.php`, `Template/portfolio/roadmap.php` (new), `Locale/en_US/translations.php`, `Test/Controller/PortfolioViewControllerTest.php`, `Test/Plugin/ApiRegistrationTest.php`
+- **Learnings for future iterations:**
+  - `json_encode(float)` without `JSON_PRESERVE_ZERO_FRACTION` drops `.0` for whole-number floats. Use `assertEquals` in tests when asserting numeric values decoded from JSON.
+  - Route registration test: `array_slice(..., 0, N)` — N must be updated when inserting routes. roadmap is at index 9 (0-based), so N went from 19 to 20.
+  - `PortfolioViewFakeMilestoneModel` now has `getProgress()` — safe to use in roadmap tests without touching other tests (default 2nd param is `[]`).
+---
+
+## 2026-03-25 - US-006
+Session: iter-0b61c12a / loop-cfe4d683
+Review Outcome: PASS
+Trajectory: ON_TRACK
+Trajectory Notes: N/A
+Corrective Plan: N/A
+- Added `getWorkload(int $portfolioId): array` to `PortfolioTaskModel`
+- Method fetches all tasks in portfolio member projects, builds dependency stats via existing `buildTaskDependencyStats()`, groups by `owner_id` into accumulators
+- Each user entry: user_id, username, name, task_count, active_task_count, overdue_task_count, blocked_task_count, total_score, total_estimated_hours, total_spent_hours, projects[] breakdown
+- Overdue: `$isActive && $dateDue > 0 && $dateDue < $now`
+- Blocked count from `buildTaskDependencyStats()` `blocked_by_count` field
+- Unassigned bucket (owner_id=0): same counts but no user identity fields (user_id/username/name unset before return)
+- Users sorted alphabetically by name for determinism
+- Added `buildEmptyWorkloadResult()` private helper for all early-return paths
+- Registered `getPortfolioWorkload` JSON-RPC callback in Plugin.php (read-only, no apiAccessMap entry) — 31st method
+- Added `portfolio_workload_threshold` config setting (int, default 15) to ConfigController `getDefaultSettings()` and `normalizeSubmittedSettings()`
+- Added threshold number input to `Template/config/settings.php` (min 1, max 500)
+- Added 2 translation strings to `Locale/en_US/translations.php`
+- Added `time_spent INTEGER NOT NULL DEFAULT 0` to PortfolioTaskModelTest tasks DDL
+- Added 3 workload unit tests: `testGetWorkloadReturnsEmptyResultForPortfolioWithNoProjects`, `testGetWorkloadAggregatesMetricsPerUserWithOverdueAndBlocked`, `testGetWorkloadGroupsUnassignedTasksSeparately`
+- Added 1 ConfigControllerTest: `testSaveNormalizesOutOfRangeWorkloadThresholdToDefault`; updated `testSaveNormalizesAndPersistsSettings` to assert `portfolio_workload_threshold` saved correctly
+- Updated ApiRegistrationTest to expect 31 methods (`testRegistersAllThirtyOneJsonRpcMethods`)
+- Fixed PHPStan "else branch always true" errors: replaced `is_array($x) ? $x : []` with `(array) $x` for projects sub-arrays already known to be arrays
+- Test count: 167 (163 from US-005 + 4 new); 944 assertions; 0 errors; 1 pre-existing deprecation
+- Files changed: `Model/PortfolioTaskModel.php`, `Plugin.php`, `Controller/ConfigController.php`, `Template/config/settings.php`, `Locale/en_US/translations.php`, `Test/Model/PortfolioTaskModelTest.php`, `Test/Plugin/ApiRegistrationTest.php`, `Test/Controller/ConfigControllerTest.php`
+- **Learnings for future iterations:**
+  - PHPStan flags `is_array($arr) ? $arr : []` as "else branch always true" when PHPStan already knows `$arr` is an array (e.g., from `@var` annotation or initialization context). Use `(array) $arr` cast instead.
+  - For accumulator patterns with mixed-key sub-arrays, avoid `@var array<int, array<string, mixed>>` on the outer array if you also use `++` on inner keys — let PHPStan infer from initialization to get precise types.
+  - Always unset identity fields (user_id/username/name) from the unassigned bucket before returning — the API contract intentionally omits them for owner_id=0.
+---
+
+## 2026-03-25 - US-005
+Session: iter-0951cd49 / loop-cfe4d683
+Review Outcome: PASS
+Trajectory: ON_TRACK
+Trajectory Notes: N/A
+Corrective Plan: N/A
+- Updated `PortfolioViewController::show()` to call `getPortfolioActivity($portfolioId, 10)` and pass `activities` to template
+- Added private `getPortfolioActivity(int $portfolioId, int $limit = 10): array` helper method following the same `is_object()` + `method_exists()` + null-safe pattern used throughout the controller
+- Added 'Recent Activity' section to `Template/portfolio/show.php` below Milestone Health section
+- Section shows: date, event_name, task link (TaskViewController::show with task_id+project_id), project_name
+- Empty state: "No recent activity." in `<p class="alert portfolio-activity-empty">`
+- All CSS classes prefixed with `portfolio-activity-`: table, row, date, event, task, project, empty
+- All output escaped via `$this->text->e()`; all strings wrapped in `t()`
+- Added 3 translation strings to `Locale/en_US/translations.php`: 'Recent Activity', 'No recent activity.', 'Event'
+- Added `getActivity()` method + `activityCalls` tracking + `$activities` constructor param to `PortfolioViewFakePortfolioTaskModel` (new 4th param with default `[]` — fully backward compatible)
+- Added 2 controller tests: `testPortfolioDashboardPassesActivitiesToTemplate` (verifies activity data passthrough + HTML rendering), `testPortfolioDashboardShowsEmptyActivityStateWhenNoActivities` (verifies empty state)
+- Fixed pre-existing PHPCS brace error: `new class\n{` → `new class {` in `buildServices()` userModel entry
+- Test count: 163 (161 from US-004 + 2 new); 897 assertions; 0 errors; 1 pre-existing deprecation
+- Files changed: `Controller/PortfolioViewController.php`, `Template/portfolio/show.php`, `Locale/en_US/translations.php`, `Test/Controller/PortfolioViewControllerTest.php`
+- **Learnings for future iterations:**
+  - `git commit` requires `timeout: 300` in the Bash tool call — phpstan Docker takes ~46s, so default 30s tool timeout kills the process
+  - `PortfolioViewFakePortfolioTaskModel` now has a 4th constructor param `$activities = []` — add it when constructing in tests that need activity data
+  - Template defensive pattern for optional controller vars: `$activityList = is_array($activities ?? null) ? ($activities ?? []) : [];`
+  - The `activityCalls` tracking array records `portfolio_id` and `limit` (not `offset`) — consistent with how other call trackers in the fake model work
+---
+
+## 2026-03-25 - US-004
+Session: iter-b3a3e465 / loop-cfe4d683
+Review Outcome: PASS
+Trajectory: ON_TRACK
+Trajectory Notes: N/A
+Corrective Plan: N/A
+- Added `getActivity(int $portfolioId, int $limit = 25, int $offset = 0): array` to `PortfolioTaskModel`
+- Method fetches all `project_activities` rows, filters to portfolio-member projects in-memory, enriches with `project_name` from projects table, sorts by `date_creation DESC`, paginates with clamped limit [1, 100]
+- Defensive try/catch returns [] if `project_activities` table doesn't exist
+- Registered `getPortfolioActivity` JSON-RPC callback in Plugin.php (read-only, no apiAccessMap entry)
+- Added `project_activities` table DDL to `PortfolioTaskModelTest` `setUp()`
+- Added `insertActivity()` helper method to test class
+- Added 3 unit tests: `testGetActivityReturnsEmptyArrayForPortfolioWithNoProjects`, `testGetActivityReturnsActivitiesEnrichedWithProjectName`, `testGetActivityPaginatesResults`
+- Updated `ApiRegistrationTest` to expect 30 methods (`testRegistersAllThirtyJsonRpcMethods`) — added `getPortfolioActivity` to expected array
+- Fixed `scripts/docker-phpstan.sh` to use `--memory-limit=512M` (default 128M caused OOM crash)
+- Test count: 161 (158 from US-003 + 3 new); 882 assertions; 0 errors
+- Files changed: `Model/PortfolioTaskModel.php`, `Plugin.php`, `Test/Model/PortfolioTaskModelTest.php`, `Test/Plugin/ApiRegistrationTest.php`, `scripts/docker-phpstan.sh`
+- **Learnings for future iterations:**
+  - `scripts/docker-phpstan.sh` now uses `--memory-limit=512M` — this is already applied, no action needed
+  - `getActivity()` uses the same in-memory scan pattern as other PortfolioTaskModel methods; do not try to use PicoDb JOINs or IN clauses
+  - `project_activities` test schema: use AUTOINCREMENT on id (for insert tests without explicit id) or explicit id (as done here for clarity in assertions)
+  - API test: always sync test name and expected array length when adding new JSON-RPC methods
 
 ## PRD Run Context
-PRD Branch: ralph/post-release-remediation
-Started: 2026-03-23T22:20:35.323Z
+PRD Branch: ralph/planning-depth-enhancements
+Started: 2026-03-25T18:16:45.763Z
 ---
 
-## 2026-03-23 — US-001
-Session: iter-4be9155b / loop-9e860edc iteration 1
+## 2026-03-25 - US-001
+Session: iter-a0a0b260 / loop-cfe4d683
 Review Outcome: PASS
 Trajectory: ON_TRACK
 Trajectory Notes: N/A
 Corrective Plan: N/A
-- Fixed `MilestoneController::addTask()` to call `$this->request->getValues()` once and read `task_id`, `is_critical`, `position` from the returned array instead of calling `getValue()` three times (each call consumed the CSRF token, returning null after the first).
-- Fixed `MilestoneController::removeTask()` to use the same `getValues()` pattern for consistency.
-- Added missing Kanboard stubs to `phpstan-kanboard-stubs.php` (`BaseController`, `FilterInterface`, `BaseFilter`) — baseline had 9 pre-existing PHPStan "unknown class" errors; now 0.
-- Renamed `TaskPortfolioFilter::$container` → `$serviceContainer` to avoid shadowing `Core\Base::$container`; added PHP return type hints to `setContainer()`, `getAttributes()`, `apply()`.
-- PHPCBF auto-fixed pre-existing multi-line indentation errors in `MilestoneController.php` and `PortfolioModificationController.php`; manually expanded one-liner anonymous classes in two test files to PSR-12 format.
-- Files changed: `Controller/MilestoneController.php`, `Controller/PortfolioModificationController.php`, `Filter/TaskPortfolioFilter.php`, `phpstan-kanboard-stubs.php`, `Test/Controller/MilestoneControllerTest.php`, `Test/Controller/PortfolioViewControllerTest.php`, `.ralphi/config.yaml`, `.ralphi/prd.json`, `.ralphi/progress.txt`
+- Added `getStatusReport(int $portfolioId, int $periodDays = 7): array` to `PortfolioTaskModel`
+- Added 4 private helpers: `filterCompletedTasksInPeriod`, `buildCriticalBlockers`, `buildAtRiskItems`, `computeDependencyHealth`
+- Registered `getPortfolioStatusReport` JSON-RPC callback in `Plugin.php` (read-only, no apiAccessMap entry)
+- Added 4 unit tests to `PortfolioTaskModelTest`: empty portfolio zeros, period filtering, custom period_days, dependency health stub
+- Added `date_completed INTEGER NOT NULL DEFAULT 0` to test schema; added optional `$dateCompleted = 0` param to `insertTask()`
+- Added `PortfolioTaskDependencyModelStub` for dependency health testing
+- Updated `ApiRegistrationTest` to expect 29 methods (was 28)
+- Fixed pre-existing PSR-12 error in `PortfolioViewControllerTest.php` line 933 (inline anonymous class brace)
+- Files changed: `Model/PortfolioTaskModel.php`, `Plugin.php`, `Test/Model/PortfolioTaskModelTest.php`, `Test/Plugin/ApiRegistrationTest.php`, `Test/Controller/PortfolioViewControllerTest.php`
 - **Learnings for future iterations:**
-  - `Request::getValue()` calls `getValues()` internally on each invocation — always consolidate into one `getValues()` call per handler.
-  - PHPStan stubs need `BaseController`, `BaseFilter`, and `FilterInterface` declared to avoid false "unknown class" errors across all controllers and filters.
-  - One-liner anonymous classes in test `buildServices()` helpers trigger PSR-12 brace errors that PHPCBF cannot fix automatically — expand them manually.
-  - Never name a property `$container` in a subclass of `Kanboard\Core\Base`; it conflicts with the base class's protected property.
+  - The tasks table needs `date_completed` in the test schema to support completion-based filtering
+  - `computeDependencyHealth` follows the same `resolveContainerService` + `is_object/method_exists` pattern used in `getOverview` — reuse this pattern for all future dependencyModel calls
+  - PHPUnit `D` markers = deprecation warnings (test passes but emits deprecation); harmless
+  - Test count 151 = 147 original + 4 new — confirmed via isolated `--testdox` run
 ---
 
-## 2026-03-23 — US-002
-Session: iter-d205829e / loop-9e860edc iteration 2
+## 2026-03-25 - US-002
+Session: iter-5e6800ac / loop-cfe4d683
 Review Outcome: PASS
 Trajectory: ON_TRACK
 Trajectory Notes: N/A
 Corrective Plan: N/A
-- Updated `Plugin::getPluginHomepage()` to return the correct repository URL: `https://github.com/geekmuse/kanboard-plugin-portfolio-management` (was missing `-management` suffix).
-- Verified against `git remote -v` which shows `git@github.com:geekmuse/kanboard-plugin-portfolio-management.git`.
-- Files changed: `Plugin.php`, `.ralphi/prd.json`, `.ralphi/progress.txt`
+- Extended `MilestoneModel::getProgress()` with optional `string $weightBy = 'count'` parameter
+- Added 'count' (backward compat), 'score' (tasks.score), 'time_estimated' (tasks.time_estimated) modes
+- Added `no_data` flag when total_score or total_time is 0
+- Added `weight_by`, `no_data`, `score_total`, `score_completed`, `time_total`, `time_completed` to return
+- Added private `normalizeWeightBy()` in MilestoneModel
+- Updated `PortfolioTaskModel::calculateMilestoneHealth()` to collect and return score_total, score_completed, time_total, time_completed
+- Updated `getMilestoneProgress` API callback in Plugin.php to accept and pass `$weight_by` parameter
+- Added `portfolio_milestone_weight_by` config setting (default 'count') to ConfigController
+- Added `normalizeWeightBy()` private method to ConfigController
+- Added dropdown (Count / Story Points / Time Estimated) to Template/config/settings.php
+- Added 4 new unit tests in MilestoneModelTest: count compat, score mode, time_estimated mode, no-data flag
+- Added 1 new test in ConfigControllerTest: testSaveNormalizesInvalidWeightByToCount
+- Updated testSaveNormalizesAndPersistsSettings to assert portfolio_milestone_weight_by saved correctly
+- Added score/time_estimated columns to MilestoneModelTest tasks CREATE TABLE
+- Added time_estimated column to PortfolioTaskModelTest tasks CREATE TABLE
+- Added 7 new translation strings to Locale/en_US/translations.php
+- Test count: 156 (151 from US-001 + 5 new)
+- Files changed: `Model/MilestoneModel.php`, `Model/PortfolioTaskModel.php`, `Plugin.php`, `Controller/ConfigController.php`, `Template/config/settings.php`, `Locale/en_US/translations.php`, `Test/Model/MilestoneModelTest.php`, `Test/Model/PortfolioTaskModelTest.php`, `Test/Controller/ConfigControllerTest.php`
 - **Learnings for future iterations:**
-  - Minimal single-line metadata fixes require no new tests (pure string constant, no behavior under test).
-  - Pre-existing PHPCS line-length warnings across many files do not block commits — they are warnings, not errors.
+  - MilestoneModelTest tasks table was minimal (id, project_id, is_active); add new columns when model methods need to read task fields
+  - PortfolioTaskModelTest::insertTask inserts explicit columns (score=0 hardcoded); adding time_estimated only needs schema DDL change since DEFAULT 0 handles inserts that omit the column
+  - getProgress() return array can safely grow with new keys — existing tests that assert specific keys are unaffected
+  - ConfigController pattern: getDefaultSettings (type determines auto-cast in getCurrentSettings), normalizeSubmittedSettings (explicit per-key), normalizeWeightBy-style validators belong in private methods
+  - Multi-line function declaration: must be `): ReturnType {` on one line per PSR-12
+---
+
+## 2026-03-25 - US-003
+Session: iter-4ad14aa7 / loop-cfe4d683
+Review Outcome: PASS
+Trajectory: ON_TRACK
+Trajectory Notes: N/A
+Corrective Plan: N/A
+- Updated `MilestoneController::show()` to read `weight_by` from `$this->request->getValue('weight_by', 'count')` and pass to `getMilestoneProgress()` and template
+- Extended `getMilestoneProgress()` private method to accept `string $weightBy = 'count'` and pass to `milestoneModel->getProgress()`; added new fallback keys (`no_data`, `weight_by`, `score_*`, `time_*`)
+- Added weight-mode selector dropdown (Count / Story Points / Time Estimated) to `Template/milestone/show.php` as a GET form that reloads on `onchange`
+- Added visual progress bar (`portfolio-progress-bar-container` / `portfolio-progress-bar`) to show.php, shown only when `no_data` is false
+- Added no-data message display ("No score data available" / "No time estimates available") replacing the progress bar when `no_data` is true
+- Updated `Template/portfolio/show.php` Milestone Health table: pre-computes `$hasScoreData` and `$hasTimeData` from milestone list; conditionally adds Score and Est. Hours columns
+- Added 3 new translation strings: `Progress Weight`, `Score`, `Est. Hours`
+- Updated `MilestoneControllerFakeMilestoneModel::getProgress()` to accept `$weightBy` param; added `getProgressWeightByCalls` array to track it separately (preserving existing `getProgressCalls` assertions)
+- Added 2 new controller tests: `testMilestoneShowPassesWeightByParameterToGetProgress` and `testMilestoneShowRendersNoDataMessageForScoreMode`
+- Test count: 158 (156 from US-002 + 2 new); 860 assertions; 0 errors
+- Files changed: `Controller/MilestoneController.php`, `Template/milestone/show.php`, `Template/portfolio/show.php`, `Locale/en_US/translations.php`, `Test/Controller/MilestoneControllerTest.php`
+- **Learnings for future iterations:**
+  - `request->getValue('param', 'default')` is the pattern for reading optional GET query params in controllers
+  - Conditional table columns in templates: pre-compute boolean flags in a PHP block before the table, then use `<?php if ($flag): ?><th>...</th><?php endif ?>` in both header and body rows
+  - When adding keys to a controller's fallback array for model results, mirror all keys the model can return so `array_merge($fallback, $result)` always produces a complete/safe array
+---
+
+## 2026-03-25 - US-007
+Session: iter-1300bc77 / loop-cfe4d683
+Review Outcome: PASS
+Trajectory: ON_TRACK
+Trajectory Notes: N/A
+Corrective Plan: N/A
+- Added `workload()` action to `PortfolioViewController` — fetches portfolio, validates existence, reads `portfolio_workload_threshold` config, calls `getWorkload()`, renders template
+- Added private `getWorkloadData()` helper following same `is_object()` + `method_exists()` + null-safe pattern
+- Registered route `/portfolio/:portfolio_id/workload` → `PortfolioViewController::workload()` in Plugin.php; access covered by existing `'PortfolioViewController', '*', Role::APP_USER`
+- Added 'Team' link to `Template/portfolio/_sidebar.php` (active when `$sidebar_active === 'workload'`), inserted between Gantt Chart and Milestones
+- Created `Template/portfolio/workload.php`: table (User, Active Tasks, Overdue, Blocked, Score, Est. Hours, Spent Hours), `portfolio-workload-row--overloaded` class on rows exceeding threshold, ⚠ overload indicator, per-user links to `/portfolio/:portfolio_id/tasks?assignee_id=:user_id`, Unassigned row at bottom, empty-state `<p class="alert portfolio-workload-empty">` when no tasks
+- Added `portfolio-workload-` CSS classes to `Asset/css/portfolio.css` (table, header, row, overloaded/unassigned variants, user link, overload indicator, legend)
+- Added 6 translation strings to `Locale/en_US/translations.php`: Team, Portfolio Team Workload, No tasks found for this portfolio., Overloaded, Overloaded: active tasks exceed threshold of %d, Spent Hours
+- Added `workloadCalls` tracker + `getWorkload()` method to `PortfolioViewFakePortfolioTaskModel`; added `$workload` as 5th constructor param (default `['users' => [], 'unassigned' => []]`)
+- Added 2 controller tests: `testWorkloadRendersTableWithUserMetricsAndOverloadIndicator` (verifies template rendered, overload row, links, workloadCalls), `testWorkloadRedirectsWhenPortfolioNotFound` (verifies flash + redirect, workloadCalls empty)
+- Updated `ApiRegistrationTest::testRegistersPortfolioCrudRoutes` to include workload route and `array_slice(..., 19)`
+- Test count: 169 (167 from US-006 + 2 new); 957 assertions; 0 errors; 1 pre-existing deprecation
+- Files changed: `Controller/PortfolioViewController.php`, `Plugin.php`, `Template/portfolio/_sidebar.php`, `Template/portfolio/workload.php`, `Asset/css/portfolio.css`, `Locale/en_US/translations.php`, `Test/Controller/PortfolioViewControllerTest.php`, `Test/Plugin/ApiRegistrationTest.php`
+- **Learnings for future iterations:**
+  - Route registration test (`testRegistersPortfolioCrudRoutes`) tracks exact route order + `array_slice` count — update both when adding new routes
+  - `PortfolioViewFakePortfolioTaskModel` now has a 5th constructor param `$workload = ['users' => [], 'unassigned' => []]` — all existing tests omit it safely (defaults are backward compatible)
+  - Workload empty-state check: `$hasData = $users !== [] || (int)($unassigned['task_count'] ?? 0) > 0` — both users array and unassigned bucket must be empty for the empty state to display
+  - Sidebar active-state key for workload: `'workload'` (matches `$sidebar_active` var in template); controller uses this as `sidebar_active` via the require pattern
 ---

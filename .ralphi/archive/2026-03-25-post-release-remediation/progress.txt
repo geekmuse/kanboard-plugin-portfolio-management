@@ -1,0 +1,17 @@
+## Codebase Patterns
+- **REQUIRED READING**: Before writing any code each iteration, read `docs/references/kanboard-plugin-development-guidelines.md`. It contains authoritative agent feedback, known pitfalls, and hard-won patterns from previous work on this project. Do NOT commit or modify this file.
+- **POST forms — always use `getValues()` once**: `Request::getValue()` internally calls `getValues()` which validates and strips the CSRF token. Calling it multiple times means only the first call returns real data. Pattern: `$values = $this->request->getValues(); $field = (int)($values['field'] ?? 0);`
+- **PHPStan stubs** — `phpstan-kanboard-stubs.php` must declare `Kanboard\Controller\BaseController`, `Kanboard\Filter\BaseFilter`, and `Kanboard\Core\Filter\FilterInterface` for PHPStan to resolve the full type graph. Without them, every controller and filter file emits "unknown class" errors.
+- **Filter private properties** — never name a property `$container` in a class that extends `Kanboard\Core\Base`; it shadows the protected `$container` property. Use a distinct name like `$serviceContainer`.
+- **PHPCBF + manual** — PHPCBF auto-fixes multi-line-call indentation issues but cannot fix one-liner anonymous classes. Expand them to PSR-12 multi-line format manually before committing.
+- **Event listeners** — NEVER use `$this->on()` for event registration. Kanboard's `Plugin\Base::on()` wraps callbacks and passes the DI container, NOT the event object. Always use `$this->dispatcher->addListener()` with `$plugin = $this` captured for service resolution.
+- **JSON_HEX_TAG** — encodes `<` as `\u003C` in JSON strings. When HTML-attribute-escaped by `$this->text->e()`, the backslash and `u003C` pass through unchanged. XSS tests should check for `\u003C` NOT `&lt;` inside data attributes.
+- **D3 loading** — Load D3 per-page via `$this->asset->js()` in the specific template, not globally via `hook->on`. Call `window.PortfolioGantt.renderXxx()` on DOMContentLoaded.
+- **Route registration tests** — `ApiRegistrationTest::testRegistersPortfolioCrudRoutes` asserts the exact ordered route list with `array_slice()`; adding a route requires updating both the expected array AND the slice count.
+- Add reusable, project-wide implementation patterns here.
+---
+
+## PRD Run Context
+PRD Branch: ralph/planning-depth-enhancements
+Started: (pending first iteration)
+---

@@ -24,6 +24,7 @@ class PortfolioViewController extends BaseController
             'title' => t('Portfolio Dashboard'),
             'portfolio' => $portfolio,
             'overview' => $this->getOverview($portfolioId, $portfolio),
+            'activities' => $this->getPortfolioActivity($portfolioId, 10),
         ]));
     }
 
@@ -216,6 +217,166 @@ class PortfolioViewController extends BaseController
             'timeline_data' => $timelineData,
             'timeline_json' => $timelineJson,
         ]));
+    }
+
+    public function roadmap(): mixed
+    {
+        $portfolioId = $this->request->getIntegerParam('portfolio_id');
+        $portfolio = $this->portfolioModel->getById($portfolioId);
+
+        if (! is_array($portfolio)) {
+            $this->flash->failure(t('Portfolio not found.'));
+
+            return $this->response->redirect(
+                $this->helper->url->href('PortfolioListController', 'index', ['plugin' => 'Portfolio'])
+            );
+        }
+
+        $milestones = $this->getPortfolioMilestones($portfolioId);
+        $roadmapItems = $this->buildRoadmapItems($milestones);
+
+        $roadmapJson = json_encode($roadmapItems, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+        if (! is_string($roadmapJson)) {
+            $roadmapJson = '[]';
+        }
+
+        return $this->response->html($this->helper->layout->app('Portfolio:portfolio/roadmap', [
+            'title' => t('Portfolio Roadmap'),
+            'portfolio' => $portfolio,
+            'roadmap_json' => $roadmapJson,
+            'has_items' => $roadmapItems !== [],
+        ]));
+    }
+
+    public function workload(): mixed
+    {
+        $portfolioId = $this->request->getIntegerParam('portfolio_id');
+        $portfolio = $this->portfolioModel->getById($portfolioId);
+
+        if (! is_array($portfolio)) {
+            $this->flash->failure(t('Portfolio not found.'));
+
+            return $this->response->redirect(
+                $this->helper->url->href('PortfolioListController', 'index', ['plugin' => 'Portfolio'])
+            );
+        }
+
+        $workload = $this->getWorkloadData($portfolioId);
+        $threshold = $this->getConfigValueAsInt('portfolio_workload_threshold', 15);
+
+        return $this->response->html($this->helper->layout->app('Portfolio:portfolio/workload', [
+            'title' => t('Portfolio Team Workload'),
+            'portfolio' => $portfolio,
+            'workload' => $workload,
+            'threshold' => $threshold,
+        ]));
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $milestones
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function buildRoadmapItems(array $milestones): array
+    {
+        $items = [];
+        $now = time();
+
+        foreach ($milestones as $milestone) {
+            $milestoneId = (int) ($milestone['id'] ?? 0);
+            $targetDate = (int) ($milestone['target_date'] ?? 0);
+
+            if ($milestoneId <= 0 || $targetDate <= 0) {
+                continue;
+            }
+
+            // Fetch milestone tasks to determine start_date and task_count
+            $tasks = [];
+            if (is_object($this->milestoneTaskModel) && method_exists($this->milestoneTaskModel, 'getTasks')) {
+                $rawTasks = $this->milestoneTaskModel->getTasks($milestoneId);
+                if (is_array($rawTasks)) {
+                    $tasks = $rawTasks;
+                }
+            }
+
+            // Earliest task due date → start_date; fall back to target_date
+            $startDate = 0;
+            foreach ($tasks as $task) {
+                $dueDate = (int) ($task['date_due'] ?? 0);
+                if ($dueDate > 0 && ($startDate === 0 || $dueDate < $startDate)) {
+                    $startDate = $dueDate;
+                }
+            }
+
+            if ($startDate <= 0) {
+                $startDate = $targetDate;
+            }
+
+            // Get completion percentage from milestone model
+            $percent = 0.0;
+            if (is_object($this->milestoneModel) && method_exists($this->milestoneModel, 'getProgress')) {
+                $progress = $this->milestoneModel->getProgress($milestoneId);
+                if (is_array($progress)) {
+                    $percent = (float) ($progress['percent'] ?? 0.0);
+                }
+            }
+
+            $items[] = [
+                'id' => $milestoneId,
+                'name' => (string) ($milestone['name'] ?? ''),
+                'color_id' => (string) ($milestone['color_id'] ?? 'blue'),
+                'start_date' => $startDate,
+                'end_date' => $targetDate,
+                'percent' => $percent,
+                'health' => $this->computeMilestoneHealth($percent, $targetDate, $now),
+                'task_count' => count($tasks),
+            ];
+        }
+
+        return $items;
+    }
+
+    private function computeMilestoneHealth(float $percent, int $targetDate, int $now): string
+    {
+        if ($targetDate > 0 && $targetDate < $now && $percent < 100.0) {
+            return 'overdue';
+        }
+
+        if ($targetDate > 0 && $targetDate < ($now + 7 * 86400) && $percent < 80.0) {
+            return 'at_risk';
+        }
+
+        return 'on_track';
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function getWorkloadData(int $portfolioId): array
+    {
+        $empty = ['users' => [], 'unassigned' => []];
+
+        if (! is_object($this->portfolioTaskModel) || ! method_exists($this->portfolioTaskModel, 'getWorkload')) {
+            return $empty;
+        }
+
+        $workload = $this->portfolioTaskModel->getWorkload($portfolioId);
+
+        return is_array($workload) ? $workload : $empty;
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function getPortfolioActivity(int $portfolioId, int $limit = 10): array
+    {
+        if (! is_object($this->portfolioTaskModel) || ! method_exists($this->portfolioTaskModel, 'getActivity')) {
+            return [];
+        }
+
+        $activities = $this->portfolioTaskModel->getActivity($portfolioId, $limit);
+
+        return is_array($activities) ? $activities : [];
     }
 
     /**

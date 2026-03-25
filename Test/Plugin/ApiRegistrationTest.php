@@ -448,7 +448,7 @@ final class ApiRegistrationTest extends TestCase
         $this->plugin->initialize();
     }
 
-    public function testRegistersAllTwentyEightJsonRpcMethods(): void
+    public function testRegistersAllThirtyOneJsonRpcMethods(): void
     {
         $expected = [
             'createPortfolio',
@@ -479,6 +479,9 @@ final class ApiRegistrationTest extends TestCase
             'getPortfolioTasks',
             'getPortfolioTaskCount',
             'getPortfolioOverview',
+            'getPortfolioStatusReport',
+            'getPortfolioActivity',
+            'getPortfolioWorkload',
         ];
 
         $this->assertSame($expected, $this->procedureHandler->getMethodNames());
@@ -543,9 +546,21 @@ final class ApiRegistrationTest extends TestCase
                     'plugin' => 'Portfolio',
                 ],
                 [
+                    'path' => '/portfolio/:portfolio_id/roadmap',
+                    'controller' => 'PortfolioViewController',
+                    'action' => 'roadmap',
+                    'plugin' => 'Portfolio',
+                ],
+                [
                     'path' => '/portfolio/:portfolio_id/gantt',
                     'controller' => 'PortfolioViewController',
                     'action' => 'gantt',
+                    'plugin' => 'Portfolio',
+                ],
+                [
+                    'path' => '/portfolio/:portfolio_id/workload',
+                    'controller' => 'PortfolioViewController',
+                    'action' => 'workload',
                     'plugin' => 'Portfolio',
                 ],
                 [
@@ -597,7 +612,7 @@ final class ApiRegistrationTest extends TestCase
                     'plugin' => 'Portfolio',
                 ],
             ],
-            array_slice($this->route->getRoutes(), 0, 18)
+            array_slice($this->route->getRoutes(), 0, 20)
         );
     }
 
