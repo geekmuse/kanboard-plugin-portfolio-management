@@ -190,6 +190,7 @@ return [
 
     // Widget / hook templates
     'None' => 'None',
+    'This task is in Portfolio:' => 'This task is in Portfolio:',
     'View all portfolios' => 'View all portfolios',
     'Blocked by cross-project dependency' => 'Blocked by cross-project dependency',
     'Portfolio Dependencies' => 'Portfolio Dependencies',

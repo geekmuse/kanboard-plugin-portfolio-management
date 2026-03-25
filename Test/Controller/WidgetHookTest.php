@@ -603,6 +603,106 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
         }
 
         // -------------------------------------------------------------------
+        // task_context_banner template
+        // -------------------------------------------------------------------
+
+        public function testTaskContextBannerRendersWhenProjectInPortfolio(): void
+        {
+            $portfolios = [
+                ['id' => 5, 'name' => 'Q2 Launch'],
+                ['id' => 6, 'name' => 'Platform <beta>'],
+            ];
+
+            $context = new WidgetFakeContext();
+            $html    = $context->renderWidget(
+                $this->templateDir . '/task_context_banner.php',
+                ['portfolios' => $portfolios]
+            );
+
+            $this->assertStringContainsString('portfolio-widget-task-banner', $html);
+            $this->assertStringContainsString('This task is in Portfolio:', $html);
+            $this->assertStringContainsString('Q2 Launch', $html);
+            // XSS in portfolio name must be escaped
+            $this->assertStringContainsString('&lt;beta&gt;', $html);
+            $this->assertStringNotContainsString('<beta>', $html);
+            $this->assertStringContainsString('PortfolioViewController', $html);
+            $this->assertStringContainsString('portfolio_id=5', $html);
+        }
+
+        public function testTaskContextBannerRendersNothingWhenNoPortfolios(): void
+        {
+            $context = new WidgetFakeContext();
+            $html    = $context->renderWidget(
+                $this->templateDir . '/task_context_banner.php',
+                ['portfolios' => []]
+            );
+
+            $this->assertSame('', trim($html));
+        }
+
+        // -------------------------------------------------------------------
+        // project_header_badge template
+        // -------------------------------------------------------------------
+
+        public function testProjectHeaderBadgeRendersWhenProjectInPortfolio(): void
+        {
+            $portfolios = [
+                ['id' => 3, 'name' => 'Alpha Portfolio'],
+            ];
+
+            $context = new WidgetFakeContext();
+            $html    = $context->renderWidget(
+                $this->templateDir . '/project_header_badge.php',
+                ['portfolios' => $portfolios]
+            );
+
+            $this->assertStringContainsString('portfolio-widget-project-badge', $html);
+            $this->assertStringContainsString('Portfolios', $html);
+            $this->assertStringContainsString('Alpha Portfolio', $html);
+            $this->assertStringContainsString('PortfolioViewController', $html);
+            $this->assertStringContainsString('portfolio_id=3', $html);
+        }
+
+        public function testProjectHeaderBadgeRendersNothingWhenNoPortfolios(): void
+        {
+            $context = new WidgetFakeContext();
+            $html    = $context->renderWidget(
+                $this->templateDir . '/project_header_badge.php',
+                ['portfolios' => []]
+            );
+
+            $this->assertSame('', trim($html));
+        }
+
+        // -------------------------------------------------------------------
+        // board_task_blocked_icon template
+        // -------------------------------------------------------------------
+
+        public function testBoardTaskBlockedIconShowsIconForBlockedTask(): void
+        {
+            $context = new WidgetFakeContext();
+            $html    = $context->renderWidget(
+                $this->templateDir . '/board_task_blocked_icon.php',
+                ['isBlocked' => true]
+            );
+
+            $this->assertStringContainsString('portfolio-board-blocked-icon', $html);
+            $this->assertStringContainsString('portfolio-task-blocked', $html);
+            $this->assertStringContainsString('Blocked by cross-project dependency', $html);
+        }
+
+        public function testBoardTaskBlockedIconRendersNothingForUnblockedTask(): void
+        {
+            $context = new WidgetFakeContext();
+            $html    = $context->renderWidget(
+                $this->templateDir . '/board_task_blocked_icon.php',
+                ['isBlocked' => false]
+            );
+
+            $this->assertSame('', trim($html));
+        }
+
+        // -------------------------------------------------------------------
         // PortfolioHelper unit tests — caching / N+1 prevention
         // -------------------------------------------------------------------
 

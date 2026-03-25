@@ -45,8 +45,8 @@
       "dependsOn": [],
       "notes": "This is the highest-value template hook from Task 1 in the PRD. The task.create event listener must use $this->dispatcher->addListener() (not $this->on()). The milestone assignment uses milestoneTaskModel->add() which validates project-in-portfolio membership.",
       "startedAt": "2026-03-25T21:36:50.107Z",
-      "updatedAt": "2026-03-25T22:05:00.000Z",
-      "completedAt": "2026-03-25T22:05:00.000Z"
+      "updatedAt": "2026-03-25T21:50:27.941Z",
+      "completedAt": "2026-03-25T21:50:27.941Z"
     },
     {
       "id": "US-003",
@@ -65,9 +65,12 @@
         "All existing tests pass, PHP lint clean, PHPCS 0 errors, PHPStan clean"
       ],
       "priority": 3,
-      "status": "open",
+      "status": "in_progress",
       "dependsOn": [],
-      "notes": "The board:task:icons hook reuses PortfolioHelper's per-project lazy cache (same pattern as the existing board:task:footer blocked indicator). No new queries needed."
+      "notes": "The board:task:icons hook reuses PortfolioHelper's per-project lazy cache (same pattern as the existing board:task:footer blocked indicator). No new queries needed.",
+      "startedAt": "2026-03-25T21:50:28.439Z",
+      "updatedAt": "2026-03-25T21:50:28.439Z",
+      "completedAt": null
     },
     {
       "id": "US-004",

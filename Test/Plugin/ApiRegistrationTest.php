@@ -900,6 +900,15 @@ final class ApiRegistrationTest extends TestCase
         // Task creation form — milestone assignment dropdown
         $this->assertContains('template:task:form:first-column', $hookNames);
 
+        // Task detail top — portfolio context banner
+        $this->assertContains('template:task:show:top', $hookNames);
+
+        // Project header — portfolio membership badge
+        $this->assertContains('template:project:header:after', $hookNames);
+
+        // Board card icons — blocked icon
+        $this->assertContains('template:board:task:icons', $hookNames);
+
         // Header dropdown
         $this->assertContains('template:header:dropdown:menu', $hookNames);
 
@@ -943,5 +952,19 @@ final class ApiRegistrationTest extends TestCase
         // Two task-detail hooks for milestone info and dependency snippet
         $this->assertContains('Portfolio:widget/task_milestone_info', $templateByHook['template:task:details:second-column']);
         $this->assertContains('Portfolio:widget/task_dependency_snippet', $templateByHook['template:task:details:second-column']);
+
+        // Three new display-only hooks (US-003)
+        $this->assertSame(
+            ['Portfolio:widget/task_context_banner'],
+            $templateByHook['template:task:show:top']
+        );
+        $this->assertSame(
+            ['Portfolio:widget/project_header_badge'],
+            $templateByHook['template:project:header:after']
+        );
+        $this->assertSame(
+            ['Portfolio:widget/board_task_blocked_icon'],
+            $templateByHook['template:board:task:icons']
+        );
     }
 }

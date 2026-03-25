@@ -172,6 +172,57 @@ class Plugin extends Base
             }
         );
 
+        // Task detail — portfolio context banner (top of page, above task body).
+        // Shows "This task is in Portfolio: {name}" with links to portfolio dashboards.
+        // Renders nothing when the task's project belongs to no portfolios.
+        $this->template->hook->attachCallable(
+            'template:task:show:top',
+            'Portfolio:widget/task_context_banner',
+            function (array $params) {
+                $task      = $params['task'] ?? $params;
+                $projectId = (int) ($task['project_id'] ?? 0);
+                return [
+                    'portfolios' => $projectId > 0
+                        ? $this->container['portfolioProjectModel']->getPortfolios($projectId)
+                        : [],
+                ];
+            }
+        );
+
+        // Project header — portfolio membership badge(s) with links to dashboards.
+        // Renders nothing when the project belongs to no portfolios.
+        $this->template->hook->attachCallable(
+            'template:project:header:after',
+            'Portfolio:widget/project_header_badge',
+            function (array $params) {
+                $project   = $params['project'] ?? $params;
+                $projectId = (int) ($project['id'] ?? 0);
+                return [
+                    'portfolios' => $projectId > 0
+                        ? $this->container['portfolioProjectModel']->getPortfolios($projectId)
+                        : [],
+                ];
+            }
+        );
+
+        // Board card icons — blocked icon alongside existing footer indicator.
+        // Reuses the PortfolioHelper per-project lazy cache (same instance as the
+        // board:task:footer hook above), so no additional DB queries are made.
+        $this->template->hook->attachCallable(
+            'template:board:task:icons',
+            'Portfolio:widget/board_task_blocked_icon',
+            function (array $params) {
+                $task      = $params['task'] ?? $params;
+                $taskId    = (int) ($task['id'] ?? 0);
+                $projectId = (int) ($task['project_id'] ?? 0);
+                $enabled   = (int) $this->container['configModel']->get('portfolio_board_show_blockers', 1) === 1;
+                return [
+                    'isBlocked' => $enabled && $taskId > 0 && $projectId > 0
+                        && $this->container['portfolioHelper']->isTaskBlocked($taskId, $projectId),
+                ];
+            }
+        );
+
         // Task creation form — optional milestone assignment dropdown.
         // When the task's project belongs to one or more portfolios, renders a
         // dropdown listing all active milestones across those portfolios.
