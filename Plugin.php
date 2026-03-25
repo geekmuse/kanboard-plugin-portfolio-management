@@ -336,6 +336,9 @@ class Plugin extends Base
             })
             ->withCallback('getPortfolioActivity', function ($portfolio_id, $limit = 25, $offset = 0) {
                 return $this->portfolioTaskModel->getActivity((int) $portfolio_id, (int) $limit, (int) $offset);
+            })
+            ->withCallback('getPortfolioWorkload', function ($portfolio_id) {
+                return $this->portfolioTaskModel->getWorkload((int) $portfolio_id);
             });
 
         $this->apiAccessMap->add('PortfolioProcedure', ['createPortfolio', 'updatePortfolio', 'removePortfolio'], Role::APP_MANAGER);

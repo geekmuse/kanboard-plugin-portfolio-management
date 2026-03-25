@@ -316,6 +316,7 @@ class PortfolioTaskModelTest extends TestCase
                 priority INTEGER NOT NULL DEFAULT 0,
                 score INTEGER NOT NULL DEFAULT 0,
                 time_estimated INTEGER NOT NULL DEFAULT 0,
+                time_spent INTEGER NOT NULL DEFAULT 0,
                 color_id TEXT NOT NULL DEFAULT '',
                 category_id INTEGER NOT NULL DEFAULT 0,
                 swimlane_id INTEGER NOT NULL DEFAULT 0
@@ -705,6 +706,141 @@ class PortfolioTaskModelTest extends TestCase
         // limit clamped to minimum 1
         $minLimit = $this->model->getActivity(1, 0, 0);
         $this->assertCount(1, $minLimit);
+    }
+
+    public function testGetWorkloadReturnsEmptyResultForPortfolioWithNoProjects(): void
+    {
+        $this->insertPortfolio(1, 'Empty Portfolio');
+        // No projects added — getPortfolioProjectIds returns []
+
+        $result = $this->model->getWorkload(1);
+
+        $this->assertSame([], $result['users']);
+        $this->assertSame(0, (int) $result['unassigned']['task_count']);
+        $this->assertSame(0, (int) $result['unassigned']['active_task_count']);
+        $this->assertSame(0, (int) $result['unassigned']['overdue_task_count']);
+        $this->assertSame(0, (int) $result['unassigned']['blocked_task_count']);
+        $this->assertSame(0, (int) $result['unassigned']['total_score']);
+        $this->assertSame(0, (int) $result['unassigned']['total_estimated_hours']);
+        $this->assertSame(0, (int) $result['unassigned']['total_spent_hours']);
+        $this->assertSame([], $result['unassigned']['projects']);
+    }
+
+    public function testGetWorkloadAggregatesMetricsPerUserWithOverdueAndBlocked(): void
+    {
+        $now = time();
+
+        $this->insertPortfolio(1, 'Workload Portfolio');
+        $this->insertProject(10, 'Alpha');
+        $this->insertProject(20, 'Beta');
+        $this->insertProject(30, 'Gamma');
+        $this->insertPortfolioProject(1, 10, 1);
+        $this->insertPortfolioProject(1, 20, 2);
+        // project 30 is NOT in portfolio
+
+        $this->insertColumn(100, 10, 'Backlog');
+        $this->insertColumn(200, 20, 'Doing');
+
+        $this->insertUser(5, 'alice', 'Alice Adams');
+        $this->insertUser(6, 'bob', 'Bob Brown');
+
+        // Alice: 2 active tasks in Alpha, 1 overdue (date_due in past)
+        $this->insertTask(101, 'Alice A1', 10, 100, 5, 1, $now - 86400, $now - 3600, 1, 'blue'); // overdue
+        $this->insertTask(102, 'Alice A2', 10, 100, 5, 1, $now + 86400, $now - 1800, 2, 'green'); // not overdue
+
+        // Bob: 1 active task in Beta, 1 closed task in Alpha; Bob task 201 is blocked by Alice task 101
+        $this->insertTask(201, 'Bob B1', 20, 200, 6, 1, $now + 86400, $now - 900, 1, 'red'); // active
+        $this->insertTask(202, 'Bob A1 closed', 10, 100, 6, 0, 0, $now - 7200, 1, 'yellow'); // closed
+
+        // Task in project 30 (outside portfolio) — must not appear
+        $this->insertTask(301, 'Outside', 30, 0, 5, 1, 0, $now - 100, 1, 'blue');
+
+        // Alice task 101 blocks Bob task 201
+        $this->insertLink(77, 'blocks', 'is blocked by');
+        $this->insertTaskLink(101, 201, 77);
+
+        $result = $this->model->getWorkload(1);
+
+        $this->assertIsArray($result['users']);
+        $this->assertCount(2, $result['users']);
+
+        // Users sorted by name: Alice Adams < Bob Brown
+        $alice = $result['users'][0];
+        $bob = $result['users'][1];
+
+        $this->assertSame(5, (int) $alice['user_id']);
+        $this->assertSame('alice', (string) $alice['username']);
+        $this->assertSame('Alice Adams', (string) $alice['name']);
+        $this->assertSame(2, (int) $alice['task_count']);         // 101, 102
+        $this->assertSame(2, (int) $alice['active_task_count']);
+        $this->assertSame(1, (int) $alice['overdue_task_count']); // 101 is overdue
+        $this->assertSame(0, (int) $alice['blocked_task_count']); // Alice tasks not blocked
+
+        $this->assertSame(6, (int) $bob['user_id']);
+        $this->assertSame('Bob Brown', (string) $bob['name']);
+        $this->assertSame(2, (int) $bob['task_count']);            // 201, 202
+        $this->assertSame(1, (int) $bob['active_task_count']);     // only 201 is active
+        $this->assertSame(0, (int) $bob['overdue_task_count']);    // 201 not overdue
+        $this->assertSame(1, (int) $bob['blocked_task_count']);    // 201 blocked by 101
+
+        // Alice has tasks in project Alpha only
+        $aliceProjects = $alice['projects'];
+        $this->assertCount(1, $aliceProjects);
+        $this->assertSame(10, (int) $aliceProjects[0]['project_id']);
+        $this->assertSame('Alpha', (string) $aliceProjects[0]['project_name']);
+        $this->assertSame(2, (int) $aliceProjects[0]['task_count']);
+        $this->assertSame(2, (int) $aliceProjects[0]['active_task_count']);
+
+        // Bob has tasks in both Alpha (closed) and Beta (active)
+        $bobProjectIds = array_map(static fn (array $p): int => (int) $p['project_id'], $bob['projects']);
+        sort($bobProjectIds);
+        $this->assertSame([10, 20], $bobProjectIds);
+
+        // Unassigned bucket should be empty
+        $this->assertSame(0, (int) $result['unassigned']['task_count']);
+    }
+
+    public function testGetWorkloadGroupsUnassignedTasksSeparately(): void
+    {
+        $now = time();
+
+        $this->insertPortfolio(1, 'Unassigned Portfolio');
+        $this->insertProject(10, 'Alpha');
+        $this->insertPortfolioProject(1, 10, 1);
+        $this->insertColumn(100, 10, 'Backlog');
+        $this->insertUser(5, 'alice', 'Alice Adams');
+
+        // Assigned task (owner_id=5)
+        $this->insertTask(101, 'Assigned', 10, 100, 5, 1, 0, $now - 3600, 1, 'blue');
+
+        // Unassigned tasks (owner_id=0): 1 active, 1 overdue
+        $this->insertTask(102, 'Unassigned active', 10, 100, 0, 1, $now + 86400, $now - 1800, 1, 'green');
+        $this->insertTask(103, 'Unassigned overdue', 10, 100, 0, 1, $now - 86400, $now - 900, 1, 'red');
+
+        $result = $this->model->getWorkload(1);
+
+        // Users list has only Alice; no entry for owner_id=0
+        $this->assertCount(1, $result['users']);
+        $this->assertSame(5, (int) $result['users'][0]['user_id']);
+        $this->assertSame(1, (int) $result['users'][0]['task_count']);
+
+        // Unassigned bucket has both tasks
+        $unassigned = $result['unassigned'];
+        $this->assertSame(2, (int) $unassigned['task_count']);
+        $this->assertSame(2, (int) $unassigned['active_task_count']);
+        $this->assertSame(1, (int) $unassigned['overdue_task_count']); // task 103 is overdue
+        $this->assertSame(0, (int) $unassigned['blocked_task_count']);
+
+        // Unassigned has project breakdown
+        $this->assertCount(1, $unassigned['projects']);
+        $this->assertSame(10, (int) $unassigned['projects'][0]['project_id']);
+        $this->assertSame('Alpha', (string) $unassigned['projects'][0]['project_name']);
+        $this->assertSame(2, (int) $unassigned['projects'][0]['task_count']);
+
+        // user_id/username/name keys must NOT be present in unassigned bucket
+        $this->assertArrayNotHasKey('user_id', $unassigned);
+        $this->assertArrayNotHasKey('username', $unassigned);
+        $this->assertArrayNotHasKey('name', $unassigned);
     }
 
     /**

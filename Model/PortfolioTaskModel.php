@@ -111,6 +111,168 @@ class PortfolioTaskModel extends Base
     /**
      * @return array<string, mixed>
      */
+    public function getWorkload(int $portfolioId): array
+    {
+        $projectIds = $this->getPortfolioProjectIds($portfolioId);
+        if ($projectIds === []) {
+            return $this->buildEmptyWorkloadResult();
+        }
+
+        $projectScope = [];
+        foreach ($projectIds as $id) {
+            $projectScope[$id] = true;
+        }
+
+        try {
+            $taskRows = $this->db->table('tasks')->findAll();
+        } catch (Throwable $exception) {
+            return $this->buildEmptyWorkloadResult();
+        }
+
+        if (! is_array($taskRows) || $taskRows === []) {
+            return $this->buildEmptyWorkloadResult();
+        }
+
+        $taskMap = [];
+        foreach ($taskRows as $taskRow) {
+            if (! is_array($taskRow)) {
+                continue;
+            }
+
+            $taskId = (int) ($taskRow['id'] ?? 0);
+            if ($taskId <= 0) {
+                continue;
+            }
+
+            $taskMap[$taskId] = $taskRow;
+        }
+
+        $dependencyStats = $this->buildTaskDependencyStats($taskMap, $projectScope);
+        $userMap = $this->buildTableLookup('users');
+        $projectMap = $this->buildTableLookup('projects');
+        $now = time();
+
+        // Accumulators indexed by owner_id (0 = unassigned bucket)
+        $accumulators = [];
+
+        foreach ($taskMap as $taskId => $task) {
+            $projectId = (int) ($task['project_id'] ?? 0);
+            if (! array_key_exists($projectId, $projectScope)) {
+                continue;
+            }
+
+            $ownerId = (int) ($task['owner_id'] ?? 0);
+            $isActive = (int) ($task['is_active'] ?? 1) === 1;
+            $dateDue = (int) ($task['date_due'] ?? 0);
+            $isOverdue = $isActive && $dateDue > 0 && $dateDue < $now;
+            $score = (int) ($task['score'] ?? 0);
+            $timeEstimated = (int) ($task['time_estimated'] ?? 0);
+            $timeSpent = (int) ($task['time_spent'] ?? 0);
+            $depStats = $dependencyStats[$taskId] ?? ['blocked_by_count' => 0];
+            $isBlocked = (int) ($depStats['blocked_by_count'] ?? 0) > 0;
+            $projectName = (string) ($projectMap[$projectId]['name'] ?? '');
+
+            if (! array_key_exists($ownerId, $accumulators)) {
+                $user = $ownerId > 0 ? ($userMap[$ownerId] ?? []) : [];
+                $accumulators[$ownerId] = [
+                    'user_id' => $ownerId,
+                    'username' => (string) ($user['username'] ?? ''),
+                    'name' => (string) ($user['name'] ?? ''),
+                    'task_count' => 0,
+                    'active_task_count' => 0,
+                    'overdue_task_count' => 0,
+                    'blocked_task_count' => 0,
+                    'total_score' => 0,
+                    'total_estimated_hours' => 0,
+                    'total_spent_hours' => 0,
+                    'projects' => [],
+                ];
+            }
+
+            ++$accumulators[$ownerId]['task_count'];
+
+            if ($isActive) {
+                ++$accumulators[$ownerId]['active_task_count'];
+            }
+
+            if ($isOverdue) {
+                ++$accumulators[$ownerId]['overdue_task_count'];
+            }
+
+            if ($isBlocked) {
+                ++$accumulators[$ownerId]['blocked_task_count'];
+            }
+
+            $accumulators[$ownerId]['total_score'] = (int) $accumulators[$ownerId]['total_score'] + $score;
+            $accumulators[$ownerId]['total_estimated_hours'] =
+                (int) $accumulators[$ownerId]['total_estimated_hours'] + $timeEstimated;
+            $accumulators[$ownerId]['total_spent_hours'] =
+                (int) $accumulators[$ownerId]['total_spent_hours'] + $timeSpent;
+
+            /** @var array<int, array<string, mixed>> $ownerProjects */
+            $ownerProjects = (array) $accumulators[$ownerId]['projects'];
+
+            if (! array_key_exists($projectId, $ownerProjects)) {
+                $ownerProjects[$projectId] = [
+                    'project_id' => $projectId,
+                    'project_name' => $projectName,
+                    'task_count' => 0,
+                    'active_task_count' => 0,
+                ];
+            }
+
+            ++$ownerProjects[$projectId]['task_count'];
+
+            if ($isActive) {
+                ++$ownerProjects[$projectId]['active_task_count'];
+            }
+
+            $accumulators[$ownerId]['projects'] = $ownerProjects;
+        }
+
+        // Separate unassigned (ownerId=0) from users
+        $unassigned = $accumulators[0] ?? [
+            'task_count' => 0,
+            'active_task_count' => 0,
+            'overdue_task_count' => 0,
+            'blocked_task_count' => 0,
+            'total_score' => 0,
+            'total_estimated_hours' => 0,
+            'total_spent_hours' => 0,
+            'projects' => [],
+        ];
+
+        /** @var array<int, array<string, mixed>> $unassignedProjects */
+        $unassignedProjects = (array) $unassigned['projects'];
+        unset($unassigned['user_id'], $unassigned['username'], $unassigned['name']);
+        $unassigned['projects'] = array_values($unassignedProjects);
+
+        $users = [];
+        foreach ($accumulators as $ownerId => $data) {
+            if ((int) $ownerId === 0) {
+                continue;
+            }
+
+            /** @var array<int, array<string, mixed>> $userProjects */
+            $userProjects = (array) $data['projects'];
+            $data['projects'] = array_values($userProjects);
+            $users[] = $data;
+        }
+
+        usort(
+            $users,
+            static fn (array $a, array $b): int => strcmp((string) ($a['name'] ?? ''), (string) ($b['name'] ?? ''))
+        );
+
+        return [
+            'users' => $users,
+            'unassigned' => $unassigned,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
     public function getStatusReport(int $portfolioId, int $periodDays = 7): array
     {
         $now = time();
@@ -245,6 +407,26 @@ class PortfolioTaskModel extends Base
             'at_risk_milestones' => $atRiskMilestones,
             'overdue_milestones' => $overdueMilestones,
             'critical_path_length' => $criticalPathLength,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildEmptyWorkloadResult(): array
+    {
+        return [
+            'users' => [],
+            'unassigned' => [
+                'task_count' => 0,
+                'active_task_count' => 0,
+                'overdue_task_count' => 0,
+                'blocked_task_count' => 0,
+                'total_score' => 0,
+                'total_estimated_hours' => 0,
+                'total_spent_hours' => 0,
+                'projects' => [],
+            ],
         ];
     }
 

@@ -28,6 +28,9 @@ return [
     'Progress Weight' => 'Progress Weight',
     'Score' => 'Score',
     'Est. Hours' => 'Est. Hours',
+    'Workload Overload Threshold (active tasks)' => 'Workload Overload Threshold (active tasks)',
+    'Active task count above which a user is considered overloaded.' =>
+        'Active task count above which a user is considered overloaded.',
     'Recent Activity' => 'Recent Activity',
     'No recent activity.' => 'No recent activity.',
     'Event' => 'Event',

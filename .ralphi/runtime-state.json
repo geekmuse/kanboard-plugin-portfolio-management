@@ -1167,7 +1167,7 @@
     {
       "id": "iter-0951cd49",
       "phase": "ralphi-loop-iteration",
-      "status": "running",
+      "status": "completed",
       "sessionKey": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-11-35-295Z_8947aedc-07c6-4e23-8711-8cc8fdd1d258.jsonl",
       "sessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-11-35-295Z_8947aedc-07c6-4e23-8711-8cc8fdd1d258.jsonl",
       "checkpointLeafId": null,
@@ -1178,7 +1178,38 @@
       "loopId": "loop-cfe4d683",
       "iteration": 5,
       "storyId": "US-005",
-      "storyTitle": "Add activity feed to portfolio dashboard template"
+      "storyTitle": "Add activity feed to portfolio dashboard template",
+      "summary": "US-005 complete: Added activity feed to portfolio dashboard template. Updated PortfolioViewController::show() to call getActivity(portfolio_id, 10) via a new private getPortfolioActivity() helper and pass results as `activities` to the template. Added a 'Recent Activity' section to Template/portfolio/show.php below Milestone Health with date/event/task-link/project columns, portfolio- prefixed CSS classes, and an empty state message. Added 3 translation strings. Added 2 controller tests to PortfolioViewControllerTest (activity passthrough + empty state). Fixed a pre-existing PHPCS brace error. All 163 tests pass, 0 lint/PHPCS errors, PHPStan clean.",
+      "outputs": [
+        "Controller/PortfolioViewController.php",
+        "Template/portfolio/show.php",
+        "Locale/en_US/translations.php",
+        "Test/Controller/PortfolioViewControllerTest.php",
+        ".ralphi/prd.json",
+        ".ralphi/progress.txt"
+      ],
+      "complete": false,
+      "reviewPasses": 1,
+      "trajectory": "ON_TRACK",
+      "reflectionSummary": "All 5 stories completed so far (US-001 through US-005) are done. 4 stories remain open (US-006 through US-009). Implementation is fully aligned with PRD intent — no drift detected across any iteration.",
+      "nextIterationPlan": "Next story: US-006 (Add portfolio workload API method) — highest-priority open story. Backend-only: add getWorkload() to PortfolioTaskModel, register getPortfolioWorkload JSON-RPC callback in Plugin.php, add portfolio_workload_threshold config setting, update ConfigController and settings template, add 3+ unit tests.",
+      "completedAt": "2026-03-25T19:35:05.642Z"
+    },
+    {
+      "id": "iter-0b61c12a",
+      "phase": "ralphi-loop-iteration",
+      "status": "running",
+      "sessionKey": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-35-14-636Z_5ef25701-6148-438f-ac09-d1e0f607e35f.jsonl",
+      "sessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-35-14-636Z_5ef25701-6148-438f-ac09-d1e0f607e35f.jsonl",
+      "checkpointLeafId": null,
+      "checkpointSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-24T20-27-01-539Z_29a1079d-f934-4143-ad25-8a9d7ae75c37.jsonl",
+      "cwd": "/Users/bradmatic/Dev/geekmuse/kanboard-plugin-portfolio-mgmt",
+      "createdAt": "2026-03-25T19:35:14.636Z",
+      "autoConfirm": true,
+      "loopId": "loop-cfe4d683",
+      "iteration": 6,
+      "storyId": "US-006",
+      "storyTitle": "Add portfolio workload API method"
     }
   ],
   "loops": [
@@ -1239,7 +1270,7 @@
       "id": "loop-cfe4d683",
       "controllerSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-24T20-27-01-539Z_29a1079d-f934-4143-ad25-8a9d7ae75c37.jsonl",
       "maxIterations": 50,
-      "iteration": 5,
+      "iteration": 6,
       "active": true,
       "stopRequested": false,
       "createdAt": "2026-03-25T18:16:45.766Z",
@@ -1248,11 +1279,12 @@
         "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T18-33-11-524Z_cb7c968e-e873-4bc0-84b2-6470e29c6b3b.jsonl",
         "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T18-44-58-599Z_2ab7bf04-712e-48ac-9317-97a9e4c30e27.jsonl",
         "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T18-56-41-388Z_85abd44a-5835-424c-9bd2-1d24db1ada35.jsonl",
-        "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-11-35-295Z_8947aedc-07c6-4e23-8711-8cc8fdd1d258.jsonl"
+        "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-11-35-295Z_8947aedc-07c6-4e23-8711-8cc8fdd1d258.jsonl",
+        "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-35-14-636Z_5ef25701-6148-438f-ac09-d1e0f607e35f.jsonl"
       ],
-      "currentIterationStartedAt": "2026-03-25T19:11:35.295Z",
-      "activeIterationSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-11-35-295Z_8947aedc-07c6-4e23-8711-8cc8fdd1d258.jsonl"
+      "currentIterationStartedAt": "2026-03-25T19:35:14.636Z",
+      "activeIterationSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-35-14-636Z_5ef25701-6148-438f-ac09-d1e0f607e35f.jsonl"
     }
   ],
-  "savedAt": "2026-03-25T19:11:35.298Z"
+  "savedAt": "2026-03-25T19:35:14.638Z"
 }

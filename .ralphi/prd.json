@@ -125,8 +125,8 @@
       ],
       "notes": "Template + controller changes. Depends on US-004 for the getActivity() model method.",
       "startedAt": "2026-03-25T19:11:35.297Z",
-      "updatedAt": "2026-03-25T19:25:00.000Z",
-      "completedAt": "2026-03-25T19:25:00.000Z"
+      "updatedAt": "2026-03-25T19:35:14.279Z",
+      "completedAt": "2026-03-25T19:35:14.279Z"
     },
     {
       "id": "US-006",
@@ -148,9 +148,12 @@
         "New translation strings added to Locale/en_US/translations.php"
       ],
       "priority": 6,
-      "status": "open",
+      "status": "in_progress",
       "dependsOn": [],
-      "notes": "Backend + config. The workload view template is in US-007."
+      "notes": "Backend + config. The workload view template is in US-007.",
+      "startedAt": "2026-03-25T19:35:14.637Z",
+      "updatedAt": "2026-03-25T19:35:14.637Z",
+      "completedAt": null
     },
     {
       "id": "US-007",

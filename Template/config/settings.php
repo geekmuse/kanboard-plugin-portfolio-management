@@ -92,6 +92,21 @@
             </p>
         </div>
 
+        <div class="portfolio-config-field">
+            <label for="portfolio_workload_threshold"><?= $this->text->e(t('Workload Overload Threshold (active tasks)')) ?></label>
+            <input
+                type="number"
+                min="1"
+                max="500"
+                id="portfolio_workload_threshold"
+                name="portfolio_workload_threshold"
+                value="<?= $this->text->e((string) ($settings['portfolio_workload_threshold'] ?? 15)) ?>"
+            >
+            <p class="portfolio-config-help">
+                <?= $this->text->e(t('Active task count above which a user is considered overloaded.')) ?>
+            </p>
+        </div>
+
         <div class="form-actions">
             <button type="submit" class="btn btn-blue"><?= $this->text->e(t('Save')) ?></button>
             <?= $this->text->e(t('or')) ?>

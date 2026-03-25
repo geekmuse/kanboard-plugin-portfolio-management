@@ -297,6 +297,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
                 'portfolio_dependency_link_types' => 'blocks, relates to, blocks',
                 'portfolio_tasks_per_page' => '250',
                 'portfolio_milestone_weight_by' => 'score',
+                'portfolio_workload_threshold' => '20',
             ]);
 
             $controller = $this->buildController($request, $configModel);
@@ -318,10 +319,31 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $this->assertSame('blocks, relates to', $saved['portfolio_dependency_link_types']);
             $this->assertSame('250', $saved['portfolio_tasks_per_page']);
             $this->assertSame('score', $saved['portfolio_milestone_weight_by']);
+            $this->assertSame('20', $saved['portfolio_workload_threshold']);
             $this->assertSame(['Portfolio settings saved successfully.'], $flash->successMessages);
             $this->assertSame($response->redirectUrl, $redirectUrl);
             $this->assertStringContainsString('controller=ConfigController', (string) $redirectUrl);
             $this->assertStringContainsString('action=show', (string) $redirectUrl);
+        }
+
+        public function testSaveNormalizesOutOfRangeWorkloadThresholdToDefault(): void
+        {
+            $configModel = new ConfigControllerFakeConfigModel();
+            $request = new ConfigControllerFakeRequest([
+                'csrf_token' => self::CSRF_TOKEN,
+                'portfolio_workload_threshold' => '999',
+            ]);
+
+            $controller = $this->buildController($request, $configModel);
+            $controller->save();
+
+            $saved = [];
+            foreach ($configModel->saveCalls as $call) {
+                $saved[$call['key']] = $call['value'];
+            }
+
+            // 999 exceeds max of 500, so falls back to default 15
+            $this->assertSame('15', $saved['portfolio_workload_threshold']);
         }
 
         public function testSaveNormalizesInvalidWeightByToCount(): void
