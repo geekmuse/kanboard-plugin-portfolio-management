@@ -201,12 +201,12 @@
         "PHP lint passes, all existing tests pass"
       ],
       "priority": 8,
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": [],
       "notes": "Controller + route + template shell. The D3 rendering is in US-009.",
       "startedAt": "2026-03-25T19:55:36.194Z",
-      "updatedAt": "2026-03-25T19:55:36.194Z",
-      "completedAt": null
+      "updatedAt": "2026-03-25T20:05:50.789Z",
+      "completedAt": "2026-03-25T20:05:50.789Z"
     },
     {
       "id": "US-009",
@@ -228,11 +228,14 @@
         "PHP lint passes, all existing tests pass"
       ],
       "priority": 9,
-      "status": "open",
+      "status": "done",
       "dependsOn": [
         "US-008"
       ],
-      "notes": "Client-side JS + CSS. Depends on US-008 for the controller/template that provides the data. Follows the same pattern as renderGantt() — D3 v7 is already bundled."
+      "notes": "Client-side JS + CSS. Depends on US-008 for the controller/template that provides the data. Follows the same pattern as renderGantt() — D3 v7 is already bundled.",
+      "startedAt": "2026-03-25T20:05:51.050Z",
+      "updatedAt": "2026-03-25T20:09:00.000Z",
+      "completedAt": "2026-03-25T20:09:00.000Z"
     }
   ]
 }
