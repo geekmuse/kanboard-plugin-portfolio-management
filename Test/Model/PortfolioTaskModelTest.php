@@ -315,6 +315,7 @@ class PortfolioTaskModelTest extends TestCase
                 date_completed INTEGER NOT NULL DEFAULT 0,
                 priority INTEGER NOT NULL DEFAULT 0,
                 score INTEGER NOT NULL DEFAULT 0,
+                time_estimated INTEGER NOT NULL DEFAULT 0,
                 color_id TEXT NOT NULL DEFAULT '',
                 category_id INTEGER NOT NULL DEFAULT 0,
                 swimlane_id INTEGER NOT NULL DEFAULT 0

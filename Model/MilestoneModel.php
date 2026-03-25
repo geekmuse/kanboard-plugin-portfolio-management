@@ -156,7 +156,7 @@ class MilestoneModel extends Base
     /**
      * @return array<string, mixed>|null
      */
-    public function getProgress(int $milestoneId): ?array
+    public function getProgress(int $milestoneId, string $weightBy = 'count'): ?array
     {
         $milestone = $this->getById($milestoneId);
 
@@ -172,6 +172,10 @@ class MilestoneModel extends Base
         $total = 0;
         $completed = 0;
         $blockedCount = 0;
+        $scoreTotal = 0;
+        $scoreCompleted = 0;
+        $timeTotal = 0;
+        $timeCompleted = 0;
         $blockedByLinkIds = $this->getBlockedByLinkIds();
 
         foreach ($memberships as $membership) {
@@ -187,8 +191,22 @@ class MilestoneModel extends Base
             ++$total;
 
             $task = $this->db->table('tasks')->eq('id', $taskId)->findOne();
-            if (is_array($task) && (int) ($task['is_active'] ?? 1) === 0) {
+            $isTaskCompleted = is_array($task) && (int) ($task['is_active'] ?? 1) === 0;
+
+            if ($isTaskCompleted) {
                 ++$completed;
+            }
+
+            if (is_array($task)) {
+                $taskScore = (int) ($task['score'] ?? 0);
+                $taskTime = (int) ($task['time_estimated'] ?? 0);
+                $scoreTotal += $taskScore;
+                $timeTotal += $taskTime;
+
+                if ($isTaskCompleted) {
+                    $scoreCompleted += $taskScore;
+                    $timeCompleted += $taskTime;
+                }
             }
 
             if ($blockedByLinkIds !== [] && $this->hasUnresolvedBlockedByLink($taskId, $blockedByLinkIds)) {
@@ -196,7 +214,27 @@ class MilestoneModel extends Base
             }
         }
 
-        $percent = $total > 0 ? round(($completed / $total) * 100, 2) : 0.0;
+        $normalizedWeightBy = $this->normalizeWeightBy($weightBy);
+        $noData = false;
+
+        if ($normalizedWeightBy === 'score') {
+            if ($scoreTotal <= 0) {
+                $percent = 0.0;
+                $noData = true;
+            } else {
+                $percent = round(($scoreCompleted / $scoreTotal) * 100, 2);
+            }
+        } elseif ($normalizedWeightBy === 'time_estimated') {
+            if ($timeTotal <= 0) {
+                $percent = 0.0;
+                $noData = true;
+            } else {
+                $percent = round(($timeCompleted / $timeTotal) * 100, 2);
+            }
+        } else {
+            $percent = $total > 0 ? round(($completed / $total) * 100, 2) : 0.0;
+        }
+
         $targetDate = (int) ($milestone['target_date'] ?? 0);
         $now = time();
 
@@ -220,7 +258,21 @@ class MilestoneModel extends Base
             'is_at_risk' => $isAtRisk,
             'is_overdue' => $isOverdue,
             'target_date' => $milestone['target_date'] ?? 0,
+            'weight_by' => $normalizedWeightBy,
+            'no_data' => $noData,
+            'score_total' => $scoreTotal,
+            'score_completed' => $scoreCompleted,
+            'time_total' => $timeTotal,
+            'time_completed' => $timeCompleted,
         ];
+    }
+
+    private function normalizeWeightBy(string $weightBy): string
+    {
+        $allowed = ['count', 'score', 'time_estimated'];
+        $normalized = strtolower(trim($weightBy));
+
+        return in_array($normalized, $allowed, true) ? $normalized : 'count';
     }
 
     private function portfolioExists(int $portfolioId): bool

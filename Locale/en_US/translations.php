@@ -18,6 +18,13 @@ return [
     'Comma-separated task link labels treated as dependencies.' =>
         'Comma-separated task link labels treated as dependencies.',
     'Default portfolio tasks per page' => 'Default portfolio tasks per page',
+    'Milestone Progress Weight' => 'Milestone Progress Weight',
+    'How milestone progress percentage is computed.' => 'How milestone progress percentage is computed.',
+    'Count' => 'Count',
+    'Story Points' => 'Story Points',
+    'Time Estimated' => 'Time Estimated',
+    'No score data available' => 'No score data available',
+    'No time estimates available' => 'No time estimates available',
     'or' => 'or',
     'Portfolio Name' => 'Portfolio Name',
     'Portfolio Description' => 'Portfolio Description',

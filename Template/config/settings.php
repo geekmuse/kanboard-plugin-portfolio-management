@@ -80,6 +80,18 @@
             >
         </div>
 
+        <div class="portfolio-config-field">
+            <label for="portfolio_milestone_weight_by"><?= $this->text->e(t('Milestone Progress Weight')) ?></label>
+            <select id="portfolio_milestone_weight_by" name="portfolio_milestone_weight_by">
+                <option value="count" <?= (($settings['portfolio_milestone_weight_by'] ?? 'count') === 'count') ? 'selected' : '' ?>><?= $this->text->e(t('Count')) ?></option>
+                <option value="score" <?= (($settings['portfolio_milestone_weight_by'] ?? 'count') === 'score') ? 'selected' : '' ?>><?= $this->text->e(t('Story Points')) ?></option>
+                <option value="time_estimated" <?= (($settings['portfolio_milestone_weight_by'] ?? 'count') === 'time_estimated') ? 'selected' : '' ?>><?= $this->text->e(t('Time Estimated')) ?></option>
+            </select>
+            <p class="portfolio-config-help">
+                <?= $this->text->e(t('How milestone progress percentage is computed.')) ?>
+            </p>
+        </div>
+
         <div class="form-actions">
             <button type="submit" class="btn btn-blue"><?= $this->text->e(t('Save')) ?></button>
             <?= $this->text->e(t('or')) ?>

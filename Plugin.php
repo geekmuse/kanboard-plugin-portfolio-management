@@ -288,8 +288,8 @@ class Plugin extends Base
             ->withCallback('getTaskMilestones', function ($task_id) {
                 return $this->milestoneTaskModel->getMilestones((int) $task_id);
             })
-            ->withCallback('getMilestoneProgress', function ($milestone_id) {
-                return $this->milestoneModel->getProgress((int) $milestone_id);
+            ->withCallback('getMilestoneProgress', function ($milestone_id, $weight_by = 'count') {
+                return $this->milestoneModel->getProgress((int) $milestone_id, (string) $weight_by);
             })
             ->withCallback('getPortfolioDependencies', function ($portfolio_id, $cross_project_only = true) {
                 return $this->dependencyModel->getDependencies((int) $portfolio_id, (bool) $cross_project_only);

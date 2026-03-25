@@ -1056,6 +1056,10 @@ class PortfolioTaskModel extends Base
 
         $total = 0;
         $completed = 0;
+        $scoreTotal = 0;
+        $scoreCompleted = 0;
+        $timeTotal = 0;
+        $timeCompleted = 0;
 
         foreach ($memberships as $membership) {
             if (! is_array($membership)) {
@@ -1070,8 +1074,22 @@ class PortfolioTaskModel extends Base
             ++$total;
 
             $task = $this->db->table('tasks')->eq('id', $taskId)->findOne();
-            if (is_array($task) && (int) ($task['is_active'] ?? 1) === 0) {
+            $isTaskCompleted = is_array($task) && (int) ($task['is_active'] ?? 1) === 0;
+
+            if ($isTaskCompleted) {
                 ++$completed;
+            }
+
+            if (is_array($task)) {
+                $taskScore = (int) ($task['score'] ?? 0);
+                $taskTime = (int) ($task['time_estimated'] ?? 0);
+                $scoreTotal += $taskScore;
+                $timeTotal += $taskTime;
+
+                if ($isTaskCompleted) {
+                    $scoreCompleted += $taskScore;
+                    $timeCompleted += $taskTime;
+                }
             }
         }
 
@@ -1095,6 +1113,10 @@ class PortfolioTaskModel extends Base
             'percent' => $percent,
             'is_at_risk' => $isAtRisk,
             'is_overdue' => $isOverdue,
+            'score_total' => $scoreTotal,
+            'score_completed' => $scoreCompleted,
+            'time_total' => $timeTotal,
+            'time_completed' => $timeCompleted,
         ];
     }
 

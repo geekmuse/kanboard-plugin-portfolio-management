@@ -1,182 +1,34 @@
-## 2026-03-23 — US-003
-Session: iter-5f381b80 / loop-9e860edc iteration 3
-Review Outcome: PASS
-Trajectory: ON_TRACK
-Trajectory Notes: N/A
-Corrective Plan: N/A
-- Added CSS grid layout to `.portfolio-task-filter-form` so the 8 filter rows flow left-to-right using `repeat(auto-fill, minmax(180px, 1fr))`, collapsing to fewer columns on narrow screens.
-- Added `.portfolio-form-row` styles (flex column direction, label + input stacking) and `.portfolio-form-actions` with `grid-column: 1 / -1` to span the submit button row full width.
-- No template changes were needed — existing `<div class="portfolio-form-row">` wrappers in `tasks.php` already provided correct grid-cell granularity; `<input type="hidden">` is `display:none` and does not create a visual grid cell.
-- Files changed: `Asset/css/portfolio.css`, `.ralphi/prd.json`, `.ralphi/progress.txt`
-- **Learnings for future iterations:**
-  - CSS-only layout fixes (no PHP behavior change) require no new tests.
-  - `input[type="hidden"]` elements have `display:none` from the user-agent stylesheet and are therefore not grid items — safe to leave in-form without wrapping.
-  - Pre-existing PHPCS line-length warnings across many files do not block commits.
----
-
-## 2026-03-23 — US-004
-Session: iter-e0de97ae / loop-9e860edc iteration 4
-Review Outcome: PASS
-Trajectory: ON_TRACK
-Trajectory Notes: N/A
-Corrective Plan: N/A
-- Replaced the vertical `<ul>/<li>` metrics list in `Template/portfolio/show.php` with a `<div class="portfolio-metrics-grid">` containing 8 `<div class="portfolio-metric-card">` cards, each with a `portfolio-metric-label` span and `portfolio-metric-value` bold value.
-- Added `.portfolio-metrics-grid` (CSS grid, `repeat(auto-fill, minmax(150px, 1fr))`, 0.75rem gap) and `.portfolio-metric-card`, `.portfolio-metric-label`, `.portfolio-metric-value` rules to `Asset/css/portfolio.css`.
-- 8 cards fit in 1 row at 1280px (≥150px × 8 = 1200px); at worst 2 rows — satisfies "2 rows max" criterion.
-- No PHP behavior change; no new tests needed (CSS-only layout, same pattern as US-003).
-- Files changed: `Template/portfolio/show.php`, `Asset/css/portfolio.css`, `.ralphi/prd.json`, `.ralphi/progress.txt`
-- **Learnings for future iterations:**
-  - CSS-only layout refactors (no PHP logic change) need no new tests — confirmed again here.
-  - `repeat(auto-fill, minmax(150px, 1fr))` with 8 items fits comfortably in 1–2 rows on standard 1280px screens.
----
-
-## 2026-03-23 — US-005
-Session: iter-0a257061 / loop-9e860edc iteration 5
-Review Outcome: PASS
-Trajectory: ON_TRACK
-Trajectory Notes: N/A
-Corrective Plan: N/A
-- Changed `buildTimelineData()` to accept a third `string $portfolioName = ''` parameter.
-- In `timeline()`, extracted `$portfolioName = (string) ($portfolio['name'] ?? '')` and passed it to `buildTimelineData()`.
-- Milestone items now populate `'project_name' => $portfolioName` instead of the previous empty string.
-- Task items remain unchanged: `'project_name' => (string) ($task['project_name'] ?? '')`.
-- Template (`Template/portfolio/timeline.php`) required no changes — it already rendered `$item['project_name']` for both types.
-- Added two assertions to the timeline controller test: one asserting the escaped portfolio name appears in rendered HTML (milestone Project column), one asserting the task's project name still appears.
-- Files changed: `Controller/PortfolioViewController.php`, `Test/Controller/PortfolioViewControllerTest.php`, `.ralphi/prd.json`, `.ralphi/progress.txt`
-- **Learnings for future iterations:**
-  - When `buildTimelineData()` already renders both item types through the same template field, the fix is entirely in the controller — no template change needed.
-  - Default parameter values (`string $portfolioName = ''`) are PHPStan-clean for optional enrichment parameters with backward-compatible call sites.
----
-
-## 2026-03-23 — US-006
-Session: iter-984d76a0 / loop-9e860edc iteration 6
-Review Outcome: PASS
-Trajectory: ON_TRACK
-Trajectory Notes: N/A
-Corrective Plan: N/A
-- Root cause: `.portfolio-board-column` had no explicit flex display, so the browser fell back to whatever formatting Kanboard's base CSS applied — causing cards to stack horizontally in some contexts.
-- Fix: added `display: flex; flex-direction: column; gap: 0.5rem;` to `.portfolio-board-column`, making each column an explicit flex column container so cards always stack vertically.
-- Removed the now-redundant `margin-bottom: 0.5rem;` from `.portfolio-board-card` — `gap` on the column handles spacing cleanly between all flex items (h3, p, articles).
-- No PHP behavior change, no template changes needed, no new tests required (CSS-only layout fix, same pattern as US-003 and US-004).
-- Files changed: `Asset/css/portfolio.css`, `.ralphi/prd.json`, `.ralphi/progress.txt`
-- **Learnings for future iterations:**
-  - When a parent is `display: flex`, its children become flex items, but those children are NOT automatically flex containers themselves — always add `display: flex; flex-direction: column;` to a column container explicitly to guarantee vertical card stacking.
-  - Replacing `margin-bottom` on cards with `gap` on the container is cleaner — it avoids trailing space after the last item and centralises spacing control in the column rule.
----
-
-## 2026-03-23 — US-007
-Session: iter-d9fae084 / loop-9e860edc iteration 7
-Review Outcome: PASS
-Trajectory: ON_TRACK
-Trajectory Notes: N/A
-Corrective Plan: N/A
-- Replaced the vertical `<ol>/<li>` critical-path layout with a horizontal `<div class="portfolio-critical-path-flow">` flex container (`display:flex; flex-wrap:wrap; align-items:center; gap:0.5rem`).
-- Each task is now a compact `<div class="portfolio-critical-path-node">` card showing: step position badge, `#id title` (bold, strikethrough when closed), and a meta line with project, assignee, and "Closed"/"N downstream" annotations.
-- `→` arrow spans are emitted between consecutive nodes in PHP (`$index < $lastIndex`), so the last node has no trailing arrow.
-- Closed nodes use `portfolio-critical-path-node--closed` modifier: `opacity:0.65` (dimmed) + `text-decoration:line-through; color:#6b7280` on title.
-- Old CSS classes removed: `.portfolio-critical-path-list`, `.portfolio-critical-path-item`, `.portfolio-critical-path-item--closed`, `.portfolio-critical-path-item-header`, `.portfolio-critical-path-position`, `.portfolio-critical-path-task-title`, `.portfolio-critical-path-item-meta`, `.portfolio-critical-path-connector`.
-- New CSS classes added: `.portfolio-critical-path-flow`, `.portfolio-critical-path-node`, `.portfolio-critical-path-node--closed`, `.portfolio-critical-path-pos`, `.portfolio-critical-path-node-body`, `.portfolio-critical-path-node-title`, `.portfolio-critical-path-node-meta`, `.portfolio-critical-path-arrow`.
-- No PHP behavior change; no new tests needed (CSS-only layout refactor, same pattern as US-003/004/006).
-- Files changed: `Template/dependency/critical_path.php`, `Asset/css/portfolio.css`, `.ralphi/prd.json`, `.ralphi/progress.txt`
-- **Learnings for future iterations:**
-  - Pure CSS flex-wrap cannot detect which flex item is last on a given wrapped row — hiding connectors "after the last item on each row" requires JS or accepting that trailing-row arrows show only on the last item overall (PHP-side guard: `$index < $lastIndex`).
-  - `t('%d downstream', $downstreamCount)` is the correct pattern for numeric interpolation in Kanboard's `t()` (passes through sprintf; `%d` is a valid format specifier).
-  - BEM modifier pattern for closed/inactive items: `portfolio-xxx--closed` on the node, then target the title with `.portfolio-xxx--closed .portfolio-xxx-title { text-decoration: line-through; }` — keeps the modifier and sub-element rules cleanly separated.
----
-
-## 2026-03-23 — US-008
-Session: iter-bbff2e52 / loop-9e860edc iteration 8
-Review Outcome: PASS
-Trajectory: ON_TRACK
-Trajectory Notes: N/A
-Corrective Plan: N/A
-- Added `moveTask()` AJAX endpoint to `PortfolioViewController` that reads `task_id`+`column_id` from `getValues()`, validates portfolio existence, and calls `taskModificationModel->update()` to persist the column change through Kanboard's core API.
-- Registered `/portfolio/:portfolio_id/board/move-task` route in `Plugin.php`.
-- Updated `Template/portfolio/board.php`: added `draggable="true"` + `data-task-id` on cards; `data-column-id` on columns; `data-move-task-url` + `data-move-error-label` on the board container; hidden `portfolio-board-csrf` div with `$this->form->csrf()` for AJAX; `.portfolio-board-column-count` span for JS count updates; per-page `$this->asset->js(...)` loading of `portfolio-board.js`.
-- Created `Asset/js/portfolio-board.js`: pure HTML5 drag-and-drop (ES5-compatible), optimistic DOM move on drop, XHR POST with CSRF token + FormData, revert to source column on failure, 5-second error banner injected above the board.
-- Added CSS for drag-and-drop visual states: `.portfolio-board-card--dragging` (opacity+shadow), `.portfolio-board-column--drop-target` (blue dashed border + tinted background), `.portfolio-board-error` margin.
-- Updated `ApiRegistrationTest.php` to add the new route to expected array and bump slice count from 16→17.
-- Added 5 new tests to `PortfolioViewControllerTest.php`: `testMoveTaskSuccessfullyUpdatesColumnViaTaskModificationModel`, `testMoveTaskReturnsErrorForInvalidTaskId`, `testMoveTaskReturnsErrorWhenPortfolioNotFound`, `testMoveTaskReturnsErrorWhenModelUpdateFails`, `testBoardTemplateRendersWithDragAndDropAttributes`.
-- Files changed: `Controller/PortfolioViewController.php`, `Plugin.php`, `Template/portfolio/board.php`, `Asset/js/portfolio-board.js` (new), `Asset/css/portfolio.css`, `Test/Controller/PortfolioViewControllerTest.php`, `Test/Plugin/ApiRegistrationTest.php`, `.ralphi/prd.json`, `.ralphi/progress.txt`
-- **Learnings for future iterations:**
-  - `$this->response->json(array $data)` is valid on Kanboard's Response object — used in `DependencyController::graphData()` — safe to use in other AJAX endpoints.
-  - For AJAX CSRF: `$this->request->getValues()` validates CSRF internally; if the CSRF token is missing or invalid, `getValues()` returns an empty array. The `task_id`/`column_id` validation then catches the empty array, so no explicit CSRF check is needed in AJAX handlers.
-  - HTML5 DnD + XHR + FormData is the cleanest ES5-compatible AJAX approach — no jQuery AJAX, no fetch(), no build step required.
-  - To expose a translated PHP error string to JS without a build step, put it as a `data-*` attribute on the container element in the template (e.g., `data-move-error-label="<?= $this->text->e(t('...')) ?>"`).
-  - `NodeList.forEach()` is NOT ES5 — use indexed for-loop over querySelectorAll results.
-  - Route registration tests (`ApiRegistrationTest::testRegistersPortfolioCrudRoutes`) assert the exact ordered route list with `array_slice()`; adding a route requires updating both the expected array AND the slice count.
----
-
-## 2026-03-23 — US-009
-Session: iter-67c4bccb / loop-9e860edc iteration 9
-Review Outcome: PASS
-Trajectory: ON_TRACK
-Trajectory Notes: N/A
-Corrective Plan: N/A
-- Added `gantt()` controller action to `PortfolioViewController` that fetches tasks (all statuses), milestones, and dependency edges, builds a structured JSON payload, and renders a new `Portfolio:portfolio/gantt` template.
-- Added private `buildGanttData()` method: processes tasks (using `date_started` → `date_creation` → `date_due` fallback for start date), milestones (with portfolio_name populated), dependency edges (from `dependencyModel->getDependencies()`), and unique sorted project names.
-- Added private `getPortfolioDependencies()` helper with defensive `is_object`/`method_exists` guards and `Throwable` catch.
-- Created `Template/portfolio/gantt.php`: shows empty-state message when `has_items` is false; otherwise renders `<div data-gantt="...">` and loads D3 + portfolio-gantt.js per-page via `$this->asset->js()`, then calls `window.PortfolioGantt.renderGantt(...)`.
-- Added "Gantt Chart" sidebar link (`$active === 'gantt'`) to `Template/portfolio/_sidebar.php` immediately after Timeline.
-- Rewrote `Asset/js/portfolio-gantt.js`: kept existing `render()` dot-marker function intact (used by timeline.php); added new `renderGantt(container, data)` D3 v7 function that renders horizontal task bars, diamond milestone markers, cubic Bézier dependency arrows with arrowhead markers, per-row labels, and a bottom time axis. Colors assigned per project using a 10-color fixed palette.
-- Added Gantt CSS to `Asset/css/portfolio.css`: `.portfolio-gantt-chart`, `.portfolio-gantt-svg`, `.portfolio-gantt-grid-line`, `.portfolio-gantt-axis`, `.portfolio-gantt-row-label`, `.portfolio-gantt-bar`, `.portfolio-gantt-milestone-diamond`, `.portfolio-gantt-milestone-marker`, `.portfolio-gantt-dep-edge`, `.portfolio-gantt-arrow-head`.
-- Added route `/portfolio/:portfolio_id/gantt` → `PortfolioViewController::gantt()` in `Plugin.php`.
-- Updated `ApiRegistrationTest::testRegistersPortfolioCrudRoutes` to include the new gantt route and bump `array_slice(..., 0, 18)`.
-- Added `PortfolioViewFakeDependencyModel` stub to test harness; updated `buildServices()` with an optional `$dependencyModel` parameter.
-- Added 4 new controller tests: `testPortfolioGanttRendersChartWithD3Assets`, `testPortfolioGanttBuildsJsonWithTasksAndMilestonesAndEdges`, `testPortfolioGanttRedirectsWhenPortfolioNotFound`, `testPortfolioGanttShowsEmptyStateWhenNoItemsHaveDueDates`.
-- Files changed: `Controller/PortfolioViewController.php`, `Template/portfolio/gantt.php` (new), `Template/portfolio/_sidebar.php`, `Asset/js/portfolio-gantt.js`, `Asset/css/portfolio.css`, `Plugin.php`, `Test/Controller/PortfolioViewControllerTest.php`, `Test/Plugin/ApiRegistrationTest.php`, `.ralphi/prd.json`, `.ralphi/progress.txt`
-- **Learnings for future iterations:**
-  - JSON_HEX_TAG encodes `<` as `\u003C` and `>` as `\u003E` in the JSON string. When that JSON string is then HTML-attribute-escaped by `$this->text->e()`, the backslash and `u003C` are not HTML special chars — they remain as-is. So XSS tests should check for `\u003C` NOT for `&lt;` inside data attributes.
-  - D3 is loaded as a global `d3` object from the bundled `d3.v7.min.js` — no import/require needed; just load the script before the consuming script.
-  - Load D3 per-page via `$this->asset->js()` in the specific template (not globally via `hook->on`) to avoid double-execution on every Kanboard page.
-  - The `dependencyModel->getDependencies($portfolioId, false)` call with `$crossProjectOnly = false` returns all dependency edges including same-project ones — better for Gantt arrows.
-  - For start-date fallback logic (date_started → date_creation → date_due), always clamp `$startDate = min($startDate, $dueDate)` to avoid reversed bars.
-  - When reusing a JS module's public API, add new methods to the IIFE's `window.X = { ... }` export object rather than duplicating the IIFE — keeps the dot-marker legacy `render()` intact while adding `renderGantt()`.
----
-
 ## Codebase Patterns
-- **REQUIRED READING**: Before writing any code each iteration, read `docs/references/kanboard-plugin-development-guidelines.md`. It contains authoritative agent feedback, known pitfalls, and hard-won patterns from previous work on this project. Do NOT commit or modify this file.
-- **POST forms — always use `getValues()` once**: `Request::getValue()` internally calls `getValues()` which validates and strips the CSRF token. Calling it multiple times means only the first call returns real data. Pattern: `$values = $this->request->getValues(); $field = (int)($values['field'] ?? 0);`
-- **PHPStan stubs** — `phpstan-kanboard-stubs.php` must declare `Kanboard\Controller\BaseController`, `Kanboard\Filter\BaseFilter`, and `Kanboard\Core\Filter\FilterInterface` for PHPStan to resolve the full type graph. Without them, every controller and filter file emits "unknown class" errors.
-- **Filter private properties** — never name a property `$container` in a class that extends `Kanboard\Core\Base`; it shadows the protected `$container` property. Use a distinct name like `$serviceContainer`.
-- **PHPCBF + manual** — PHPCBF auto-fixes multi-line-call indentation issues but cannot fix one-liner anonymous classes. Expand them to PSR-12 multi-line format manually before committing.
-- Add reusable, project-wide implementation patterns here.
+- All model methods that delegate to dependencyModel use `resolveContainerService('dependencyModel')` + `is_object() && method_exists()` guard + `try/catch Throwable`. PHPStan level 5 is satisfied because `is_object()` narrows `mixed` to `object`.
+- The test harness for PortfolioTaskModel: create stub classes in the same file (PSR1.Classes.ClassDeclaration is relaxed for Test/), use in-memory SQLite with manual DDL in setUp(). Pass overrides via `createModel(['serviceKey' => $stub])`.
+- `insertTask()` in PortfolioTaskModelTest has an optional `$dateCompleted = 0` final parameter. All existing callers omit it safely (defaults to 0 via column DEFAULT 0).
+- Pre-existing PHPCS error in PortfolioViewControllerTest.php line 933 (inline anonymous class brace formatting) — fix on sight when editing that file.
+- API registration test is named `testRegistersAllTwentyNineJsonRpcMethods` (updated from 28). Update name + expected array when adding new JSON-RPC methods.
 ---
 
 ## PRD Run Context
-PRD Branch: ralph/post-release-remediation
-Started: 2026-03-23T22:20:35.323Z
+PRD Branch: ralph/planning-depth-enhancements
+Started: 2026-03-25T18:16:45.763Z
 ---
 
-## 2026-03-23 — US-001
-Session: iter-4be9155b / loop-9e860edc iteration 1
+## 2026-03-25 - US-001
+Session: iter-a0a0b260 / loop-cfe4d683
 Review Outcome: PASS
 Trajectory: ON_TRACK
 Trajectory Notes: N/A
 Corrective Plan: N/A
-- Fixed `MilestoneController::addTask()` to call `$this->request->getValues()` once and read `task_id`, `is_critical`, `position` from the returned array instead of calling `getValue()` three times (each call consumed the CSRF token, returning null after the first).
-- Fixed `MilestoneController::removeTask()` to use the same `getValues()` pattern for consistency.
-- Added missing Kanboard stubs to `phpstan-kanboard-stubs.php` (`BaseController`, `FilterInterface`, `BaseFilter`) — baseline had 9 pre-existing PHPStan "unknown class" errors; now 0.
-- Renamed `TaskPortfolioFilter::$container` → `$serviceContainer` to avoid shadowing `Core\Base::$container`; added PHP return type hints to `setContainer()`, `getAttributes()`, `apply()`.
-- PHPCBF auto-fixed pre-existing multi-line indentation errors in `MilestoneController.php` and `PortfolioModificationController.php`; manually expanded one-liner anonymous classes in two test files to PSR-12 format.
-- Files changed: `Controller/MilestoneController.php`, `Controller/PortfolioModificationController.php`, `Filter/TaskPortfolioFilter.php`, `phpstan-kanboard-stubs.php`, `Test/Controller/MilestoneControllerTest.php`, `Test/Controller/PortfolioViewControllerTest.php`, `.ralphi/config.yaml`, `.ralphi/prd.json`, `.ralphi/progress.txt`
+- Added `getStatusReport(int $portfolioId, int $periodDays = 7): array` to `PortfolioTaskModel`
+- Added 4 private helpers: `filterCompletedTasksInPeriod`, `buildCriticalBlockers`, `buildAtRiskItems`, `computeDependencyHealth`
+- Registered `getPortfolioStatusReport` JSON-RPC callback in `Plugin.php` (read-only, no apiAccessMap entry)
+- Added 4 unit tests to `PortfolioTaskModelTest`: empty portfolio zeros, period filtering, custom period_days, dependency health stub
+- Added `date_completed INTEGER NOT NULL DEFAULT 0` to test schema; added optional `$dateCompleted = 0` param to `insertTask()`
+- Added `PortfolioTaskDependencyModelStub` for dependency health testing
+- Updated `ApiRegistrationTest` to expect 29 methods (was 28)
+- Fixed pre-existing PSR-12 error in `PortfolioViewControllerTest.php` line 933 (inline anonymous class brace)
+- Files changed: `Model/PortfolioTaskModel.php`, `Plugin.php`, `Test/Model/PortfolioTaskModelTest.php`, `Test/Plugin/ApiRegistrationTest.php`, `Test/Controller/PortfolioViewControllerTest.php`
 - **Learnings for future iterations:**
-  - `Request::getValue()` calls `getValues()` internally on each invocation — always consolidate into one `getValues()` call per handler.
-  - PHPStan stubs need `BaseController`, `BaseFilter`, and `FilterInterface` declared to avoid false "unknown class" errors across all controllers and filters.
-  - One-liner anonymous classes in test `buildServices()` helpers trigger PSR-12 brace errors that PHPCBF cannot fix automatically — expand them manually.
-  - Never name a property `$container` in a subclass of `Kanboard\Core\Base`; it conflicts with the base class's protected property.
----
-
-## 2026-03-23 — US-002
-Session: iter-d205829e / loop-9e860edc iteration 2
-Review Outcome: PASS
-Trajectory: ON_TRACK
-Trajectory Notes: N/A
-Corrective Plan: N/A
-- Updated `Plugin::getPluginHomepage()` to return the correct repository URL: `https://github.com/geekmuse/kanboard-plugin-portfolio-management` (was missing `-management` suffix).
-- Verified against `git remote -v` which shows `git@github.com:geekmuse/kanboard-plugin-portfolio-management.git`.
-- Files changed: `Plugin.php`, `.ralphi/prd.json`, `.ralphi/progress.txt`
-- **Learnings for future iterations:**
-  - Minimal single-line metadata fixes require no new tests (pure string constant, no behavior under test).
-  - Pre-existing PHPCS line-length warnings across many files do not block commits — they are warnings, not errors.
+  - The tasks table needs `date_completed` in the test schema to support completion-based filtering
+  - `computeDependencyHealth` follows the same `resolveContainerService` + `is_object/method_exists` pattern used in `getOverview` — reuse this pattern for all future dependencyModel calls
+  - PHPUnit `D` markers = deprecation warnings (test passes but emits deprecation); harmless
+  - Test count 151 = 147 original + 4 new — confirmed via isolated `--testdox` run
 ---
