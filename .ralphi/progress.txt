@@ -139,3 +139,25 @@ Corrective Plan: N/A
   - When adding new fake model classes to ApiRegistrationTest, follow the same stub shape: public array for call recording, method matching the real signature
   - For stub methods on existing models (DependencyModel, PortfolioTaskModel), insert before private helper methods so public API stays grouped at the top
 ---
+
+## 2026-03-25 — US-006
+Session: N/A
+Review Outcome: PASS
+Trajectory: ON_TRACK
+Trajectory Notes: N/A
+Corrective Plan: N/A
+- Added `->in('project_id', $projectIds)` to `buildFilteredTaskRows()` tasks query — eliminates full-table scan, scopes to portfolio projects before fetching
+- Added `->in('task_id', $scopedTaskIds)` (where `$scopedTaskIds = array_keys($stats)`) to `buildTaskDependencyStats()` task_has_links query — scopes link lookup to portfolio task IDs only
+- Empty-projectIds early return (already present before the `->in()` call) and empty-stats early return (already present before the link query) guard against empty IN lists
+- `buildTableLookup()` for 'projects', 'columns', 'users' unchanged (small reference tables)
+- Added `in()` method to `PortfolioTaskTestQueryBuilder` in test harness with proper `IN (...)` SQL generation; handles empty-values edge case with `1=0`
+- Updated `buildWhereClause()` in test builder to dispatch on `IN` vs scalar operators
+- All 189 existing tests pass unchanged — behavior identical, just fewer rows scanned
+- PHP lint clean, PHPCS 0 errors, PHPStan clean
+- Files changed: `Model/PortfolioTaskModel.php`, `Test/Model/PortfolioTaskModelTest.php`
+- **Learnings for future iterations:**
+  - `array_keys($stats)` gives portfolio-scoped task IDs for the `buildTaskDependencyStats()` IN clause — `$stats` is already filtered by `$projectScope`, so its keys are correct regardless of whether `$taskMap` came from a scoped or full-table query
+  - Empty IN list guard pattern: early return before `->in()` call; test builder maps empty array to `1=0` as a safety net
+  - PHPStan cold Docker timeout: warm with one manual `bash scripts/docker-phpstan.sh` before committing — the second run is fast
+  - `PortfolioTaskTestQueryBuilder` IN implementation: multi-placeholder approach `:in_{conditionIndex}_{valueIndex}` avoids placeholder collisions when multiple IN conditions are chained
+---
