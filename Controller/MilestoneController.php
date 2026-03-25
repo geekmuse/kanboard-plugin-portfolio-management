@@ -41,6 +41,7 @@ class MilestoneController extends BaseController
         }
 
         $portfolioId = (int) ($milestone['portfolio_id'] ?? 0);
+        $weightBy = (string) $this->request->getValue('weight_by', 'count');
 
         $portfolioTasks = $this->portfolioTaskModel->getTasks($portfolioId, [
             'status_id' => 1,
@@ -55,8 +56,9 @@ class MilestoneController extends BaseController
             'milestone' => $milestone,
             'portfolio' => $this->getPortfolio($portfolioId) ?? [],
             'tasks' => $this->getMilestoneTasks($milestoneId),
-            'progress' => $this->getMilestoneProgress($milestoneId),
+            'progress' => $this->getMilestoneProgress($milestoneId, $weightBy),
             'available_tasks' => is_array($portfolioTasks) ? $portfolioTasks : [],
+            'weight_by' => $weightBy,
         ]));
     }
 
@@ -367,23 +369,29 @@ class MilestoneController extends BaseController
     /**
      * @return array<string, mixed>
      */
-    private function getMilestoneProgress(int $milestoneId): array
+    private function getMilestoneProgress(int $milestoneId, string $weightBy = 'count'): array
     {
         $fallback = [
             'total' => 0,
             'completed' => 0,
-            'percent' => 0,
+            'percent' => 0.0,
             'blocked_count' => 0,
             'is_at_risk' => false,
             'is_overdue' => false,
             'target_date' => 0,
+            'no_data' => false,
+            'weight_by' => 'count',
+            'score_total' => 0,
+            'score_completed' => 0,
+            'time_total' => 0,
+            'time_completed' => 0,
         ];
 
         if (! is_object($this->milestoneModel) || ! method_exists($this->milestoneModel, 'getProgress')) {
             return $fallback;
         }
 
-        $progress = $this->milestoneModel->getProgress($milestoneId);
+        $progress = $this->milestoneModel->getProgress($milestoneId, $weightBy);
         if (! is_array($progress)) {
             return $fallback;
         }

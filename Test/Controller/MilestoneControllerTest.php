@@ -265,6 +265,9 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
         /** @var array<int, int> */
         public array $getProgressCalls = [];
 
+        /** @var array<int, string> */
+        public array $getProgressWeightByCalls = [];
+
         /** @var array<int, array<string, mixed>> */
         public array $createCalls = [];
 
@@ -382,9 +385,10 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
         }
 
         /** @return array<string, mixed>|null */
-        public function getProgress(int $milestoneId): ?array
+        public function getProgress(int $milestoneId, string $weightBy = 'count'): ?array
         {
             $this->getProgressCalls[] = $milestoneId;
+            $this->getProgressWeightByCalls[] = $weightBy;
 
             if (array_key_exists($milestoneId, $this->progressByMilestone)) {
                 return $this->progressByMilestone[$milestoneId];
@@ -399,6 +403,8 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
                 'is_at_risk' => false,
                 'is_overdue' => false,
                 'target_date' => 0,
+                'no_data' => false,
+                'weight_by' => $weightBy,
             ];
         }
 
@@ -816,6 +822,94 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $this->assertStringContainsString('controller=MilestoneController', (string) $services['response']->redirectUrl);
             $this->assertStringContainsString('action=show', (string) $services['response']->redirectUrl);
             $this->assertStringContainsString('milestone_id=42', (string) $services['response']->redirectUrl);
+        }
+
+        public function testMilestoneShowPassesWeightByParameterToGetProgress(): void
+        {
+            $request = new MilestoneControllerFakeRequest(['weight_by' => 'score'], ['milestone_id' => 42]);
+            $milestoneModel = new MilestoneControllerFakeMilestoneModel(
+                [
+                    [
+                        'id' => 42,
+                        'portfolio_id' => 9,
+                        'name' => 'Release Candidate',
+                        'description' => 'Testing',
+                        'target_date' => 1717200000,
+                        'status' => 1,
+                    ],
+                ],
+                [
+                    42 => [
+                        'total' => 2,
+                        'completed' => 1,
+                        'percent' => 50.0,
+                        'blocked_count' => 0,
+                        'is_at_risk' => false,
+                        'is_overdue' => false,
+                        'target_date' => 1717200000,
+                        'no_data' => false,
+                        'weight_by' => 'score',
+                    ],
+                ]
+            );
+
+            $services = $this->buildServices(
+                new MilestoneControllerFakePortfolioModel([['id' => 9, 'name' => 'Q2 Release']]),
+                $milestoneModel,
+                new MilestoneControllerFakeMilestoneTaskModel(),
+                $request
+            );
+            $controller = new MilestoneController($services);
+
+            $html = $controller->show();
+
+            $this->assertSame([42], $milestoneModel->getProgressCalls);
+            $this->assertSame(['score'], $milestoneModel->getProgressWeightByCalls);
+            $this->assertStringContainsString('value="score" selected', $html);
+            $this->assertStringContainsString('Progress Weight', $html);
+        }
+
+        public function testMilestoneShowRendersNoDataMessageForScoreMode(): void
+        {
+            $request = new MilestoneControllerFakeRequest(['weight_by' => 'score'], ['milestone_id' => 42]);
+            $milestoneModel = new MilestoneControllerFakeMilestoneModel(
+                [
+                    [
+                        'id' => 42,
+                        'portfolio_id' => 9,
+                        'name' => 'Release Candidate',
+                        'description' => 'Testing',
+                        'target_date' => 1717200000,
+                        'status' => 1,
+                    ],
+                ],
+                [
+                    42 => [
+                        'total' => 3,
+                        'completed' => 0,
+                        'percent' => 0.0,
+                        'blocked_count' => 0,
+                        'is_at_risk' => false,
+                        'is_overdue' => false,
+                        'target_date' => 1717200000,
+                        'no_data' => true,
+                        'weight_by' => 'score',
+                    ],
+                ]
+            );
+
+            $services = $this->buildServices(
+                new MilestoneControllerFakePortfolioModel([['id' => 9, 'name' => 'Q2 Release']]),
+                $milestoneModel,
+                new MilestoneControllerFakeMilestoneTaskModel(),
+                $request
+            );
+            $controller = new MilestoneController($services);
+
+            $html = $controller->show();
+
+            $this->assertStringContainsString('No score data available', $html);
+            $this->assertStringNotContainsString('portfolio-progress-bar', $html);
         }
 
         /**

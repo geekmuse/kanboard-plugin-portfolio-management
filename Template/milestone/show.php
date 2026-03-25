@@ -61,10 +61,44 @@ if ($statusId === 0) {
 
 <div class="portfolio-milestone-progress">
     <h3><?= $this->text->e(t('Progress')) ?></h3>
+
+    <div class="portfolio-milestone-weight-selector">
+        <form method="get" action="<?= $this->url->href('MilestoneController', 'show', ['milestone_id' => $milestoneId, 'plugin' => 'Portfolio']) ?>">
+            <label for="portfolio-weight-by"><?= $this->text->e(t('Progress Weight')) ?></label>
+            <select id="portfolio-weight-by" name="weight_by" onchange="this.form.submit()">
+                <option value="count"<?= ($weight_by ?? 'count') === 'count' ? ' selected' : '' ?>><?= $this->text->e(t('Count')) ?></option>
+                <option value="score"<?= ($weight_by ?? 'count') === 'score' ? ' selected' : '' ?>><?= $this->text->e(t('Story Points')) ?></option>
+                <option value="time_estimated"<?= ($weight_by ?? 'count') === 'time_estimated' ? ' selected' : '' ?>><?= $this->text->e(t('Time Estimated')) ?></option>
+            </select>
+        </form>
+    </div>
+
+    <?php $progressNoData = (bool) ($progress['no_data'] ?? false); ?>
+    <?php $progressPercent = (float) ($progress['percent'] ?? 0); ?>
+    <?php $currentWeightBy = (string) ($weight_by ?? 'count'); ?>
+
+    <?php if ($progressNoData): ?>
+        <p class="portfolio-progress-no-data">
+            <?php if ($currentWeightBy === 'score'): ?>
+                <?= $this->text->e(t('No score data available')) ?>
+            <?php else: ?>
+                <?= $this->text->e(t('No time estimates available')) ?>
+            <?php endif ?>
+        </p>
+    <?php else: ?>
+        <?php $barWidth = (int) min(100, max(0, $progressPercent)); ?>
+        <div class="portfolio-progress-bar-container">
+            <div class="portfolio-progress-bar" style="width: <?= $this->text->e((string) $barWidth) ?>%"></div>
+        </div>
+        <p class="portfolio-progress-percent"><?= $this->text->e((string) $progressPercent) ?>%</p>
+    <?php endif ?>
+
     <ul class="portfolio-milestone-progress-list">
         <li><?= $this->text->e(t('Total Tasks')) ?>: <?= $this->text->e((string) ((int) ($progress['total'] ?? 0))) ?></li>
         <li><?= $this->text->e(t('Closed Tasks')) ?>: <?= $this->text->e((string) ((int) ($progress['completed'] ?? 0))) ?></li>
-        <li><?= $this->text->e(t('Progress')) ?>: <?= $this->text->e((string) ((float) ($progress['percent'] ?? 0))) ?>%</li>
+        <?php if (! $progressNoData): ?>
+            <li><?= $this->text->e(t('Progress')) ?>: <?= $this->text->e((string) $progressPercent) ?>%</li>
+        <?php endif ?>
         <li><?= $this->text->e(t('Blocked Tasks')) ?>: <?= $this->text->e((string) ((int) ($progress['blocked_count'] ?? 0))) ?></li>
         <li><?= $this->text->e(t('At Risk')) ?>: <?= $this->text->e(((bool) ($progress['is_at_risk'] ?? false)) ? t('Yes') : t('No')) ?></li>
         <li><?= $this->text->e(t('Overdue')) ?>: <?= $this->text->e(((bool) ($progress['is_overdue'] ?? false)) ? t('Yes') : t('No')) ?></li>

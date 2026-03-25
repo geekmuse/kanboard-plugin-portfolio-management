@@ -73,17 +73,36 @@
             <?php if (empty($overview['milestones'])): ?>
                 <p class="alert"><?= $this->text->e(t('No milestones found.')) ?></p>
             <?php else: ?>
+                <?php
+                $milestonesList = is_array($overview['milestones']) ? $overview['milestones'] : [];
+                $hasScoreData = false;
+                $hasTimeData = false;
+                foreach ($milestonesList as $ms) {
+                    if ((int) ($ms['score_total'] ?? 0) > 0) {
+                        $hasScoreData = true;
+                    }
+                    if ((int) ($ms['time_total'] ?? 0) > 0) {
+                        $hasTimeData = true;
+                    }
+                }
+                ?>
                 <table class="table-striped table-scrolling">
                     <thead>
                     <tr>
                         <th><?= $this->text->e(t('Milestone')) ?></th>
                         <th><?= $this->text->e(t('Target Date')) ?></th>
                         <th><?= $this->text->e(t('Progress')) ?></th>
+                        <?php if ($hasScoreData): ?>
+                            <th><?= $this->text->e(t('Score')) ?></th>
+                        <?php endif ?>
+                        <?php if ($hasTimeData): ?>
+                            <th><?= $this->text->e(t('Est. Hours')) ?></th>
+                        <?php endif ?>
                         <th><?= $this->text->e(t('Health')) ?></th>
                     </tr>
                     </thead>
                     <tbody>
-                    <?php foreach ($overview['milestones'] as $milestone): ?>
+                    <?php foreach ($milestonesList as $milestone): ?>
                         <?php
                         $targetDate = (int) ($milestone['target_date'] ?? 0);
                         $healthLabel = t('On Track');
@@ -101,6 +120,20 @@
                             </td>
                             <td><?= $this->text->e($targetDate > 0 ? date('Y-m-d', $targetDate) : t('No target date')) ?></td>
                             <td><?= $this->text->e((string) ((float) ($milestone['percent'] ?? 0))) ?>%</td>
+                            <?php if ($hasScoreData): ?>
+                                <td>
+                                    <?= $this->text->e((string) ((int) ($milestone['score_completed'] ?? 0))) ?>
+                                    /
+                                    <?= $this->text->e((string) ((int) ($milestone['score_total'] ?? 0))) ?>
+                                </td>
+                            <?php endif ?>
+                            <?php if ($hasTimeData): ?>
+                                <td>
+                                    <?= $this->text->e((string) ((int) ($milestone['time_completed'] ?? 0))) ?>
+                                    /
+                                    <?= $this->text->e((string) ((int) ($milestone['time_total'] ?? 0))) ?>
+                                </td>
+                            <?php endif ?>
                             <td><?= $this->text->e($healthLabel) ?></td>
                         </tr>
                     <?php endforeach ?>

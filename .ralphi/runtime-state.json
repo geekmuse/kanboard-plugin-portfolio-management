@@ -1071,7 +1071,7 @@
     {
       "id": "iter-5e6800ac",
       "phase": "ralphi-loop-iteration",
-      "status": "running",
+      "status": "completed",
       "sessionKey": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T18-33-11-524Z_cb7c968e-e873-4bc0-84b2-6470e29c6b3b.jsonl",
       "sessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T18-33-11-524Z_cb7c968e-e873-4bc0-84b2-6470e29c6b3b.jsonl",
       "checkpointLeafId": null,
@@ -1082,7 +1082,41 @@
       "loopId": "loop-cfe4d683",
       "iteration": 2,
       "storyId": "US-002",
-      "storyTitle": "Add weighted milestone progress (model + API + config)"
+      "storyTitle": "Add weighted milestone progress (model + API + config)",
+      "summary": "US-002 complete: Added weighted milestone progress to MilestoneModel::getProgress() with 3 modes (count/score/time_estimated), backward-compatible return with no_data flag and score/time totals. Updated PortfolioTaskModel::calculateMilestoneHealth() to include score_total/score_completed/time_total/time_completed. Updated getMilestoneProgress API callback to pass weight_by. Added portfolio_milestone_weight_by config setting with ConfigController handling and settings page dropdown. Added 5 new tests (4 MilestoneModel + 1 ConfigController) and 7 new translation strings. 156/156 tests pass, PHPStan clean, PHPCS 0 errors.",
+      "outputs": [
+        "Model/MilestoneModel.php",
+        "Model/PortfolioTaskModel.php",
+        "Plugin.php",
+        "Controller/ConfigController.php",
+        "Template/config/settings.php",
+        "Locale/en_US/translations.php",
+        "Test/Model/MilestoneModelTest.php",
+        "Test/Model/PortfolioTaskModelTest.php",
+        "Test/Controller/ConfigControllerTest.php"
+      ],
+      "complete": false,
+      "reviewPasses": 1,
+      "trajectory": "ON_TRACK",
+      "reflectionSummary": "All 13 acceptance criteria met. Backward compatibility confirmed (count mode identical to prior behavior). Score and time_estimated modes compute percent from task field sums. no_data flag set when totals are zero. getOverviewMilestones now returns score/time aggregates. API callback updated. Config UI complete with dropdown. 4 weight-mode tests + 1 config test + existing 151 = 156 total. No scope creep.",
+      "nextIterationPlan": "US-003: Add weight-mode selector to milestone templates (Template/milestone/show.php + Template/portfolio/show.php + MilestoneController::show() reading weight_by from request params). Depends on US-002 (done). Pure template + controller changes.",
+      "completedAt": "2026-03-25T18:44:55.521Z"
+    },
+    {
+      "id": "iter-4ad14aa7",
+      "phase": "ralphi-loop-iteration",
+      "status": "running",
+      "sessionKey": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T18-44-58-599Z_2ab7bf04-712e-48ac-9317-97a9e4c30e27.jsonl",
+      "sessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T18-44-58-599Z_2ab7bf04-712e-48ac-9317-97a9e4c30e27.jsonl",
+      "checkpointLeafId": null,
+      "checkpointSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-24T20-27-01-539Z_29a1079d-f934-4143-ad25-8a9d7ae75c37.jsonl",
+      "cwd": "/Users/bradmatic/Dev/geekmuse/kanboard-plugin-portfolio-mgmt",
+      "createdAt": "2026-03-25T18:44:58.600Z",
+      "autoConfirm": true,
+      "loopId": "loop-cfe4d683",
+      "iteration": 3,
+      "storyId": "US-003",
+      "storyTitle": "Add weight-mode selector to milestone templates"
     }
   ],
   "loops": [
@@ -1143,17 +1177,18 @@
       "id": "loop-cfe4d683",
       "controllerSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-24T20-27-01-539Z_29a1079d-f934-4143-ad25-8a9d7ae75c37.jsonl",
       "maxIterations": 50,
-      "iteration": 2,
+      "iteration": 3,
       "active": true,
       "stopRequested": false,
       "createdAt": "2026-03-25T18:16:45.766Z",
       "iterationSessionFiles": [
         "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T18-16-46-020Z_cab94e15-5986-4528-a2b2-03ec1aa0939e.jsonl",
-        "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T18-33-11-524Z_cb7c968e-e873-4bc0-84b2-6470e29c6b3b.jsonl"
+        "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T18-33-11-524Z_cb7c968e-e873-4bc0-84b2-6470e29c6b3b.jsonl",
+        "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T18-44-58-599Z_2ab7bf04-712e-48ac-9317-97a9e4c30e27.jsonl"
       ],
-      "currentIterationStartedAt": "2026-03-25T18:33:11.525Z",
-      "activeIterationSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T18-33-11-524Z_cb7c968e-e873-4bc0-84b2-6470e29c6b3b.jsonl"
+      "currentIterationStartedAt": "2026-03-25T18:44:58.600Z",
+      "activeIterationSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T18-44-58-599Z_2ab7bf04-712e-48ac-9317-97a9e4c30e27.jsonl"
     }
   ],
-  "savedAt": "2026-03-25T18:33:11.526Z"
+  "savedAt": "2026-03-25T18:44:58.603Z"
 }
