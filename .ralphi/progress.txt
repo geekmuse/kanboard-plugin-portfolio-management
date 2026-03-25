@@ -1,4 +1,8 @@
 ## Codebase Patterns
+- Task form hooks use `template:task:form:first-column` to inject fields into Kanboard's task creation form; `params['project_id']` carries the project context (also check `params['task']['project_id']` defensively).
+- `task.create` event receives all form values including custom fields added by hook templates; listener can read `$event['milestone_id']` to process post-creation side effects.
+- Widget templates that receive pre-fetched data via `attachCallable` follow the pattern: check `! empty($varName)` at top → render content → close endif; this keeps templates minimal and testable.
+- New FakeMilestoneTaskModel in ApiRegistrationTest: `$addCalls[]` records `[$milestoneId, $taskId]` tuples; set in container after `initialize()` for listener behavioral tests.
 - Event listener tests: use FakeDispatcher.listeners[eventName][0](array) to invoke registered callbacks with an ArrayAccess-compatible plain array (no Kanboard runtime needed).
 - DependencyModel event chain: `onTaskClosed` calls `dispatchDependencyResolvedEvent` which routes through the container's 'dispatcher' service (if it has a `dispatch()` method) — use DependencyTestEventDispatcher or FakeDispatcher in tests.
 - Deep behavioral tests for Plugin event wiring live in `Test/Plugin/ApiRegistrationTest.php`; per-method DependencyModel behaviour tests live in `Test/Model/DependencyModelTest.php`.
@@ -26,4 +30,27 @@ Corrective Plan: N/A
   - The PRD notes section may describe prior state ("already covers X"); always check acceptance criteria directly against existing code/tests before writing new code.
   - `testRegistersDependencyLifecycleListenersAndDelegatesToDependencyModel` provides full behavioral validation (not just registration): it invokes the listener closures with fake event data and asserts delegation to the model.
   - DependencyModel's `dispatchDependencyResolvedEvent()` checks for `dispatch()` first (Symfony-style dispatcher), then falls back to `fire()` (Kanboard eventManager) — tests must supply a dispatcher with `dispatch()` to capture events reliably.
+---
+
+## 2026-03-25 — US-002
+Session: N/A
+Review Outcome: PASS
+Trajectory: ON_TRACK
+Trajectory Notes: N/A
+Corrective Plan: N/A
+- Registered `template:task:form:first-column` hook via `attachCallable` in Plugin.php
+- Callable pre-fetches portfolios (one `getPortfolios()` call) then milestones (one `getByPortfolioId()` per portfolio) — no N+1
+- Returns `['milestones' => []]` when project belongs to no portfolios; template guards with `! empty($milestones)`
+- Registered `task.create` dispatcher listener; reads `milestone_id` from event, calls `milestoneTaskModel->add()` if both IDs > 0
+- Created `Template/widget/task_form_milestone_dropdown.php` — standard `<select>` with `portfolio-milestone-form-field` CSS class
+- Added `'None' => 'None'` to `Locale/en_US/translations.php`
+- Added 4 new tests (176 total): 2 template rendering (`WidgetHookTest`) + 2 event listener behavioral (`ApiRegistrationTest`)
+- Updated `testRegistersAllRequiredTemplateHooks` and `testTemplateHooksPointToCorrectWidgetTemplates` in ApiRegistrationTest
+- Added `FakeMilestoneTaskModel` to ApiRegistrationTest for listener tests
+- Files changed: `Plugin.php`, `Template/widget/task_form_milestone_dropdown.php`, `Locale/en_US/translations.php`, `Test/Controller/WidgetHookTest.php`, `Test/Plugin/ApiRegistrationTest.php`
+- **Learnings for future iterations:**
+  - Task creation form hook provides `params['project_id']` directly (also defensively check `params['task']['project_id']`)
+  - `task.create` event data includes all form values; custom fields like `milestone_id` flow through from POST to event
+  - `FakeMilestoneTaskModel` pattern: record `[$milestoneId, $taskId]` tuples in `$addCalls` for assertion; set in container AFTER `initialize()` runs (overrides the registered closure)
+  - Closures inside `initialize()` auto-bind `$this` to the Plugin object — no explicit `use ($this)` needed
 ---
