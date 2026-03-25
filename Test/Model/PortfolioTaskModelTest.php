@@ -236,6 +236,35 @@ final class PortfolioTaskConfigModelStub
     }
 }
 
+final class PortfolioTaskDependencyModelStub
+{
+    /**
+     * @param array<int, array<string, mixed>> $dependencies
+     * @param array<int, array<string, mixed>> $criticalPath
+     */
+    public function __construct(
+        private array $dependencies = [],
+        private array $criticalPath = []
+    ) {
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function getDependencies(int $portfolioId, bool $crossProjectOnly = true): array
+    {
+        return $this->dependencies;
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function getCriticalPath(int $portfolioId): array
+    {
+        return $this->criticalPath;
+    }
+}
+
 class PortfolioTaskModelTest extends TestCase
 {
     private PDO $pdo;
@@ -281,7 +310,9 @@ class PortfolioTaskModelTest extends TestCase
                 owner_id INTEGER NOT NULL DEFAULT 0,
                 is_active INTEGER NOT NULL DEFAULT 1,
                 date_due INTEGER NOT NULL DEFAULT 0,
+                date_started INTEGER NOT NULL DEFAULT 0,
                 date_creation INTEGER NOT NULL DEFAULT 0,
+                date_completed INTEGER NOT NULL DEFAULT 0,
                 priority INTEGER NOT NULL DEFAULT 0,
                 score INTEGER NOT NULL DEFAULT 0,
                 color_id TEXT NOT NULL DEFAULT '',
@@ -466,6 +497,119 @@ class PortfolioTaskModelTest extends TestCase
         $this->assertSame(4, (int) $overview['critical_path_length']);
     }
 
+    public function testGetStatusReportReturnsZeroCountsForEmptyPortfolio(): void
+    {
+        $this->insertPortfolio(1, 'Empty Portfolio');
+
+        $report = $this->model->getStatusReport(1);
+
+        $this->assertIsArray($report['portfolio']);
+        $this->assertSame('1', (string) $report['portfolio']['id']);
+        $this->assertSame(['total' => 0, 'active' => 0, 'closed' => 0, 'blocked' => 0], $report['task_summary']);
+        $this->assertSame([], $report['completed_tasks']);
+        $this->assertSame([], $report['critical_blockers']);
+        $this->assertSame([], $report['at_risk_items']);
+        $this->assertSame([], $report['milestones']);
+        $this->assertSame(0, $report['dependency_health']['total_edges']);
+        $this->assertSame(0, $report['dependency_health']['resolved']);
+        $this->assertSame(0, $report['dependency_health']['unresolved']);
+        $this->assertSame(0, $report['dependency_health']['critical_path_length']);
+        $this->assertGreaterThan(0, $report['generated_at']);
+        $this->assertLessThan($report['period_end'], $report['period_start']);
+    }
+
+    public function testGetStatusReportFiltersCompletedTasksByPeriod(): void
+    {
+        $now = time();
+
+        $this->insertPortfolio(1, 'Report Portfolio');
+        $this->insertProject(10, 'Project Alpha');
+        $this->insertPortfolioProject(1, 10, 1);
+        $this->insertColumn(100, 10, 'Done');
+        $this->insertUser(5, 'alice', 'Alice Adams');
+
+        // Active task — never completed
+        $this->insertTask(101, 'Active Task', 10, 100, 5, 1, 0, $now - 86400, 1, 'blue');
+
+        // Closed task completed 2 days ago — within the 7-day window
+        $this->insertTask(102, 'Recent Closed', 10, 100, 5, 0, 0, $now - (3 * 86400), 1, 'green', $now - (2 * 86400));
+
+        // Closed task completed 10 days ago — outside the 7-day window
+        $this->insertTask(103, 'Old Closed', 10, 100, 5, 0, 0, $now - (11 * 86400), 1, 'red', $now - (10 * 86400));
+
+        $report = $this->model->getStatusReport(1, 7);
+
+        // Only task 102 falls within the 7-day period
+        $this->assertCount(1, $report['completed_tasks']);
+        $this->assertSame(102, (int) $report['completed_tasks'][0]['id']);
+        $this->assertSame('Recent Closed', $report['completed_tasks'][0]['title']);
+        $this->assertSame('Project Alpha', $report['completed_tasks'][0]['project_name']);
+
+        // Task summary: 1 active, 2 closed (total 3 tasks)
+        $this->assertSame(3, $report['task_summary']['total']);
+        $this->assertSame(1, $report['task_summary']['active']);
+        $this->assertSame(2, $report['task_summary']['closed']);
+
+        // Portfolio present
+        $this->assertIsArray($report['portfolio']);
+        $this->assertSame('1', (string) $report['portfolio']['id']);
+    }
+
+    public function testGetStatusReportCustomPeriodDaysFiltersCorrectly(): void
+    {
+        $now = time();
+
+        $this->insertPortfolio(1, 'Custom Period Portfolio');
+        $this->insertProject(10, 'Project Alpha');
+        $this->insertPortfolioProject(1, 10, 1);
+        $this->insertColumn(100, 10, 'Done');
+        $this->insertUser(5, 'alice', 'Alice Adams');
+
+        // Closed 2 days ago — within both 3-day and 7-day windows
+        $this->insertTask(101, 'Within 3 Days', 10, 100, 5, 0, 0, $now - (3 * 86400), 1, 'blue', $now - (2 * 86400));
+
+        // Closed 5 days ago — within 7-day window only, NOT within 3-day window
+        $this->insertTask(102, 'Within 7 Days', 10, 100, 5, 0, 0, $now - (6 * 86400), 1, 'green', $now - (5 * 86400));
+
+        // 3-day window: only task 101
+        $report3 = $this->model->getStatusReport(1, 3);
+        $this->assertCount(1, $report3['completed_tasks']);
+        $this->assertSame(101, (int) $report3['completed_tasks'][0]['id']);
+
+        // 7-day window: both tasks (sorted newest first)
+        $report7 = $this->model->getStatusReport(1, 7);
+        $this->assertCount(2, $report7['completed_tasks']);
+        $this->assertSame(101, (int) $report7['completed_tasks'][0]['id']);
+        $this->assertSame(102, (int) $report7['completed_tasks'][1]['id']);
+    }
+
+    public function testGetStatusReportDependencyHealthFromStub(): void
+    {
+        $this->insertPortfolio(1, 'Dep Health Portfolio');
+        $this->insertProject(10, 'Project Alpha');
+        $this->insertPortfolioProject(1, 10, 1);
+
+        $dependencies = [
+            ['is_resolved' => false],
+            ['is_resolved' => true],
+            ['is_resolved' => false],
+        ];
+
+        $this->model = $this->createModel([
+            'dependencyModel' => new PortfolioTaskDependencyModelStub(
+                $dependencies,
+                [['id' => 1], ['id' => 2]]
+            ),
+        ]);
+
+        $report = $this->model->getStatusReport(1);
+
+        $this->assertSame(3, $report['dependency_health']['total_edges']);
+        $this->assertSame(1, $report['dependency_health']['resolved']);
+        $this->assertSame(2, $report['dependency_health']['unresolved']);
+        $this->assertSame(2, $report['dependency_health']['critical_path_length']);
+    }
+
     /**
      * @param array<string, mixed> $overrides
      */
@@ -622,7 +766,8 @@ class PortfolioTaskModelTest extends TestCase
         int $dateDue,
         int $dateCreation,
         int $priority,
-        string $colorId
+        string $colorId,
+        int $dateCompleted = 0
     ): void {
         $this->pdo->prepare(
             'INSERT INTO tasks (
@@ -638,7 +783,8 @@ class PortfolioTaskModelTest extends TestCase
                 score,
                 color_id,
                 category_id,
-                swimlane_id
+                swimlane_id,
+                date_completed
             ) VALUES (
                 :id,
                 :title,
@@ -652,7 +798,8 @@ class PortfolioTaskModelTest extends TestCase
                 :score,
                 :color_id,
                 :category_id,
-                :swimlane_id
+                :swimlane_id,
+                :date_completed
             )'
         )->execute([
             ':id' => $id,
@@ -668,6 +815,7 @@ class PortfolioTaskModelTest extends TestCase
             ':color_id' => $colorId,
             ':category_id' => 0,
             ':swimlane_id' => 0,
+            ':date_completed' => $dateCompleted,
         ]);
     }
 

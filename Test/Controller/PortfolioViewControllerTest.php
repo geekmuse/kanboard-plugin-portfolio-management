@@ -930,7 +930,10 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
                 'milestoneModel' => $milestoneModel ?? new PortfolioViewFakeMilestoneModel(),
                 'milestoneTaskModel' => new class {
                     /** @return array<int, array<string, mixed>> */
-                    public function getTasks(int $id): array { return []; }
+                    public function getTasks(int $id): array
+                    {
+                        return [];
+                    }
                 },
                 'configModel' => $configModel ?? new PortfolioViewFakeConfigModel(),
                 'taskModificationModel' => $taskModificationModel ?? new PortfolioViewFakeTaskModificationModel(),

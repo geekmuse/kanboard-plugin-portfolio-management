@@ -330,6 +330,9 @@ class Plugin extends Base
             })
             ->withCallback('getPortfolioOverview', function ($portfolio_id) {
                 return $this->portfolioTaskModel->getOverview((int) $portfolio_id);
+            })
+            ->withCallback('getPortfolioStatusReport', function ($portfolio_id, $period_days = 7) {
+                return $this->portfolioTaskModel->getStatusReport((int) $portfolio_id, (int) $period_days);
             });
 
         $this->apiAccessMap->add('PortfolioProcedure', ['createPortfolio', 'updatePortfolio', 'removePortfolio'], Role::APP_MANAGER);

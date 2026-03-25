@@ -45,6 +45,64 @@ class PortfolioTaskModel extends Base
         return array_values(array_slice($rows, $offset, $limit));
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    public function getStatusReport(int $portfolioId, int $periodDays = 7): array
+    {
+        $now = time();
+        $periodDays = max(1, $periodDays);
+        $periodStart = $now - ($periodDays * 86400);
+
+        $portfolio = null;
+        try {
+            $portfolio = $this->db->table(self::PORTFOLIO_TABLE)->eq('id', $portfolioId)->findOne();
+        } catch (Throwable $exception) {
+            // leave null
+        }
+
+        if (! is_array($portfolio)) {
+            return [
+                'portfolio' => null,
+                'generated_at' => $now,
+                'period_start' => $periodStart,
+                'period_end' => $now,
+                'milestones' => [],
+                'task_summary' => ['total' => 0, 'active' => 0, 'closed' => 0, 'blocked' => 0],
+                'completed_tasks' => [],
+                'critical_blockers' => [],
+                'at_risk_items' => [],
+                'dependency_health' => [
+                    'total_edges' => 0,
+                    'resolved' => 0,
+                    'unresolved' => 0,
+                    'critical_path_length' => 0,
+                ],
+            ];
+        }
+
+        $taskSummary = $this->getCounts($portfolioId);
+        $allRows = $this->buildFilteredTaskRows($portfolioId, []);
+        $completedTasks = $this->filterCompletedTasksInPeriod($portfolioId, $periodStart, $now);
+        $criticalBlockers = $this->buildCriticalBlockers($allRows);
+        [$milestones] = $this->getOverviewMilestones($portfolioId);
+        $atRiskItems = $this->buildAtRiskItems($milestones, $allRows, $now);
+        $dependencyHealth = $this->computeDependencyHealth($portfolioId);
+
+        return [
+            'portfolio' => $portfolio,
+            'generated_at' => $now,
+            'period_start' => $periodStart,
+            'period_end' => $now,
+            'milestones' => $milestones,
+            'task_summary' => $taskSummary,
+            'completed_tasks' => $completedTasks,
+            'critical_blockers' => $criticalBlockers,
+            'at_risk_items' => $atRiskItems,
+            'dependency_health' => $dependencyHealth,
+        ];
+    }
+
     public function getCounts(int $portfolioId, ?int $statusId = null): array
     {
         $filters = [];
@@ -123,6 +181,226 @@ class PortfolioTaskModel extends Base
             'milestones' => $milestones,
             'at_risk_milestones' => $atRiskMilestones,
             'overdue_milestones' => $overdueMilestones,
+            'critical_path_length' => $criticalPathLength,
+        ];
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function filterCompletedTasksInPeriod(int $portfolioId, int $periodStart, int $periodEnd): array
+    {
+        $projectIds = $this->getPortfolioProjectIds($portfolioId);
+        if ($projectIds === []) {
+            return [];
+        }
+
+        $projectScope = [];
+        foreach ($projectIds as $id) {
+            $projectScope[$id] = true;
+        }
+
+        try {
+            $taskRows = $this->db->table('tasks')->findAll();
+        } catch (Throwable $exception) {
+            return [];
+        }
+
+        if (! is_array($taskRows) || $taskRows === []) {
+            return [];
+        }
+
+        $projectMap = $this->buildTableLookup('projects');
+        $result = [];
+
+        foreach ($taskRows as $task) {
+            if (! is_array($task)) {
+                continue;
+            }
+
+            $taskProjectId = (int) ($task['project_id'] ?? 0);
+            if (! array_key_exists($taskProjectId, $projectScope)) {
+                continue;
+            }
+
+            $isActive = (int) ($task['is_active'] ?? 1);
+            if ($isActive !== 0) {
+                continue;
+            }
+
+            $dateCompleted = (int) ($task['date_completed'] ?? 0);
+            if ($dateCompleted <= 0 || $dateCompleted < $periodStart || $dateCompleted > $periodEnd) {
+                continue;
+            }
+
+            $project = $projectMap[$taskProjectId] ?? [];
+            $result[] = [
+                'id' => (int) ($task['id'] ?? 0),
+                'title' => (string) ($task['title'] ?? ''),
+                'project_id' => $taskProjectId,
+                'project_name' => (string) ($project['name'] ?? ''),
+                'date_completed' => $dateCompleted,
+            ];
+        }
+
+        usort(
+            $result,
+            static fn (array $a, array $b): int => (int) ($b['date_completed'] ?? 0) <=> (int) ($a['date_completed'] ?? 0)
+        );
+
+        return $result;
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $allRows
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function buildCriticalBlockers(array $allRows): array
+    {
+        $blockers = [];
+
+        foreach ($allRows as $row) {
+            $blockedByCount = (int) ($row['blocked_by_count'] ?? 0);
+            $isActive = (int) ($row['is_active'] ?? 1);
+
+            if ($blockedByCount <= 0 || $isActive !== 1) {
+                continue;
+            }
+
+            $blockers[] = [
+                'id' => (int) ($row['id'] ?? 0),
+                'title' => (string) ($row['title'] ?? ''),
+                'project_id' => (int) ($row['project_id'] ?? 0),
+                'project_name' => (string) ($row['project_name'] ?? ''),
+                'blocked_by_count' => $blockedByCount,
+            ];
+        }
+
+        usort(
+            $blockers,
+            static function (array $a, array $b): int {
+                $cmp = (int) ($b['blocked_by_count'] ?? 0) <=> (int) ($a['blocked_by_count'] ?? 0);
+                if ($cmp !== 0) {
+                    return $cmp;
+                }
+
+                return (int) ($a['id'] ?? 0) <=> (int) ($b['id'] ?? 0);
+            }
+        );
+
+        return $blockers;
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $milestones
+     * @param array<int, array<string, mixed>> $allRows
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function buildAtRiskItems(array $milestones, array $allRows, int $now): array
+    {
+        $items = [];
+
+        foreach ($milestones as $milestone) {
+            if (! is_array($milestone)) {
+                continue;
+            }
+
+            if ((bool) ($milestone['is_at_risk'] ?? false)) {
+                $items[] = [
+                    'type' => 'milestone',
+                    'reason' => 'at_risk',
+                    'id' => (int) ($milestone['id'] ?? 0),
+                    'title' => (string) ($milestone['name'] ?? ''),
+                    'target_date' => (int) ($milestone['target_date'] ?? 0),
+                    'percent' => (float) ($milestone['percent'] ?? 0.0),
+                ];
+            }
+
+            if ((bool) ($milestone['is_overdue'] ?? false)) {
+                $items[] = [
+                    'type' => 'milestone',
+                    'reason' => 'overdue',
+                    'id' => (int) ($milestone['id'] ?? 0),
+                    'title' => (string) ($milestone['name'] ?? ''),
+                    'target_date' => (int) ($milestone['target_date'] ?? 0),
+                    'percent' => (float) ($milestone['percent'] ?? 0.0),
+                ];
+            }
+        }
+
+        foreach ($allRows as $row) {
+            $isActive = (int) ($row['is_active'] ?? 1);
+            $dateDue = (int) ($row['date_due'] ?? 0);
+
+            if ($isActive !== 1 || $dateDue <= 0 || $dateDue >= $now) {
+                continue;
+            }
+
+            $items[] = [
+                'type' => 'task',
+                'reason' => 'overdue',
+                'id' => (int) ($row['id'] ?? 0),
+                'title' => (string) ($row['title'] ?? ''),
+                'project_id' => (int) ($row['project_id'] ?? 0),
+                'project_name' => (string) ($row['project_name'] ?? ''),
+                'date_due' => $dateDue,
+            ];
+        }
+
+        return $items;
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function computeDependencyHealth(int $portfolioId): array
+    {
+        $totalEdges = 0;
+        $resolved = 0;
+        $unresolved = 0;
+        $criticalPathLength = 0;
+
+        $dependencyModel = $this->resolveContainerService('dependencyModel');
+
+        if (is_object($dependencyModel) && method_exists($dependencyModel, 'getDependencies')) {
+            try {
+                $dependencies = $dependencyModel->getDependencies($portfolioId, false);
+                if (is_array($dependencies)) {
+                    $totalEdges = count($dependencies);
+                    foreach ($dependencies as $dep) {
+                        if (! is_array($dep)) {
+                            continue;
+                        }
+
+                        if ((bool) ($dep['is_resolved'] ?? false)) {
+                            ++$resolved;
+                        } else {
+                            ++$unresolved;
+                        }
+                    }
+                }
+            } catch (Throwable $exception) {
+                // leave at defaults
+            }
+        }
+
+        if (is_object($dependencyModel) && method_exists($dependencyModel, 'getCriticalPath')) {
+            try {
+                $criticalPath = $dependencyModel->getCriticalPath($portfolioId);
+                if (is_array($criticalPath)) {
+                    $criticalPathLength = count($criticalPath);
+                }
+            } catch (Throwable $exception) {
+                // leave at default
+            }
+        }
+
+        return [
+            'total_edges' => $totalEdges,
+            'resolved' => $resolved,
+            'unresolved' => $unresolved,
             'critical_path_length' => $criticalPathLength,
         ];
     }
