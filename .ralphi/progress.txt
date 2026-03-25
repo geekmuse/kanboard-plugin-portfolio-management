@@ -1,4 +1,7 @@
 ## Codebase Patterns
+- GET forms in templates use `$this->url->href(...)` as action; in real Kanboard path-based routing preserves controller/action/plugin in the URL path, so form fields only need to carry non-routing params. Follow the same pattern as `Template/portfolio/tasks.php` filter form.
+- For MilestoneControllerFakeMilestoneModel: when extending `getProgress()` to accept `$weightBy`, add a separate `getProgressWeightByCalls: array<int, string>` so existing tests that assert `getProgressCalls` (milestone IDs) still pass.
+- `MilestoneController::getMilestoneProgress()` fallback array should mirror all keys returned by `MilestoneModel::getProgress()` (incl. `no_data`, `weight_by`, `score_*`, `time_*`) so `array_merge($fallback, $progress)` always produces a complete result regardless of what the model returns.
 - All model methods that delegate to dependencyModel use `resolveContainerService('dependencyModel')` + `is_object() && method_exists()` guard + `try/catch Throwable`. PHPStan level 5 is satisfied because `is_object()` narrows `mixed` to `object`.
 - The test harness for PortfolioTaskModel: create stub classes in the same file (PSR1.Classes.ClassDeclaration is relaxed for Test/), use in-memory SQLite with manual DDL in setUp(). Pass overrides via `createModel(['serviceKey' => $stub])`.
 - `insertTask()` in PortfolioTaskModelTest has an optional `$dateCompleted = 0` final parameter. All existing callers omit it safely (defaults to 0 via column DEFAULT 0).
@@ -67,4 +70,27 @@ Corrective Plan: N/A
   - getProgress() return array can safely grow with new keys — existing tests that assert specific keys are unaffected
   - ConfigController pattern: getDefaultSettings (type determines auto-cast in getCurrentSettings), normalizeSubmittedSettings (explicit per-key), normalizeWeightBy-style validators belong in private methods
   - Multi-line function declaration: must be `): ReturnType {` on one line per PSR-12
+---
+
+## 2026-03-25 - US-003
+Session: iter-4ad14aa7 / loop-cfe4d683
+Review Outcome: PASS
+Trajectory: ON_TRACK
+Trajectory Notes: N/A
+Corrective Plan: N/A
+- Updated `MilestoneController::show()` to read `weight_by` from `$this->request->getValue('weight_by', 'count')` and pass to `getMilestoneProgress()` and template
+- Extended `getMilestoneProgress()` private method to accept `string $weightBy = 'count'` and pass to `milestoneModel->getProgress()`; added new fallback keys (`no_data`, `weight_by`, `score_*`, `time_*`)
+- Added weight-mode selector dropdown (Count / Story Points / Time Estimated) to `Template/milestone/show.php` as a GET form that reloads on `onchange`
+- Added visual progress bar (`portfolio-progress-bar-container` / `portfolio-progress-bar`) to show.php, shown only when `no_data` is false
+- Added no-data message display ("No score data available" / "No time estimates available") replacing the progress bar when `no_data` is true
+- Updated `Template/portfolio/show.php` Milestone Health table: pre-computes `$hasScoreData` and `$hasTimeData` from milestone list; conditionally adds Score and Est. Hours columns
+- Added 3 new translation strings: `Progress Weight`, `Score`, `Est. Hours`
+- Updated `MilestoneControllerFakeMilestoneModel::getProgress()` to accept `$weightBy` param; added `getProgressWeightByCalls` array to track it separately (preserving existing `getProgressCalls` assertions)
+- Added 2 new controller tests: `testMilestoneShowPassesWeightByParameterToGetProgress` and `testMilestoneShowRendersNoDataMessageForScoreMode`
+- Test count: 158 (156 from US-002 + 2 new); 860 assertions; 0 errors
+- Files changed: `Controller/MilestoneController.php`, `Template/milestone/show.php`, `Template/portfolio/show.php`, `Locale/en_US/translations.php`, `Test/Controller/MilestoneControllerTest.php`
+- **Learnings for future iterations:**
+  - `request->getValue('param', 'default')` is the pattern for reading optional GET query params in controllers
+  - Conditional table columns in templates: pre-compute boolean flags in a PHP block before the table, then use `<?php if ($flag): ?><th>...</th><?php endif ?>` in both header and body rows
+  - When adding keys to a controller's fallback array for model results, mirror all keys the model can return so `array_merge($fallback, $result)` always produces a complete/safe array
 ---

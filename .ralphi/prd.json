@@ -70,14 +70,14 @@
         "PHP lint passes, all existing tests pass"
       ],
       "priority": 3,
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": [
         "US-002"
       ],
       "notes": "Template-only changes. Depends on US-002 for the weighted getProgress() model method and config setting.",
       "startedAt": "2026-03-25T18:44:58.601Z",
-      "updatedAt": "2026-03-25T18:44:58.601Z",
-      "completedAt": null
+      "updatedAt": "2026-03-25T19:15:00.000Z",
+      "completedAt": "2026-03-25T19:15:00.000Z"
     },
     {
       "id": "US-004",
