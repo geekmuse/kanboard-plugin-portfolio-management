@@ -18,7 +18,7 @@ The **Portfolio** plugin fills that gap by adding three capabilities Kanboard la
 2. **Cross-Project Milestones** — First-class milestone entities with target dates that aggregate tasks from any project within a portfolio, with computed progress tracking
 3. **Cross-Project Dependency Visualization** — Interactive views (D3.js force-directed graph, blocked task lists, critical path analysis) that surface dependency relationships between tasks in different projects
 
-The plugin is API-first (28 JSON-RPC endpoints), hook-only (no template overrides), and adds just four database tables. It installs and removes cleanly without touching Kanboard core.
+The plugin is API-first (31 JSON-RPC endpoints), hook-only (no template overrides), and adds just four database tables. It installs and removes cleanly without touching Kanboard core.
 
 ---
 
@@ -37,9 +37,14 @@ The plugin is API-first (28 JSON-RPC endpoints), hook-only (no template override
 | **Board Blocking Indicators** | 🔴 icons and "Blocked by" labels on task cards in the standard Kanboard board |
 | **Dashboard Widgets** | "My Portfolios" sidebar and at-risk milestone alerts on the Kanboard dashboard |
 | **Task Detail Integration** | Milestone membership and cross-project dependencies shown on task detail pages |
-| **Full JSON-RPC API** | All 28 features exposed as API endpoints for CLI tools, dashboards, and automation |
+| **Full JSON-RPC API** | All 31 features exposed as API endpoints for CLI tools, dashboards, and automation |
 | **Automatic Actions** | Notifications and comments when cross-project dependencies are resolved |
 | **Search Filter** | `portfolio:` filter in Kanboard's task search |
+| **Status Report API** | `getPortfolioStatusReport` — AI-ready structured summary: milestone health, blockers, at-risk items, dependency health |
+| **Weighted Milestone Progress** | Track progress by task count, story points, or time estimated |
+| **Activity Feed** | Recent activity across all portfolio projects on the dashboard |
+| **Workload / Team View** | Per-user task metrics with overload indicators; filterable by portfolio |
+| **Roadmap View** | Milestone-level D3.js timeline with health-coded progress bars and a "Today" marker |
 
 ---
 
@@ -82,7 +87,7 @@ Once published, install directly from Kanboard's **Settings → Plugins → Plug
 ### Post-Install Verification
 
 1. Navigate to **Settings → Plugins** in Kanboard
-2. Confirm "Portfolio" appears in the installed plugins list with version `1.0.0`
+2. Confirm "Portfolio" appears in the installed plugins list with version `1.21.0`
 3. Check that the "Portfolios" link appears in the header navigation
 
 Database tables (`portfolios`, `portfolio_has_projects`, `milestones`, `milestone_has_tasks`) are created automatically on first page load.
@@ -103,6 +108,8 @@ Navigate to **Settings → Portfolio Settings** in Kanboard to configure:
 | `portfolio_dashboard_widget_enabled` | `1` | Show portfolio widget on dashboard |
 | `portfolio_dependency_link_types` | `"blocks"` | Comma-separated link types treated as dependencies |
 | `portfolio_tasks_per_page` | `50` | Default pagination limit for task lists |
+| `portfolio_milestone_weight_by` | `count` | Default weight mode for milestone progress: `count`, `score`, or `time_estimated` |
+| `portfolio_workload_threshold` | `15` | Active-task count above which a user is flagged as overloaded in the Team view |
 
 All settings are stored in Kanboard's `settings` table (prefixed with `portfolio_`) and take effect immediately.
 
@@ -142,7 +149,7 @@ curl -X POST \
   http://localhost/kanboard/jsonrpc.php
 ```
 
-See the [API specification](docs/specs/001-kanboard-portfolio.md#4-api-surface--interface-contract) for all 28 methods.
+See the [API specification](docs/specs/001-kanboard-portfolio.md#4-api-surface--interface-contract) for all 31 methods.
 
 ---
 

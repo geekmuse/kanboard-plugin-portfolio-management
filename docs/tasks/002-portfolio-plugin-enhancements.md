@@ -1,7 +1,7 @@
 # Portfolio Plugin Enhancement Plan — Planning Depth & Agentic Readiness
 
 **Date:** 2026-03-24
-**Status:** Approved for Implementation
+**Status:** ✅ Complete — shipped in v1.21.0
 **Priority:** High
 **Depends on:** None (all enhancements are additive to the existing v1.19.0 codebase)
 
@@ -61,7 +61,7 @@ $this->dispatcher->addListener('task.close', function ($event) use ($container) 
 
 ---
 
-## Enhancement 1: Weighted Milestone Progress
+## Enhancement 1: Weighted Milestone Progress ✅ DONE — v1.21.0
 
 **Gap Ref:** GAP-03, GAP-13
 **Severity:** Important
@@ -109,7 +109,7 @@ None.
 
 ---
 
-## Enhancement 2: Status Report API Method
+## Enhancement 2: Status Report API Method ✅ DONE — v1.21.0
 
 **Gap Ref:** GAP-10
 **Severity:** Important
@@ -178,7 +178,7 @@ None.
 
 ---
 
-## Enhancement 3: Portfolio Activity Stream
+## Enhancement 3: Portfolio Activity Stream ✅ DONE — v1.21.0
 
 **Gap Ref:** GAP-14
 **Severity:** Moderate
@@ -239,7 +239,7 @@ None.
 
 ---
 
-## Enhancement 4: Resource / Workload Overview
+## Enhancement 4: Resource / Workload Overview ✅ DONE — v1.21.0
 
 **Gap Ref:** GAP-05, GAP-06
 **Severity:** Important
@@ -308,7 +308,7 @@ Enhancement 1 (weighted progress) is helpful but not required.
 
 ---
 
-## Enhancement 5: Roadmap View (Milestone-Level Timeline)
+## Enhancement 5: Roadmap View ✅ DONE — v1.21.0
 
 **Gap Ref:** GAP-07
 **Severity:** Important
@@ -346,7 +346,7 @@ None. Enhancement 1 (weighted progress) improves accuracy but isn't required.
 
 ---
 
-## Enhancement 6: Plugin.php Bug Fix (getPluginName)
+## Enhancement 6: Plugin.php Bug Fix ✅ DONE — v1.20.0
 
 **Severity:** Low (cosmetic)
 **Effort:** Trivial
@@ -370,19 +370,19 @@ public function getPluginName()
 
 ---
 
-## Implementation Order
+## Implementation Order — Complete ✅
 
 ```
-Enhancement 0 (event listener fix)   → ✅ DONE (applied during validation)
-Enhancement 6 (getPluginName fix)    → ✅ DONE (applied during validation)
-Enhancement 2 (status report)        → enables agentic workflows immediately
-Enhancement 1 (weighted progress)    → small, high-value
-Enhancement 3 (activity stream)      → moderate effort, high visibility
-Enhancement 4 (workload)             → moderate effort, high value for your use-cases
-Enhancement 5 (roadmap)              → moderate effort, completes the visualization suite
+Enhancement 0 (event listener fix)   → ✅ v1.20.0
+Enhancement 6 (getPluginName fix)    → ✅ v1.20.0
+Enhancement 2 (status report)        → ✅ v1.21.0 (US-001)
+Enhancement 1 (weighted progress)    → ✅ v1.21.0 (US-002, US-003)
+Enhancement 3 (activity stream)      → ✅ v1.21.0 (US-004, US-005)
+Enhancement 4 (workload)             → ✅ v1.21.0 (US-006, US-007)
+Enhancement 5 (roadmap)              → ✅ v1.21.0 (US-008, US-009)
 ```
 
-Total estimated effort: **8-11 ralphi loop iterations** (roughly 2-3 PRD runs) for Enhancements 1-5.
+All enhancements complete. **Actual effort: 9 ralphi loop iterations** across 1 PRD run.
 
 ---
 

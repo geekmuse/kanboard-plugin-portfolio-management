@@ -95,7 +95,7 @@ find plugins/Portfolio/ -name "*.php" -exec php -l {} \;
 | `milestones` | Cross-project milestones | `portfolio_id` → `portfolios.id`, cascades on delete |
 | `milestone_has_tasks` | Milestone ↔ Task (M:N) | PK: `(milestone_id, task_id)`, cascades on delete |
 
-## API Method Categories (28 total)
+## API Method Categories (31 total)
 
 | Category | Count | Key Methods |
 |----------|-------|-------------|
@@ -104,7 +104,7 @@ find plugins/Portfolio/ -name "*.php" -exec php -l {} \;
 | Milestone CRUD | 5 | `createMilestone`, `getMilestone`, `getPortfolioMilestones`, `updateMilestone`, `removeMilestone` |
 | Milestone ↔ Task | 5 | `addTaskToMilestone`, `removeTaskFromMilestone`, `getMilestoneTasks`, `getTaskMilestones`, `getMilestoneProgress` |
 | Dependencies | 5 | `getPortfolioDependencies`, `getBlockedTasks`, `getBlockingTasks`, `getPortfolioCriticalPath`, `getPortfolioDependencyGraph` |
-| Unified Tasks | 3 | `getPortfolioTasks`, `getPortfolioTaskCount`, `getPortfolioOverview` |
+| Unified Tasks | 6 | `getPortfolioTasks`, `getPortfolioTaskCount`, `getPortfolioOverview`, `getPortfolioStatusReport`, `getPortfolioActivity`, `getPortfolioWorkload` |
 
 ## Events
 
