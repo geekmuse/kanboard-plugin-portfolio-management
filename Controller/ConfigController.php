@@ -19,6 +19,7 @@ class ConfigController extends BaseController
             'portfolio_milestone_at_risk_threshold' => 80,
             'portfolio_board_show_blockers' => 1,
             'portfolio_dashboard_widget_enabled' => 1,
+            'portfolio_auto_complete_milestones' => 1,
             'portfolio_dependency_link_types' => 'blocks',
             'portfolio_tasks_per_page' => 50,
             'portfolio_milestone_weight_by' => 'count',
@@ -122,6 +123,9 @@ class ConfigController extends BaseController
             ) ? 1 : 0,
             'portfolio_dashboard_widget_enabled' => $this->normalizeBoolean(
                 $this->request->getValue('portfolio_dashboard_widget_enabled', 0)
+            ) ? 1 : 0,
+            'portfolio_auto_complete_milestones' => $this->normalizeBoolean(
+                $this->request->getValue('portfolio_auto_complete_milestones', 0)
             ) ? 1 : 0,
             'portfolio_dependency_link_types' => $this->normalizeLinkTypeList(
                 $this->request->getValue('portfolio_dependency_link_types', 'blocks')

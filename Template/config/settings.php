@@ -54,6 +54,21 @@
             </label>
         </div>
 
+        <div class="portfolio-config-field portfolio-config-field--checkbox">
+            <label>
+                <input
+                    type="checkbox"
+                    name="portfolio_auto_complete_milestones"
+                    value="1"
+                    <?= ((int) ($settings['portfolio_auto_complete_milestones'] ?? 1) === 1) ? 'checked' : '' ?>
+                >
+                <?= $this->text->e(t('Auto-complete milestones when all tasks are done')) ?>
+            </label>
+            <p class="portfolio-config-help">
+                <?= $this->text->e(t('Automatically mark a milestone as completed when all its tasks are closed and moved to a done column.')) ?>
+            </p>
+        </div>
+
         <div class="portfolio-config-field">
             <label for="portfolio_dependency_link_types"><?= $this->text->e(t('Dependency link labels')) ?></label>
             <input

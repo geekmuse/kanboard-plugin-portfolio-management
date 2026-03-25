@@ -315,6 +315,128 @@ class Plugin extends Base
             }
         });
 
+        // task.move.column — auto-complete milestones when all tasks are done.
+        //
+        // Fires when a task changes columns. If the destination column matches a
+        // done pattern (done, completed, closed, finished, deployed, released) AND
+        // all tasks in any of the task's milestones have is_active=0, the milestone
+        // status is set to 0 (completed) via milestoneModel->update().
+        //
+        // The column title is read from the event data (TaskEvent includes the full
+        // task row after the move, which typically includes column_title from the
+        // tasks query join). A DB fallback via column_id is provided for robustness.
+        //
+        // Guard order: task_id → config enabled → done column → milestone lookup
+        $this->dispatcher->addListener('task.move.column', function ($event) use ($plugin) {
+            $taskId = (int) ($event['task_id'] ?? 0);
+            if ($taskId <= 0) {
+                return;
+            }
+
+            // Check portfolio_auto_complete_milestones config (default 1 = enabled).
+            // Use the magic __get() accessor so the service is resolved lazily from
+            // the container at call time — consistent with other listener patterns.
+            /** @var mixed $configModel */
+            $configModel = $plugin->configModel;
+            if (is_object($configModel) && method_exists($configModel, 'get')) {
+                if ((int) $configModel->get('portfolio_auto_complete_milestones', 1) !== 1) {
+                    return;
+                }
+            }
+
+            // Resolve destination column title.
+            // TaskEvent data for task.move.column typically includes the full task
+            // row (column_title from joins). Fall back to a DB lookup via column_id
+            // if column_title is absent (defensive; handles stripped event payloads).
+            $columnTitle = strtolower(trim((string) ($event['column_title'] ?? '')));
+            if ($columnTitle === '') {
+                $columnId = (int) ($event['column_id'] ?? 0);
+                if ($columnId > 0) {
+                    try {
+                        /** @var mixed $db */
+                        $db = $plugin->db;
+                        if (is_object($db) && method_exists($db, 'table')) {
+                            $col = $db->table('columns')->eq('id', $columnId)->findOne();
+                            if (is_array($col)) {
+                                $columnTitle = strtolower(trim((string) ($col['title'] ?? '')));
+                            }
+                        }
+                    } catch (\Throwable $e) {
+                        // DB unavailable — skip
+                    }
+                }
+
+                if ($columnTitle === '') {
+                    return;
+                }
+            }
+
+            // Same done-pattern list as PortfolioViewController::resolveCanonicalLane()
+            $donePatterns = ['done', 'completed', 'closed', 'finished', 'deployed', 'released'];
+            $isDoneColumn = false;
+            foreach ($donePatterns as $donePattern) {
+                if (str_contains($columnTitle, $donePattern)) {
+                    $isDoneColumn = true;
+                    break;
+                }
+            }
+
+            if (! $isDoneColumn) {
+                return;
+            }
+
+            /** @var mixed $milestoneTaskModel */
+            $milestoneTaskModel = $plugin->milestoneTaskModel;
+            /** @var mixed $milestoneModel */
+            $milestoneModel = $plugin->milestoneModel;
+
+            if (! is_object($milestoneTaskModel) || ! method_exists($milestoneTaskModel, 'getMilestones')) {
+                return;
+            }
+
+            if (! is_object($milestoneModel) || ! method_exists($milestoneModel, 'update')) {
+                return;
+            }
+
+            $milestones = $milestoneTaskModel->getMilestones($taskId);
+            if (empty($milestones)) {
+                return;
+            }
+
+            foreach ($milestones as $milestone) {
+                $milestoneId = (int) ($milestone['id'] ?? 0);
+                if ($milestoneId <= 0) {
+                    continue;
+                }
+
+                // Skip milestones that are already completed (status = 0)
+                if ((int) ($milestone['status'] ?? 1) === 0) {
+                    continue;
+                }
+
+                if (! method_exists($milestoneTaskModel, 'getTasks')) {
+                    continue;
+                }
+
+                $tasks = $milestoneTaskModel->getTasks($milestoneId);
+                if (empty($tasks)) {
+                    continue;
+                }
+
+                $allDone = true;
+                foreach ($tasks as $task) {
+                    if ((int) ($task['is_active'] ?? 1) !== 0) {
+                        $allDone = false;
+                        break;
+                    }
+                }
+
+                if ($allDone) {
+                    $milestoneModel->update($milestoneId, ['status' => 0]);
+                }
+            }
+        });
+
         $this->eventManager->register(DependencyResolvedType::EVENT_NAME, DependencyResolvedType::getLabel());
         $this->actionManager->register(new NotifyDependencyResolved($this->container));
         $this->actionManager->register(new CommentDependencyResolved($this->container));

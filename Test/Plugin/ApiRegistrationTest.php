@@ -359,11 +359,79 @@ final class FakeMilestoneTaskModel
      */
     public array $addCalls = [];
 
+    /**
+     * Milestones returned by getMilestones() — configure per-test.
+     *
+     * @var array<int, array<string, mixed>>
+     */
+    public array $milestonesForTask = [];
+
+    /**
+     * Tasks returned by getTasks() — configure per-test.
+     *
+     * @var array<int, array<string, mixed>>
+     */
+    public array $tasksForMilestone = [];
+
     public function add(int $milestoneId, int $taskId, int $isCritical = 0, int $position = 0): bool
     {
         $this->addCalls[] = [$milestoneId, $taskId];
 
         return true;
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function getMilestones(int $taskId): array
+    {
+        return $this->milestonesForTask;
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function getTasks(int $milestoneId): array
+    {
+        return $this->tasksForMilestone;
+    }
+}
+
+final class FakeMilestoneModel
+{
+    /**
+     * @var array<int, array{0: int, 1: array<string, mixed>}>
+     */
+    public array $updateCalls = [];
+
+    /**
+     * @param array<string, mixed> $values
+     */
+    public function update(int $milestoneId, array $values): bool
+    {
+        $this->updateCalls[] = [$milestoneId, $values];
+
+        return true;
+    }
+}
+
+final class FakeConfigModel
+{
+    /**
+     * @param array<string, mixed> $values
+     */
+    public function __construct(private array $values = [])
+    {
+    }
+
+    /**
+     * @param mixed $default
+     *
+     * @return mixed
+     */
+    public function get(string $key, $default = null)
+    {
+        return $this->values[$key] ?? $default;
     }
 }
 
@@ -966,5 +1034,93 @@ final class ApiRegistrationTest extends TestCase
             ['Portfolio:widget/board_task_blocked_icon'],
             $templateByHook['template:board:task:icons']
         );
+    }
+
+    // -----------------------------------------------------------------------
+    // US-004: task.move.column — auto-complete milestones
+    // -----------------------------------------------------------------------
+
+    public function testTaskMoveColumnListenerAutoCompletesMilestoneWhenAllTasksDone(): void
+    {
+        // Set up milestoneTaskModel: task 42 is in milestone 10 (status=1, not yet done);
+        // both tasks in that milestone are closed (is_active=0).
+        $milestoneTaskModel = new FakeMilestoneTaskModel();
+        $milestoneTaskModel->milestonesForTask = [
+            ['id' => 10, 'status' => 1],
+        ];
+        $milestoneTaskModel->tasksForMilestone = [
+            ['id' => 5, 'is_active' => 0],
+            ['id' => 6, 'is_active' => 0],
+        ];
+
+        $milestoneModel = new FakeMilestoneModel();
+
+        $this->plugin->container['milestoneTaskModel'] = $milestoneTaskModel;
+        $this->plugin->container['milestoneModel']     = $milestoneModel;
+
+        /** @var FakeDispatcher $dispatcher */
+        $dispatcher = $this->plugin->container['dispatcher'];
+        $listeners  = $dispatcher->listeners;
+
+        $this->assertArrayHasKey('task.move.column', $listeners, 'task.move.column listener must be registered');
+
+        // Simulate task 42 moving to a "Done" column
+        $listeners['task.move.column'][0](['task_id' => 42, 'column_title' => 'Done']);
+
+        // Milestone 10 should be updated to status=0 (completed)
+        $this->assertSame([[10, ['status' => 0]]], $milestoneModel->updateCalls);
+    }
+
+    public function testTaskMoveColumnListenerNoopWhenConfigDisabled(): void
+    {
+        $milestoneTaskModel = new FakeMilestoneTaskModel();
+        $milestoneTaskModel->milestonesForTask = [
+            ['id' => 10, 'status' => 1],
+        ];
+        $milestoneTaskModel->tasksForMilestone = [
+            ['id' => 5, 'is_active' => 0],
+        ];
+
+        $milestoneModel = new FakeMilestoneModel();
+        $configModel    = new FakeConfigModel(['portfolio_auto_complete_milestones' => 0]);
+
+        $this->plugin->container['milestoneTaskModel'] = $milestoneTaskModel;
+        $this->plugin->container['milestoneModel']     = $milestoneModel;
+        $this->plugin->container['configModel']        = $configModel;
+
+        /** @var FakeDispatcher $dispatcher */
+        $dispatcher = $this->plugin->container['dispatcher'];
+        $listeners  = $dispatcher->listeners;
+
+        // Config disabled → listener must be a no-op
+        $listeners['task.move.column'][0](['task_id' => 42, 'column_title' => 'Done']);
+
+        $this->assertSame([], $milestoneModel->updateCalls);
+    }
+
+    public function testTaskMoveColumnListenerNoopWhenOtherTasksStillActive(): void
+    {
+        $milestoneTaskModel = new FakeMilestoneTaskModel();
+        $milestoneTaskModel->milestonesForTask = [
+            ['id' => 10, 'status' => 1],
+        ];
+        $milestoneTaskModel->tasksForMilestone = [
+            ['id' => 5, 'is_active' => 0],
+            ['id' => 6, 'is_active' => 1], // still active — milestone must NOT be completed
+        ];
+
+        $milestoneModel = new FakeMilestoneModel();
+
+        $this->plugin->container['milestoneTaskModel'] = $milestoneTaskModel;
+        $this->plugin->container['milestoneModel']     = $milestoneModel;
+
+        /** @var FakeDispatcher $dispatcher */
+        $dispatcher = $this->plugin->container['dispatcher'];
+        $listeners  = $dispatcher->listeners;
+
+        $listeners['task.move.column'][0](['task_id' => 42, 'column_title' => 'Done']);
+
+        // At least one task is still active — milestone must not be auto-completed
+        $this->assertSame([], $milestoneModel->updateCalls);
     }
 }

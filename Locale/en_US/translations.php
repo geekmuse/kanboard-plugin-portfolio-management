@@ -188,6 +188,11 @@ return [
     'No critical path found. Add cross-project task dependencies to compute the critical path.' =>
         'No critical path found. Add cross-project task dependencies to compute the critical path.',
 
+    // Config settings
+    'Auto-complete milestones when all tasks are done' => 'Auto-complete milestones when all tasks are done',
+    'Automatically mark a milestone as completed when all its tasks are closed and moved to a done column.' =>
+        'Automatically mark a milestone as completed when all its tasks are closed and moved to a done column.',
+
     // Widget / hook templates
     'None' => 'None',
     'This task is in Portfolio:' => 'This task is in Portfolio:',
