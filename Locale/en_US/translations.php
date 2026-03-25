@@ -211,6 +211,7 @@ return [
     'Portfolio Roadmap' => 'Portfolio Roadmap',
     'No milestones with target dates found. Add a target date to a milestone to populate the roadmap.' =>
         'No milestones with target dates found. Add a target date to a milestone to populate the roadmap.',
+    'Today' => 'Today',
 
     // Workload view
     'Team' => 'Team',

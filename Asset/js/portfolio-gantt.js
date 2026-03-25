@@ -503,12 +503,268 @@
     }
 
     /* ------------------------------------------------------------------ */
+    /*  D3 Roadmap renderer (roadmap.php)                                  */
+    /* ------------------------------------------------------------------ */
+
+    /*
+     * renderRoadmap(container, data)
+     *
+     * data shape:
+     * [
+     *   {
+     *     id:         <int>,
+     *     name:       <string>,
+     *     color_id:   <string>,
+     *     start_date: <int unix>,
+     *     end_date:   <int unix>,
+     *     percent:    <float 0–100>,
+     *     health:     'on_track' | 'at_risk' | 'overdue',
+     *     task_count: <int>
+     *   },
+     *   ...
+     * ]
+     */
+    function renderRoadmap(container, data) {
+        if (!container || typeof d3 === 'undefined') {
+            return;
+        }
+
+        var milestones = Array.isArray(data) ? data : [];
+        if (milestones.length === 0) {
+            return;
+        }
+
+        var HEALTH_COLORS = {
+            on_track: '#22c55e',
+            at_risk:  '#eab308',
+            overdue:  '#ef4444'
+        };
+
+        /* -------------------------------------------------------------- */
+        /*  Compute time domain — always include today                     */
+        /* -------------------------------------------------------------- */
+
+        var now = Date.now();
+        var allMs = [now];
+        var i;
+
+        for (i = 0; i < milestones.length; i++) {
+            var m = milestones[i];
+            if (m.start_date > 0) { allMs.push(m.start_date * 1000); }
+            if (m.end_date   > 0) { allMs.push(m.end_date   * 1000); }
+        }
+
+        var minMs  = d3.min(allMs);
+        var maxMs  = d3.max(allMs);
+        var padMs  = Math.max((maxMs - minMs) * 0.08, 14 * 24 * 3600 * 1000); // min 14-day pad
+        var domainMin = new Date(minMs - padMs);
+        var domainMax = new Date(maxMs + padMs);
+
+        /* -------------------------------------------------------------- */
+        /*  Layout constants                                               */
+        /* -------------------------------------------------------------- */
+
+        var ROW_H     = 44;
+        var LABEL_W   = 180;
+        var MARGIN    = { top: 24, right: 20, bottom: 40, left: LABEL_W };
+        var containerW = Math.max(container.offsetWidth || 900, 500);
+        var innerW    = containerW - MARGIN.left - MARGIN.right;
+        var innerH    = milestones.length * ROW_H;
+        var totalH    = innerH + MARGIN.top + MARGIN.bottom;
+
+        /* -------------------------------------------------------------- */
+        /*  Scale                                                          */
+        /* -------------------------------------------------------------- */
+
+        var xScale = d3.scaleTime()
+            .domain([domainMin, domainMax])
+            .range([0, innerW]);
+
+        /* -------------------------------------------------------------- */
+        /*  SVG root                                                       */
+        /* -------------------------------------------------------------- */
+
+        d3.select(container).selectAll('*').remove();
+
+        var svg = d3.select(container)
+            .append('svg')
+            .attr('width', containerW)
+            .attr('height', totalH)
+            .attr('class', 'portfolio-roadmap-svg');
+
+        var defs = svg.append('defs');
+        defs.append('clipPath')
+            .attr('id', 'roadmap-clip')
+            .append('rect')
+            .attr('width', innerW)
+            .attr('height', innerH);
+
+        var g = svg.append('g')
+            .attr('transform', 'translate(' + MARGIN.left + ',' + MARGIN.top + ')');
+
+        /* -------------------------------------------------------------- */
+        /*  Horizontal grid lines                                          */
+        /* -------------------------------------------------------------- */
+
+        for (i = 0; i <= milestones.length; i++) {
+            g.append('line')
+                .attr('x1', 0).attr('x2', innerW)
+                .attr('y1', i * ROW_H).attr('y2', i * ROW_H)
+                .attr('class', 'portfolio-roadmap-grid-line');
+        }
+
+        /* -------------------------------------------------------------- */
+        /*  X axis (month/week labels)                                     */
+        /* -------------------------------------------------------------- */
+
+        g.append('g')
+            .attr('transform', 'translate(0,' + innerH + ')')
+            .attr('class', 'portfolio-roadmap-axis')
+            .call(d3.axisBottom(xScale).ticks(Math.min(8, Math.floor(innerW / 80))));
+
+        /* -------------------------------------------------------------- */
+        /*  Today vertical line                                            */
+        /* -------------------------------------------------------------- */
+
+        var todayX = xScale(new Date(now));
+        if (todayX >= 0 && todayX <= innerW) {
+            g.append('line')
+                .attr('x1', todayX).attr('x2', todayX)
+                .attr('y1', 0).attr('y2', innerH)
+                .attr('class', 'portfolio-roadmap-today-line');
+
+            g.append('text')
+                .attr('x', todayX + 4)
+                .attr('y', 12)
+                .attr('class', 'portfolio-roadmap-today-label')
+                .text('Today');
+        }
+
+        /* -------------------------------------------------------------- */
+        /*  Bars group (clipped) + label panel                            */
+        /* -------------------------------------------------------------- */
+
+        var barsG  = g.append('g').attr('clip-path', 'url(#roadmap-clip)');
+        var labelG = svg.append('g')
+            .attr('transform', 'translate(0,' + MARGIN.top + ')');
+
+        /* -------------------------------------------------------------- */
+        /*  Milestone rows                                                 */
+        /* -------------------------------------------------------------- */
+
+        for (i = 0; i < milestones.length; i++) {
+            var ms      = milestones[i];
+            var yMid    = i * ROW_H + ROW_H / 2;
+            var barH    = 22;
+            var barY    = yMid - barH / 2;
+
+            var healthColor = HEALTH_COLORS[ms.health] || '#9ca3af';
+            var percent     = parseFloat(ms.percent) || 0;
+            var msName      = ms.name || '';
+            var msTasks     = ms.task_count || 0;
+
+            /* Compute bar x extents */
+            var startX, endX, barW;
+            var hasStart = ms.start_date > 0;
+            var hasEnd   = ms.end_date   > 0;
+
+            startX = hasStart ? xScale(new Date(ms.start_date * 1000))
+                              : (hasEnd ? xScale(new Date(ms.end_date * 1000)) - 30 : 0);
+            endX   = hasEnd   ? xScale(new Date(ms.end_date   * 1000))
+                              : startX + 30;
+            barW   = Math.max(endX - startX, 8);
+
+            /* Background bar (low opacity) */
+            barsG.append('rect')
+                .attr('x', startX)
+                .attr('y', barY)
+                .attr('width', barW)
+                .attr('height', barH)
+                .attr('rx', 3)
+                .attr('fill', healthColor)
+                .attr('opacity', 0.22)
+                .attr('class', 'portfolio-roadmap-bar portfolio-roadmap-bar--' + (ms.health || 'unknown'));
+
+            /* Progress fill (solid) */
+            if (percent > 0) {
+                barsG.append('rect')
+                    .attr('x', startX)
+                    .attr('y', barY)
+                    .attr('width', Math.min(barW * (percent / 100), barW))
+                    .attr('height', barH)
+                    .attr('rx', 3)
+                    .attr('fill', healthColor)
+                    .attr('opacity', 0.75)
+                    .attr('class', 'portfolio-roadmap-bar-progress');
+            }
+
+            /* Bar border outline */
+            barsG.append('rect')
+                .attr('x', startX)
+                .attr('y', barY)
+                .attr('width', barW)
+                .attr('height', barH)
+                .attr('rx', 3)
+                .attr('fill', 'none')
+                .attr('stroke', healthColor)
+                .attr('stroke-width', 1.5)
+                .attr('class', 'portfolio-roadmap-bar-border');
+
+            /* Percent label inside bar (only when bar is wide enough) */
+            if (barW > 50) {
+                barsG.append('text')
+                    .attr('x', startX + barW / 2)
+                    .attr('y', yMid + 4)
+                    .attr('text-anchor', 'middle')
+                    .attr('class', 'portfolio-roadmap-bar-label')
+                    .text(Math.round(percent) + '%');
+            }
+
+            /* Transparent hit area — tooltip + click navigation */
+            var hitEl = barsG.append('rect')
+                .datum({ id: ms.id, name: msName, percent: percent, task_count: msTasks })
+                .attr('x', startX)
+                .attr('y', barY)
+                .attr('width', barW)
+                .attr('height', barH)
+                .attr('fill', 'transparent')
+                .attr('class', 'portfolio-roadmap-bar-hit')
+                .style('cursor', 'pointer')
+                .on('click', function (event, d) {
+                    window.location.href = '?controller=MilestoneController&action=show'
+                        + '&milestone_id=' + d.id + '&plugin=Portfolio';
+                });
+
+            hitEl.append('title')
+                .text(msName + '\n' + Math.round(percent) + '% complete \u2022 ' + msTasks + ' tasks');
+
+            /* Left-panel: row label text */
+            var labelText = msName.length > 24 ? msName.substring(0, 24) + '\u2026' : msName;
+            labelG.append('text')
+                .attr('x', LABEL_W - 14)
+                .attr('y', yMid + 4)
+                .attr('text-anchor', 'end')
+                .attr('class', 'portfolio-roadmap-row-label')
+                .text(labelText);
+
+            /* Left-panel: health status dot */
+            labelG.append('circle')
+                .attr('cx', LABEL_W - 6)
+                .attr('cy', yMid)
+                .attr('r', 4)
+                .attr('fill', healthColor)
+                .attr('class', 'portfolio-roadmap-health-dot');
+        }
+    }
+
+    /* ------------------------------------------------------------------ */
     /*  Public API                                                         */
     /* ------------------------------------------------------------------ */
 
     window.PortfolioGantt = {
         render: render,
-        renderGantt: renderGantt
+        renderGantt: renderGantt,
+        renderRoadmap: renderRoadmap
     };
 
     /* ------------------------------------------------------------------ */
@@ -532,6 +788,17 @@
         var timelineEl = document.getElementById('portfolio-timeline-chart');
         if (timelineEl) {
             render(timelineEl);
+        }
+
+        // Roadmap chart (roadmap.php) — reads from data-roadmap attribute
+        var roadmapEl = document.getElementById('portfolio-roadmap-chart');
+        if (roadmapEl) {
+            var roadmapRaw = roadmapEl.getAttribute('data-roadmap') || '[]';
+            try {
+                renderRoadmap(roadmapEl, JSON.parse(roadmapRaw));
+            } catch (e) {
+                roadmapEl.innerHTML = '<p class="portfolio-empty-state">Failed to parse roadmap data.</p>';
+            }
         }
     });
 })();
