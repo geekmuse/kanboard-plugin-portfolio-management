@@ -1,4 +1,11 @@
 ## Codebase Patterns
+- `task.move.column` event listener pattern: read `column_title` from event (lowercase/trim), check against `$donePatterns` with `str_contains`, then check all milestone tasks for `is_active=0`. Fall back to DB lookup via `column_id` if column_title is empty. Guard order: task_id → config → done-column → milestone lookup.
+- `FakeMilestoneTaskModel` in ApiRegistrationTest now supports `getMilestones()` and `getTasks()` via `$milestonesForTask` / `$tasksForMilestone` public arrays. Set these before invoking the listener under test.
+- `FakeMilestoneModel` in ApiRegistrationTest records `update()` calls in `$updateCalls` as `[$milestoneId, $values]` tuples — same pattern as `FakePortfolioModel::$updateCalls`.
+- `FakeConfigModel` in ApiRegistrationTest: construct with `['key' => value]` map; `get($key, $default)` returns configured value or default. Set `$this->plugin->container['configModel']` after `initialize()` to override config for specific tests.
+- Pre-commit hook (ralphi check) can timeout on phpstan if Docker image is cold; run `ralphi check` manually first to warm the image, then commit.
+
+
 - Task form hooks use `template:task:form:first-column` to inject fields into Kanboard's task creation form; `params['project_id']` carries the project context (also check `params['task']['project_id']` defensively).
 - `task.create` event receives all form values including custom fields added by hook templates; listener can read `$event['milestone_id']` to process post-creation side effects.
 - Widget templates that receive pre-fetched data via `attachCallable` follow the pattern: check `! empty($varName)` at top → render content → close endif; this keeps templates minimal and testable.
@@ -79,4 +86,30 @@ Corrective Plan: N/A
   - Board task icons hook is identical in structure to board task footer hook — reuse the same callable shape
   - Use `&#x1F534;` HTML entity for 🔴 emoji in PHP template files to avoid file encoding issues
   - Codebase patterns section in progress.txt: add reusable learnings about params structures and test update procedures
+---
+
+## 2026-03-25 — US-004
+Session: N/A
+Review Outcome: PASS
+Trajectory: ON_TRACK
+Trajectory Notes: N/A
+Corrective Plan: N/A
+- Registered `task.move.column` dispatcher listener in Plugin.php
+  - Guards: task_id absent → return; config disabled → return; column not done-pattern → return; no milestones → return
+  - Done-pattern list matches `PortfolioViewController::resolveCanonicalLane`: ['done','completed','closed','finished','deployed','released']
+  - Column title: reads `$event['column_title']` first; falls back to DB lookup via `column_id` if empty
+  - For each non-completed milestone containing the task: checks all tasks for is_active=0; calls milestoneModel->update($id, ['status'=>0]) if all done
+- Added `portfolio_auto_complete_milestones` config (default 1) to ConfigController::getDefaultSettings(), normalizeSubmittedSettings()
+- Added checkbox to Template/config/settings.php with portfolio-config-help text
+- Added 2 new translation strings to Locale/en_US/translations.php
+- Updated FakeMilestoneTaskModel (added getMilestones/getTasks + milestonesForTask/tasksForMilestone props)
+- Added FakeMilestoneModel (updateCalls recording), FakeConfigModel (get() with defaults)
+- Added 3 new tests to ApiRegistrationTest (185 total, was 182): auto-complete triggers, no-op on disabled config, no-op when tasks still active
+- PHP lint clean, PHPCS 0 errors, PHPStan clean
+- Files changed: Plugin.php, Controller/ConfigController.php, Template/config/settings.php, Locale/en_US/translations.php, Test/Plugin/ApiRegistrationTest.php
+- **Learnings for future iterations:**
+  - `task.move.column` event data: include `column_title` in test events; production Kanboard event likely includes it from task row joins
+  - When adding listener tests with fake configModel: set `$this->plugin->container['configModel'] = $fake` AFTER `initialize()` (overrides lazy container entry)
+  - Pre-commit phpstan timeout: cold Docker image needs ~40s; warm `ralphi check` first if needed (run it once before commit)
+  - FakeMilestoneTaskModel is reused across US-002 (add tests) and US-004 (getMilestones/getTasks tests) — it's the shared stub for milestone-task relationship testing
 ---
