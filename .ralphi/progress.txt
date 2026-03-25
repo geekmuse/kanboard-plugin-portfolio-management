@@ -1,4 +1,8 @@
 ## Codebase Patterns
+- `task.update` and `task.assignee_change` stub listeners follow the same pattern as other lifecycle listeners: read task_id, guard `<= 0`, delegate to model method. The model method itself is a no-op stub documented with TODO for future implementation.
+- `FakePortfolioTaskModel` in ApiRegistrationTest: exposes `$assigneeChangedCalls[]` public array; set in container after `initialize()` for listener tests. Same pattern as `FakeDependencyModel`.
+- `FakeDependencyModel::$updatedCalls[]` records `onTaskUpdated` call arguments (int task_id) — same pattern as existing `closedCalls`, `openedCalls`, `linkChangedCalls` arrays.
+- Pre-commit phpstan timeout pattern confirmed again: warm the Docker image with one manual `bash scripts/docker-phpstan.sh` run before committing when image is cold.
 - `task.move.column` event listener pattern: read `column_title` from event (lowercase/trim), check against `$donePatterns` with `str_contains`, then check all milestone tasks for `is_active=0`. Fall back to DB lookup via `column_id` if column_title is empty. Guard order: task_id → config → done-column → milestone lookup.
 - `FakeMilestoneTaskModel` in ApiRegistrationTest now supports `getMilestones()` and `getTasks()` via `$milestonesForTask` / `$tasksForMilestone` public arrays. Set these before invoking the listener under test.
 - `FakeMilestoneModel` in ApiRegistrationTest records `update()` calls in `$updateCalls` as `[$milestoneId, $values]` tuples — same pattern as `FakePortfolioModel::$updateCalls`.
@@ -112,4 +116,26 @@ Corrective Plan: N/A
   - When adding listener tests with fake configModel: set `$this->plugin->container['configModel'] = $fake` AFTER `initialize()` (overrides lazy container entry)
   - Pre-commit phpstan timeout: cold Docker image needs ~40s; warm `ralphi check` first if needed (run it once before commit)
   - FakeMilestoneTaskModel is reused across US-002 (add tests) and US-004 (getMilestones/getTasks tests) — it's the shared stub for milestone-task relationship testing
+---
+
+## 2026-03-25 — US-005
+Session: N/A
+Review Outcome: PASS
+Trajectory: ON_TRACK
+Trajectory Notes: N/A
+Corrective Plan: N/A
+- Registered `task.update` listener in Plugin.php → delegates to `DependencyModel::onTaskUpdated(int $taskId)` (stub, no-op, returns early)
+- Registered `task.assignee_change` listener in Plugin.php → delegates to `PortfolioTaskModel::onAssigneeChanged(int $taskId)` (stub, no-op, returns early)
+- Both listeners guard: `task_id <= 0` → return (defensive no-op)
+- Added `onTaskUpdated()` stub to `Model/DependencyModel.php` with TODO comment (future: invalidate critical-path cache)
+- Added `onAssigneeChanged()` stub to `Model/PortfolioTaskModel.php` with TODO comment (future: invalidate workload cache)
+- Added `FakePortfolioTaskModel` to `Test/Plugin/ApiRegistrationTest.php` (assigneeChangedCalls tracking)
+- Extended `FakeDependencyModel` with `$updatedCalls[]` + `onTaskUpdated()` method
+- Added 4 new tests (189 total, was 185): testTaskUpdateListenerDelegatesToDependencyModelOnTaskUpdated, testTaskUpdateListenerIsNoopWhenTaskIdMissing, testTaskAssigneeChangeListenerDelegatesToPortfolioTaskModelOnAssigneeChanged, testTaskAssigneeChangeListenerIsNoopWhenTaskIdMissing
+- PHP lint clean, PHPCS 0 errors, PHPStan clean, 189 tests pass
+- Files changed: Plugin.php, Model/DependencyModel.php, Model/PortfolioTaskModel.php, Test/Plugin/ApiRegistrationTest.php
+- **Learnings for future iterations:**
+  - Stub listener pattern: register in Plugin.php → guard task_id → call model method → model method returns early with TODO doc comment
+  - When adding new fake model classes to ApiRegistrationTest, follow the same stub shape: public array for call recording, method matching the real signature
+  - For stub methods on existing models (DependencyModel, PortfolioTaskModel), insert before private helper methods so public API stays grouped at the top
 ---
