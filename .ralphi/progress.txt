@@ -1,4 +1,8 @@
 ## Codebase Patterns
+- `docker-phpstan.sh` requires `--memory-limit=512M` flag; the default 128M container limit causes a crash/timeout. Fixed in scripts/docker-phpstan.sh — always use the updated script.
+- `project_activities` table schema for tests: `id INTEGER PRIMARY KEY AUTOINCREMENT, project_id, task_id, event_name TEXT, creator_id INTEGER, date_creation INTEGER, data TEXT`. The defensive try/catch in `getActivity()` handles both missing-table and wrong-table-name cases.
+- `getActivity()` follows the same in-memory scan pattern as `buildFilteredTaskRows()`: fetch all rows from the table, filter by projectScope map, then sort/paginate. This is consistent cross-driver behavior without raw SQL JOINs or IN clauses.
+- API registration test name tracks method count: after US-004 it is `testRegistersAllThirtyJsonRpcMethods` (30 methods). Update name + expected array when adding new JSON-RPC methods.
 - GET forms in templates use `$this->url->href(...)` as action; in real Kanboard path-based routing preserves controller/action/plugin in the URL path, so form fields only need to carry non-routing params. Follow the same pattern as `Template/portfolio/tasks.php` filter form.
 - For MilestoneControllerFakeMilestoneModel: when extending `getProgress()` to accept `$weightBy`, add a separate `getProgressWeightByCalls: array<int, string>` so existing tests that assert `getProgressCalls` (milestone IDs) still pass.
 - `MilestoneController::getMilestoneProgress()` fallback array should mirror all keys returned by `MilestoneModel::getProgress()` (incl. `no_data`, `weight_by`, `score_*`, `time_*`) so `array_merge($fallback, $progress)` always produces a complete result regardless of what the model returns.
@@ -12,6 +16,31 @@
 - ConfigController getDefaultSettings/normalizeSubmittedSettings/getCurrentSettings follow a consistent pattern: add key to getDefaultSettings (int or string), getCurrentSettings handles generically, normalizeSubmittedSettings needs explicit normalization per key type.
 - Multi-line function declarations in PSR-12: `)` closing paren must be on the same line as `): ReturnType {` (i.e., `): void {` not `): void\n    {`).
 ---
+
+---
+
+## 2026-03-25 - US-004
+Session: iter-b3a3e465 / loop-cfe4d683
+Review Outcome: PASS
+Trajectory: ON_TRACK
+Trajectory Notes: N/A
+Corrective Plan: N/A
+- Added `getActivity(int $portfolioId, int $limit = 25, int $offset = 0): array` to `PortfolioTaskModel`
+- Method fetches all `project_activities` rows, filters to portfolio-member projects in-memory, enriches with `project_name` from projects table, sorts by `date_creation DESC`, paginates with clamped limit [1, 100]
+- Defensive try/catch returns [] if `project_activities` table doesn't exist
+- Registered `getPortfolioActivity` JSON-RPC callback in Plugin.php (read-only, no apiAccessMap entry)
+- Added `project_activities` table DDL to `PortfolioTaskModelTest` `setUp()`
+- Added `insertActivity()` helper method to test class
+- Added 3 unit tests: `testGetActivityReturnsEmptyArrayForPortfolioWithNoProjects`, `testGetActivityReturnsActivitiesEnrichedWithProjectName`, `testGetActivityPaginatesResults`
+- Updated `ApiRegistrationTest` to expect 30 methods (`testRegistersAllThirtyJsonRpcMethods`) — added `getPortfolioActivity` to expected array
+- Fixed `scripts/docker-phpstan.sh` to use `--memory-limit=512M` (default 128M caused OOM crash)
+- Test count: 161 (158 from US-003 + 3 new); 882 assertions; 0 errors
+- Files changed: `Model/PortfolioTaskModel.php`, `Plugin.php`, `Test/Model/PortfolioTaskModelTest.php`, `Test/Plugin/ApiRegistrationTest.php`, `scripts/docker-phpstan.sh`
+- **Learnings for future iterations:**
+  - `scripts/docker-phpstan.sh` now uses `--memory-limit=512M` — this is already applied, no action needed
+  - `getActivity()` uses the same in-memory scan pattern as other PortfolioTaskModel methods; do not try to use PicoDb JOINs or IN clauses
+  - `project_activities` test schema: use AUTOINCREMENT on id (for insert tests without explicit id) or explicit id (as done here for clarity in assertions)
+  - API test: always sync test name and expected array length when adding new JSON-RPC methods
 
 ## PRD Run Context
 PRD Branch: ralph/planning-depth-enhancements

@@ -76,8 +76,8 @@
       ],
       "notes": "Template-only changes. Depends on US-002 for the weighted getProgress() model method and config setting.",
       "startedAt": "2026-03-25T18:44:58.601Z",
-      "updatedAt": "2026-03-25T19:15:00.000Z",
-      "completedAt": "2026-03-25T19:15:00.000Z"
+      "updatedAt": "2026-03-25T18:56:41.164Z",
+      "completedAt": "2026-03-25T18:56:41.164Z"
     },
     {
       "id": "US-004",
@@ -95,9 +95,12 @@
         "PHP lint passes, all existing tests pass"
       ],
       "priority": 4,
-      "status": "open",
+      "status": "done",
       "dependsOn": [],
-      "notes": "Backend only. The dashboard template integration is in US-005."
+      "notes": "Backend only. The dashboard template integration is in US-005.",
+      "startedAt": "2026-03-25T18:56:41.389Z",
+      "updatedAt": "2026-03-25T19:12:00.000Z",
+      "completedAt": "2026-03-25T19:12:00.000Z"
     },
     {
       "id": "US-005",
