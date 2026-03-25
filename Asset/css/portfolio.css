@@ -771,3 +771,70 @@
 .portfolio-gantt-arrow-head--resolved {
     fill: #d1d5db;
 }
+
+/* =========================================================
+   Portfolio Workload View
+   ========================================================= */
+
+.portfolio-workload-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.portfolio-workload-header th {
+    background: #f3f4f6;
+    border-bottom: 2px solid #d1d5db;
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.portfolio-workload-row td {
+    border-bottom: 1px solid #e5e7eb;
+    padding: 0.5rem 0.75rem;
+    vertical-align: middle;
+    font-size: 0.875rem;
+}
+
+.portfolio-workload-row--overloaded td {
+    background-color: #fef2f2;
+}
+
+.portfolio-workload-row--unassigned td {
+    background-color: #f9fafb;
+    font-style: italic;
+    color: #6b7280;
+}
+
+.portfolio-workload-user a {
+    color: #2563eb;
+    text-decoration: none;
+}
+
+.portfolio-workload-user a:hover {
+    text-decoration: underline;
+}
+
+.portfolio-workload-overload-indicator {
+    color: #ef4444;
+    font-size: 1rem;
+    margin-left: 0.25rem;
+    cursor: default;
+}
+
+.portfolio-workload-unassigned-label {
+    color: #6b7280;
+}
+
+.portfolio-workload-empty {
+    color: #6b7280;
+    margin-top: 1rem;
+}
+
+.portfolio-workload-legend {
+    margin-top: 0.75rem;
+    font-size: 0.8rem;
+    color: #6b7280;
+}

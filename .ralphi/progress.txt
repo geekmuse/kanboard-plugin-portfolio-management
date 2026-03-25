@@ -1,4 +1,12 @@
 ## Codebase Patterns
+- `getWorkload()` uses the same accumulator-style pattern as `buildTaskDependencyStats()`: initialize per-owner_id sub-arrays once, then mutate with `++$accumulators[$ownerId]['field']`. PHPStan level 5 allows `++` on inferred-int fields in such arrays without explicit `@var` annotation.
+- For per-user project breakdowns in workload accumulators: extract `$ownerProjects = (array) $accumulators[$ownerId]['projects']`, modify it, then reassign back. PHPStan flags `is_array(...) ? ... : []` as always-true when the value was initialized as `[]` — use `(array) $value` cast instead.
+- API registration test name after US-006: `testRegistersAllThirtyOneJsonRpcMethods` (31 methods). Update name + expected array when adding new JSON-RPC methods.
+- `time_spent INTEGER NOT NULL DEFAULT 0` must be in the test tasks table DDL for workload tests that check `total_spent_hours`. `insertTask()` omits it (defaults to 0 from schema).
+- Workload unassigned bucket: after extracting from `$accumulators[0]`, unset `user_id`, `username`, `name` keys before returning — the API contract for unassigned omits user identity fields.
+- `buildEmptyWorkloadResult()` helper returns the canonical empty workload structure — reuse it in all early-return paths of `getWorkload()`.
+
+
 - For `git commit` to succeed when the pre-commit hook runs `ralphi check` + phpstan Docker (which takes ~46s), call `git commit` with `timeout: 300` in the Bash tool. Using the default 30s timeout causes the tool to report "Command timed out" even though the commit may be in progress.
 
 - `docker-phpstan.sh` requires `--memory-limit=512M` flag; the default 128M container limit causes a crash/timeout. Fixed in scripts/docker-phpstan.sh — always use the updated script.
@@ -19,6 +27,37 @@
 - Multi-line function declarations in PSR-12: `)` closing paren must be on the same line as `): ReturnType {` (i.e., `): void {` not `): void\n    {`).
 ---
 
+---
+
+## 2026-03-25 - US-006
+Session: iter-0b61c12a / loop-cfe4d683
+Review Outcome: PASS
+Trajectory: ON_TRACK
+Trajectory Notes: N/A
+Corrective Plan: N/A
+- Added `getWorkload(int $portfolioId): array` to `PortfolioTaskModel`
+- Method fetches all tasks in portfolio member projects, builds dependency stats via existing `buildTaskDependencyStats()`, groups by `owner_id` into accumulators
+- Each user entry: user_id, username, name, task_count, active_task_count, overdue_task_count, blocked_task_count, total_score, total_estimated_hours, total_spent_hours, projects[] breakdown
+- Overdue: `$isActive && $dateDue > 0 && $dateDue < $now`
+- Blocked count from `buildTaskDependencyStats()` `blocked_by_count` field
+- Unassigned bucket (owner_id=0): same counts but no user identity fields (user_id/username/name unset before return)
+- Users sorted alphabetically by name for determinism
+- Added `buildEmptyWorkloadResult()` private helper for all early-return paths
+- Registered `getPortfolioWorkload` JSON-RPC callback in Plugin.php (read-only, no apiAccessMap entry) — 31st method
+- Added `portfolio_workload_threshold` config setting (int, default 15) to ConfigController `getDefaultSettings()` and `normalizeSubmittedSettings()`
+- Added threshold number input to `Template/config/settings.php` (min 1, max 500)
+- Added 2 translation strings to `Locale/en_US/translations.php`
+- Added `time_spent INTEGER NOT NULL DEFAULT 0` to PortfolioTaskModelTest tasks DDL
+- Added 3 workload unit tests: `testGetWorkloadReturnsEmptyResultForPortfolioWithNoProjects`, `testGetWorkloadAggregatesMetricsPerUserWithOverdueAndBlocked`, `testGetWorkloadGroupsUnassignedTasksSeparately`
+- Added 1 ConfigControllerTest: `testSaveNormalizesOutOfRangeWorkloadThresholdToDefault`; updated `testSaveNormalizesAndPersistsSettings` to assert `portfolio_workload_threshold` saved correctly
+- Updated ApiRegistrationTest to expect 31 methods (`testRegistersAllThirtyOneJsonRpcMethods`)
+- Fixed PHPStan "else branch always true" errors: replaced `is_array($x) ? $x : []` with `(array) $x` for projects sub-arrays already known to be arrays
+- Test count: 167 (163 from US-005 + 4 new); 944 assertions; 0 errors; 1 pre-existing deprecation
+- Files changed: `Model/PortfolioTaskModel.php`, `Plugin.php`, `Controller/ConfigController.php`, `Template/config/settings.php`, `Locale/en_US/translations.php`, `Test/Model/PortfolioTaskModelTest.php`, `Test/Plugin/ApiRegistrationTest.php`, `Test/Controller/ConfigControllerTest.php`
+- **Learnings for future iterations:**
+  - PHPStan flags `is_array($arr) ? $arr : []` as "else branch always true" when PHPStan already knows `$arr` is an array (e.g., from `@var` annotation or initialization context). Use `(array) $arr` cast instead.
+  - For accumulator patterns with mixed-key sub-arrays, avoid `@var array<int, array<string, mixed>>` on the outer array if you also use `++` on inner keys — let PHPStan infer from initialization to get precise types.
+  - Always unset identity fields (user_id/username/name) from the unassigned bucket before returning — the API contract intentionally omits them for owner_id=0.
 ---
 
 ## 2026-03-25 - US-005

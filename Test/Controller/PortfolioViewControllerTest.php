@@ -261,17 +261,22 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
         /** @var array<int, array{portfolio_id: int, limit: int}> */
         public array $activityCalls = [];
 
+        /** @var array<int, int> */
+        public array $workloadCalls = [];
+
         /**
          * @param array<string, mixed> $overview
          * @param array<int, array<string, mixed>> $tasks
          * @param array<string, int> $counts
          * @param array<int, array<string, mixed>> $activities
+         * @param array<string, mixed> $workload
          */
         public function __construct(
             private array $overview = [],
             private array $tasks = [],
             private array $counts = ['total' => 0, 'active' => 0, 'closed' => 0, 'blocked' => 0],
-            private array $activities = []
+            private array $activities = [],
+            private array $workload = ['users' => [], 'unassigned' => []]
         ) {
         }
 
@@ -320,6 +325,16 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             ];
 
             return $this->activities;
+        }
+
+        /**
+         * @return array<string, mixed>
+         */
+        public function getWorkload(int $portfolioId): array
+        {
+            $this->workloadCalls[] = $portfolioId;
+
+            return $this->workload;
         }
     }
 
@@ -1205,6 +1220,113 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $this->assertStringContainsString('Recent Activity', $html);
             $this->assertStringContainsString('No recent activity.', $html);
             $this->assertStringNotContainsString('portfolio-activity-row', $html);
+        }
+
+        public function testWorkloadRendersTableWithUserMetricsAndOverloadIndicator(): void
+        {
+            $request = new PortfolioViewFakeRequest([], ['portfolio_id' => 5]);
+            $portfolioModel = new PortfolioViewFakePortfolioModel([
+                ['id' => 5, 'name' => 'Team Portfolio', 'description' => '', 'is_active' => 1],
+            ]);
+
+            $workload = [
+                'users' => [
+                    [
+                        'user_id'              => 1,
+                        'username'             => 'alice',
+                        'name'                 => 'Alice Smith',
+                        'task_count'           => 20,
+                        'active_task_count'    => 18,
+                        'overdue_task_count'   => 3,
+                        'blocked_task_count'   => 2,
+                        'total_score'          => 45,
+                        'total_estimated_hours' => 80,
+                        'total_spent_hours'    => 60,
+                        'projects'             => [],
+                    ],
+                    [
+                        'user_id'              => 2,
+                        'username'             => 'bob',
+                        'name'                 => 'Bob Jones',
+                        'task_count'           => 5,
+                        'active_task_count'    => 4,
+                        'overdue_task_count'   => 0,
+                        'blocked_task_count'   => 1,
+                        'total_score'          => 10,
+                        'total_estimated_hours' => 20,
+                        'total_spent_hours'    => 15,
+                        'projects'             => [],
+                    ],
+                ],
+                'unassigned' => [
+                    'task_count'           => 3,
+                    'active_task_count'    => 3,
+                    'overdue_task_count'   => 0,
+                    'blocked_task_count'   => 0,
+                    'total_score'          => 0,
+                    'total_estimated_hours' => 0,
+                    'total_spent_hours'    => 0,
+                    'projects'             => [],
+                ],
+            ];
+
+            // threshold=15: Alice (18 active) is overloaded; Bob (4 active) is not
+            $configModel = new PortfolioViewFakeConfigModel([
+                'portfolio_workload_threshold' => 15,
+            ]);
+
+            $portfolioTaskModel = new PortfolioViewFakePortfolioTaskModel(
+                [],
+                [],
+                ['total' => 0, 'active' => 0, 'closed' => 0, 'blocked' => 0],
+                [],
+                $workload
+            );
+
+            $services = $this->buildServices(
+                $portfolioModel,
+                $portfolioTaskModel,
+                $request,
+                null,
+                null,
+                $configModel
+            );
+
+            $controller = new PortfolioViewController($services);
+            $html = $controller->workload();
+
+            $this->assertSame('Portfolio:portfolio/workload', $services['helper']->layout->lastTemplate);
+            $this->assertStringContainsString('Portfolio Team Workload', $html);
+            $this->assertStringContainsString('Alice Smith', $html);
+            $this->assertStringContainsString('Bob Jones', $html);
+            $this->assertStringContainsString('portfolio-workload-row--overloaded', $html);
+            $this->assertStringContainsString('Unassigned', $html);
+            $this->assertStringContainsString('assignee_id=1', $html);
+            $this->assertStringContainsString('assignee_id=2', $html);
+            // Alice is overloaded — overload indicator should appear
+            $this->assertStringContainsString('portfolio-workload-overload-indicator', $html);
+
+            // Verify getWorkload was called with the correct portfolio_id
+            $this->assertSame([5], $portfolioTaskModel->workloadCalls);
+        }
+
+        public function testWorkloadRedirectsWhenPortfolioNotFound(): void
+        {
+            $request = new PortfolioViewFakeRequest([], ['portfolio_id' => 99]);
+            $portfolioModel = new PortfolioViewFakePortfolioModel();
+            $portfolioTaskModel = new PortfolioViewFakePortfolioTaskModel();
+
+            $services = $this->buildServices($portfolioModel, $portfolioTaskModel, $request);
+            $controller = new PortfolioViewController($services);
+
+            $controller->workload();
+
+            $this->assertSame(['Portfolio not found.'], $services['flash']->failureMessages);
+            $this->assertStringContainsString(
+                'controller=PortfolioListController',
+                (string) $services['response']->redirectUrl
+            );
+            $this->assertEmpty($portfolioTaskModel->workloadCalls);
         }
     }
 }

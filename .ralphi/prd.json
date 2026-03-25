@@ -148,12 +148,12 @@
         "New translation strings added to Locale/en_US/translations.php"
       ],
       "priority": 6,
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": [],
       "notes": "Backend + config. The workload view template is in US-007.",
       "startedAt": "2026-03-25T19:35:14.637Z",
-      "updatedAt": "2026-03-25T19:35:14.637Z",
-      "completedAt": null
+      "updatedAt": "2026-03-25T19:47:46.711Z",
+      "completedAt": "2026-03-25T19:47:46.711Z"
     },
     {
       "id": "US-007",
@@ -175,11 +175,14 @@
         "PHP lint passes, all existing tests pass"
       ],
       "priority": 7,
-      "status": "open",
+      "status": "in_progress",
       "dependsOn": [
         "US-006"
       ],
-      "notes": "Template + controller + route + CSS. Depends on US-006 for the getWorkload() model method."
+      "notes": "Template + controller + route + CSS. Depends on US-006 for the getWorkload() model method.",
+      "startedAt": "2026-03-25T19:47:47.074Z",
+      "updatedAt": "2026-03-25T19:47:47.074Z",
+      "completedAt": null
     },
     {
       "id": "US-008",

@@ -55,6 +55,11 @@ $active      = $sidebar_active ?? '';
                 <?= $this->text->e(t('Gantt Chart')) ?>
             </a>
         </li>
+        <li <?= $active === 'workload' ? 'class="active"' : '' ?>>
+            <a href="<?= $this->url->href('PortfolioViewController', 'workload', ['portfolio_id' => $portfolioId, 'plugin' => 'Portfolio']) ?>">
+                <?= $this->text->e(t('Team')) ?>
+            </a>
+        </li>
         <li <?= $active === 'milestones' ? 'class="active"' : '' ?>>
             <a href="<?= $this->url->href('MilestoneController', 'index', ['portfolio_id' => $portfolioId, 'plugin' => 'Portfolio']) ?>">
                 <?= $this->text->e(t('Milestones')) ?>

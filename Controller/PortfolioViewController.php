@@ -219,6 +219,46 @@ class PortfolioViewController extends BaseController
         ]));
     }
 
+    public function workload(): mixed
+    {
+        $portfolioId = $this->request->getIntegerParam('portfolio_id');
+        $portfolio = $this->portfolioModel->getById($portfolioId);
+
+        if (! is_array($portfolio)) {
+            $this->flash->failure(t('Portfolio not found.'));
+
+            return $this->response->redirect(
+                $this->helper->url->href('PortfolioListController', 'index', ['plugin' => 'Portfolio'])
+            );
+        }
+
+        $workload = $this->getWorkloadData($portfolioId);
+        $threshold = $this->getConfigValueAsInt('portfolio_workload_threshold', 15);
+
+        return $this->response->html($this->helper->layout->app('Portfolio:portfolio/workload', [
+            'title' => t('Portfolio Team Workload'),
+            'portfolio' => $portfolio,
+            'workload' => $workload,
+            'threshold' => $threshold,
+        ]));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function getWorkloadData(int $portfolioId): array
+    {
+        $empty = ['users' => [], 'unassigned' => []];
+
+        if (! is_object($this->portfolioTaskModel) || ! method_exists($this->portfolioTaskModel, 'getWorkload')) {
+            return $empty;
+        }
+
+        $workload = $this->portfolioTaskModel->getWorkload($portfolioId);
+
+        return is_array($workload) ? $workload : $empty;
+    }
+
     /**
      * @return array<int, array<string, mixed>>
      */

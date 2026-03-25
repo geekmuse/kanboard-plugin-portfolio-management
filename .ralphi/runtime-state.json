@@ -1198,7 +1198,7 @@
     {
       "id": "iter-0b61c12a",
       "phase": "ralphi-loop-iteration",
-      "status": "running",
+      "status": "completed",
       "sessionKey": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-35-14-636Z_5ef25701-6148-438f-ac09-d1e0f607e35f.jsonl",
       "sessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-35-14-636Z_5ef25701-6148-438f-ac09-d1e0f607e35f.jsonl",
       "checkpointLeafId": null,
@@ -1209,7 +1209,42 @@
       "loopId": "loop-cfe4d683",
       "iteration": 6,
       "storyId": "US-006",
-      "storyTitle": "Add portfolio workload API method"
+      "storyTitle": "Add portfolio workload API method",
+      "summary": "Implemented US-006: Add portfolio workload API method. Added getWorkload() to PortfolioTaskModel with per-user metrics (task_count, active_task_count, overdue_task_count, blocked_task_count, total_score, total_estimated_hours, total_spent_hours, projects[] breakdown) and unassigned bucket. Registered getPortfolioWorkload JSON-RPC callback (31st method). Added portfolio_workload_threshold config setting (default 15) to ConfigController, settings template, and translations. Added 4 unit tests. All 167 tests pass, 0 PHPStan errors, 0 PHPCS errors.",
+      "outputs": [
+        "Model/PortfolioTaskModel.php",
+        "Plugin.php",
+        "Controller/ConfigController.php",
+        "Template/config/settings.php",
+        "Locale/en_US/translations.php",
+        "Test/Model/PortfolioTaskModelTest.php",
+        "Test/Plugin/ApiRegistrationTest.php",
+        "Test/Controller/ConfigControllerTest.php",
+        ".ralphi/prd.json",
+        ".ralphi/progress.txt"
+      ],
+      "complete": false,
+      "reviewPasses": 1,
+      "trajectory": "ON_TRACK",
+      "reflectionSummary": "All 12 acceptance criteria satisfied. getWorkload() follows established codebase patterns (buildTaskDependencyStats reuse, in-memory aggregation, PicoDb table queries). PHPStan required fixing is_array ternary guards to (array) casts. 4 new tests covering empty, mixed-load, and unassigned scenarios.",
+      "nextIterationPlan": "Implement US-007: Add workload view template and route. Depends on US-006 getWorkload() (now done). Need: /portfolio/:portfolio_id/workload route, PortfolioViewController::workload() action, Template/portfolio/workload.php with user table, _sidebar.php 'Team' link, portfolio_workload_threshold-based overload indicators, unassigned row, 2+ controller tests.",
+      "completedAt": "2026-03-25T19:47:42.238Z"
+    },
+    {
+      "id": "iter-1300bc77",
+      "phase": "ralphi-loop-iteration",
+      "status": "running",
+      "sessionKey": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-47-47-072Z_1d84973d-7980-46e4-b826-98a3b1c4a022.jsonl",
+      "sessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-47-47-072Z_1d84973d-7980-46e4-b826-98a3b1c4a022.jsonl",
+      "checkpointLeafId": null,
+      "checkpointSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-24T20-27-01-539Z_29a1079d-f934-4143-ad25-8a9d7ae75c37.jsonl",
+      "cwd": "/Users/bradmatic/Dev/geekmuse/kanboard-plugin-portfolio-mgmt",
+      "createdAt": "2026-03-25T19:47:47.074Z",
+      "autoConfirm": true,
+      "loopId": "loop-cfe4d683",
+      "iteration": 7,
+      "storyId": "US-007",
+      "storyTitle": "Add workload view template and route"
     }
   ],
   "loops": [
@@ -1270,7 +1305,7 @@
       "id": "loop-cfe4d683",
       "controllerSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-24T20-27-01-539Z_29a1079d-f934-4143-ad25-8a9d7ae75c37.jsonl",
       "maxIterations": 50,
-      "iteration": 6,
+      "iteration": 7,
       "active": true,
       "stopRequested": false,
       "createdAt": "2026-03-25T18:16:45.766Z",
@@ -1280,11 +1315,12 @@
         "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T18-44-58-599Z_2ab7bf04-712e-48ac-9317-97a9e4c30e27.jsonl",
         "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T18-56-41-388Z_85abd44a-5835-424c-9bd2-1d24db1ada35.jsonl",
         "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-11-35-295Z_8947aedc-07c6-4e23-8711-8cc8fdd1d258.jsonl",
-        "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-35-14-636Z_5ef25701-6148-438f-ac09-d1e0f607e35f.jsonl"
+        "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-35-14-636Z_5ef25701-6148-438f-ac09-d1e0f607e35f.jsonl",
+        "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-47-47-072Z_1d84973d-7980-46e4-b826-98a3b1c4a022.jsonl"
       ],
-      "currentIterationStartedAt": "2026-03-25T19:35:14.636Z",
-      "activeIterationSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-35-14-636Z_5ef25701-6148-438f-ac09-d1e0f607e35f.jsonl"
+      "currentIterationStartedAt": "2026-03-25T19:47:47.073Z",
+      "activeIterationSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-47-47-072Z_1d84973d-7980-46e4-b826-98a3b1c4a022.jsonl"
     }
   ],
-  "savedAt": "2026-03-25T19:35:14.638Z"
+  "savedAt": "2026-03-25T19:47:47.075Z"
 }

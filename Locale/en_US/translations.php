@@ -205,4 +205,12 @@ return [
         '✅ Dependency resolved: Task #%d "%s" in project "%s" has been completed. This task is no longer blocked.',
     'Task #%d "%s" is no longer blocked because task #%d "%s" in project "%s" was completed.' =>
         'Task #%d "%s" is no longer blocked because task #%d "%s" in project "%s" was completed.',
+
+    // Workload view
+    'Team' => 'Team',
+    'Portfolio Team Workload' => 'Portfolio Team Workload',
+    'No tasks found for this portfolio.' => 'No tasks found for this portfolio.',
+    'Overloaded' => 'Overloaded',
+    'Overloaded: active tasks exceed threshold of %d' => 'Overloaded: active tasks exceed threshold of %d',
+    'Spent Hours' => 'Spent Hours',
 ];
