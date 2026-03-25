@@ -1414,7 +1414,7 @@
     {
       "id": "iter-a1cc5c90",
       "phase": "ralphi-loop-iteration",
-      "status": "running",
+      "status": "completed",
       "sessionKey": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T21-50-28-438Z_36b532d0-a4fa-4d86-8cae-46680bafb547.jsonl",
       "sessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T21-50-28-438Z_36b532d0-a4fa-4d86-8cae-46680bafb547.jsonl",
       "checkpointLeafId": null,
@@ -1425,7 +1425,73 @@
       "loopId": "loop-84e17566",
       "iteration": 3,
       "storyId": "US-003",
-      "storyTitle": "Add display-only template hooks (portfolio context banner, project badge, board icon)"
+      "storyTitle": "Add display-only template hooks (portfolio context banner, project badge, board icon)",
+      "summary": "Implemented US-003: Add display-only template hooks. Created three new widget templates and registered three new attachCallable hooks in Plugin.php: (1) template:task:show:top → task_context_banner.php showing \"This task is in Portfolio: {name}\" banner with links; (2) template:project:header:after → project_header_badge.php showing portfolio membership badges; (3) template:board:task:icons → board_task_blocked_icon.php showing 🔴 blocked icon using PortfolioHelper cache (no extra queries). Added translation string, 6 new template rendering tests (2 per hook), and updated both hook registration tests in ApiRegistrationTest. 182 tests pass, lint/PHPCS/PHPStan all clean.",
+      "outputs": [
+        "Plugin.php",
+        "Template/widget/task_context_banner.php",
+        "Template/widget/project_header_badge.php",
+        "Template/widget/board_task_blocked_icon.php",
+        "Locale/en_US/translations.php",
+        "Test/Controller/WidgetHookTest.php",
+        "Test/Plugin/ApiRegistrationTest.php",
+        ".ralphi/prd.json",
+        ".ralphi/progress.txt"
+      ],
+      "complete": false,
+      "reviewPasses": 1,
+      "trajectory": "ON_TRACK",
+      "reflectionSummary": "All 9 acceptance criteria satisfied: three hooks registered via attachCallable with defensive null checks; render-vs-nothing behavior correct; output escaped; t() used; CSS classes prefixed with portfolio-; 6 tests added (one per hook direction); all 182 tests pass; PHPCS 0 errors; PHPStan clean.",
+      "nextIterationPlan": "Implement US-004: Add auto-complete milestones on task column move — new config setting, task.move.column event listener, and milestoneModel->update() calls when all tasks in a milestone complete.",
+      "completedAt": "2026-03-25T22:02:16.129Z"
+    },
+    {
+      "id": "iter-c1c13051",
+      "phase": "ralphi-loop-iteration",
+      "status": "completed",
+      "sessionKey": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T22-02-20-722Z_72251d99-cb2e-4613-bfd9-ad8119d6a918.jsonl",
+      "sessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T22-02-20-722Z_72251d99-cb2e-4613-bfd9-ad8119d6a918.jsonl",
+      "checkpointLeafId": null,
+      "checkpointSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-24T20-27-01-539Z_29a1079d-f934-4143-ad25-8a9d7ae75c37.jsonl",
+      "cwd": "/Users/bradmatic/Dev/geekmuse/kanboard-plugin-portfolio-mgmt",
+      "createdAt": "2026-03-25T22:02:20.722Z",
+      "autoConfirm": true,
+      "loopId": "loop-84e17566",
+      "iteration": 4,
+      "storyId": "US-004",
+      "storyTitle": "Add auto-complete milestones on task column move",
+      "summary": "Implemented US-004: Add auto-complete milestones on task column move. Added task.move.column dispatcher listener in Plugin.php that checks done-column patterns (same list as resolveCanonicalLane), reads portfolio_auto_complete_milestones config, and calls milestoneModel->update($id, ['status'=>0]) when all tasks in a milestone have is_active=0. Added the new config setting to ConfigController, settings template, and translations. Added FakeMilestoneTaskModel.getMilestones/getTasks, FakeMilestoneModel, FakeConfigModel stubs plus 3 new tests (185 total). All checks pass: lint clean, 185/185 tests, PHPCS 0 errors, PHPStan clean.",
+      "outputs": [
+        "Plugin.php",
+        "Controller/ConfigController.php",
+        "Template/config/settings.php",
+        "Locale/en_US/translations.php",
+        "Test/Plugin/ApiRegistrationTest.php",
+        ".ralphi/prd.json",
+        ".ralphi/progress.txt"
+      ],
+      "complete": false,
+      "reviewPasses": 1,
+      "trajectory": "ON_TRACK",
+      "reflectionSummary": "All 8 acceptance criteria verified: config setting added (AC1), listener registered via dispatcher.addListener (AC2), defensive guards for task_id/milestone/config (AC3), done-pattern list matches resolveCanonicalLane (AC4), milestone updated to status=0 via milestoneModel->update() (AC5), no update when tasks active (AC6), 3 tests added (AC7), all existing tests pass + lint/PHPCS/PHPStan clean (AC8). No scope creep. US-005's dependsOn US-004 dependency cleared.",
+      "nextIterationPlan": "Implement US-005: Add task.update and task.assignee_change event listeners with stub DependencyModel::onTaskUpdated() and PortfolioTaskModel::onAssigneeChanged() methods. Follow same listener pattern established in US-004. Add FakeDependencyModel.onTaskUpdated and FakePortfolioTaskModel.onAssigneeChanged stubs with call recording. 2 behavioral tests.",
+      "completedAt": "2026-03-25T22:20:10.896Z"
+    },
+    {
+      "id": "iter-d59c412d",
+      "phase": "ralphi-loop-iteration",
+      "status": "running",
+      "sessionKey": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T22-20-16-791Z_3925ab00-42bb-41e0-8d69-fd36a85374bb.jsonl",
+      "sessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T22-20-16-791Z_3925ab00-42bb-41e0-8d69-fd36a85374bb.jsonl",
+      "checkpointLeafId": null,
+      "checkpointSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-24T20-27-01-539Z_29a1079d-f934-4143-ad25-8a9d7ae75c37.jsonl",
+      "cwd": "/Users/bradmatic/Dev/geekmuse/kanboard-plugin-portfolio-mgmt",
+      "createdAt": "2026-03-25T22:20:16.793Z",
+      "autoConfirm": true,
+      "loopId": "loop-84e17566",
+      "iteration": 5,
+      "storyId": "US-005",
+      "storyTitle": "Add task.update and task.assignee_change event listeners"
     }
   ],
   "loops": [
@@ -1507,18 +1573,20 @@
       "id": "loop-84e17566",
       "controllerSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-24T20-27-01-539Z_29a1079d-f934-4143-ad25-8a9d7ae75c37.jsonl",
       "maxIterations": 50,
-      "iteration": 3,
+      "iteration": 5,
       "active": true,
       "stopRequested": false,
       "createdAt": "2026-03-25T21:26:36.619Z",
       "iterationSessionFiles": [
         "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T21-26-37-215Z_02a07d25-cc02-4e05-8bfd-58a81dd158bf.jsonl",
         "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T21-36-50-106Z_5baa883a-85fc-4e91-b814-e3ce8dfe81ae.jsonl",
-        "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T21-50-28-438Z_36b532d0-a4fa-4d86-8cae-46680bafb547.jsonl"
+        "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T21-50-28-438Z_36b532d0-a4fa-4d86-8cae-46680bafb547.jsonl",
+        "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T22-02-20-722Z_72251d99-cb2e-4613-bfd9-ad8119d6a918.jsonl",
+        "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T22-20-16-791Z_3925ab00-42bb-41e0-8d69-fd36a85374bb.jsonl"
       ],
-      "currentIterationStartedAt": "2026-03-25T21:50:28.438Z",
-      "activeIterationSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T21-50-28-438Z_36b532d0-a4fa-4d86-8cae-46680bafb547.jsonl"
+      "currentIterationStartedAt": "2026-03-25T22:20:16.792Z",
+      "activeIterationSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T22-20-16-791Z_3925ab00-42bb-41e0-8d69-fd36a85374bb.jsonl"
     }
   ],
-  "savedAt": "2026-03-25T21:50:28.440Z"
+  "savedAt": "2026-03-25T22:20:16.795Z"
 }

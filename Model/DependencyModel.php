@@ -509,6 +509,25 @@ class DependencyModel extends Base
     }
 
     /**
+     * Hook point for future critical-path cache invalidation.
+     *
+     * Called when task attributes that affect the critical path (date_due, priority)
+     * change. Currently a no-op stub. Future implementation should invalidate any
+     * per-portfolio critical-path cache keyed on the task's portfolio IDs so that
+     * the next getCriticalPath() call re-computes from fresh data.
+     *
+     * TODO: Implement cache invalidation once a caching layer is introduced.
+     */
+    public function onTaskUpdated(int $taskId): void
+    {
+        if ($taskId <= 0) {
+            return;
+        }
+
+        // No-op stub: future implementation will invalidate critical-path cache.
+    }
+
+    /**
      * @return array<int, int>
      */
     private function getPortfolioProjectIds(int $portfolioId): array

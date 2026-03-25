@@ -336,6 +336,9 @@ final class FakeDependencyModel
     /** @var array<int, int> */
     public array $linkChangedCalls = [];
 
+    /** @var array<int, int> */
+    public array $updatedCalls = [];
+
     public function onTaskClosed(int $taskId): void
     {
         $this->closedCalls[] = $taskId;
@@ -349,6 +352,22 @@ final class FakeDependencyModel
     public function onLinkChanged(int $taskId): void
     {
         $this->linkChangedCalls[] = $taskId;
+    }
+
+    public function onTaskUpdated(int $taskId): void
+    {
+        $this->updatedCalls[] = $taskId;
+    }
+}
+
+final class FakePortfolioTaskModel
+{
+    /** @var array<int, int> */
+    public array $assigneeChangedCalls = [];
+
+    public function onAssigneeChanged(int $taskId): void
+    {
+        $this->assigneeChangedCalls[] = $taskId;
     }
 }
 
@@ -1122,5 +1141,81 @@ final class ApiRegistrationTest extends TestCase
 
         // At least one task is still active — milestone must not be auto-completed
         $this->assertSame([], $milestoneModel->updateCalls);
+    }
+
+    // -----------------------------------------------------------------------
+    // US-005: task.update and task.assignee_change listeners
+    // -----------------------------------------------------------------------
+
+    public function testTaskUpdateListenerDelegatesToDependencyModelOnTaskUpdated(): void
+    {
+        $dependencyModel = new FakeDependencyModel();
+        $this->plugin->container['dependencyModel'] = $dependencyModel;
+
+        /** @var FakeDispatcher $dispatcher */
+        $dispatcher = $this->plugin->container['dispatcher'];
+        $listeners  = $dispatcher->listeners;
+
+        $this->assertArrayHasKey('task.update', $listeners, 'task.update listener must be registered');
+
+        // Valid task_id → delegates to DependencyModel::onTaskUpdated()
+        $listeners['task.update'][0](['task_id' => 55]);
+
+        $this->assertSame([55], $dependencyModel->updatedCalls);
+    }
+
+    public function testTaskUpdateListenerIsNoopWhenTaskIdMissing(): void
+    {
+        $dependencyModel = new FakeDependencyModel();
+        $this->plugin->container['dependencyModel'] = $dependencyModel;
+
+        /** @var FakeDispatcher $dispatcher */
+        $dispatcher = $this->plugin->container['dispatcher'];
+        $listeners  = $dispatcher->listeners;
+
+        $this->assertArrayHasKey('task.update', $listeners);
+
+        // Missing task_id → no-op
+        $listeners['task.update'][0]([]);
+        // Explicit zero → no-op
+        $listeners['task.update'][0](['task_id' => 0]);
+
+        $this->assertSame([], $dependencyModel->updatedCalls);
+    }
+
+    public function testTaskAssigneeChangeListenerDelegatesToPortfolioTaskModelOnAssigneeChanged(): void
+    {
+        $portfolioTaskModel = new FakePortfolioTaskModel();
+        $this->plugin->container['portfolioTaskModel'] = $portfolioTaskModel;
+
+        /** @var FakeDispatcher $dispatcher */
+        $dispatcher = $this->plugin->container['dispatcher'];
+        $listeners  = $dispatcher->listeners;
+
+        $this->assertArrayHasKey('task.assignee_change', $listeners, 'task.assignee_change listener must be registered');
+
+        // Valid task_id → delegates to PortfolioTaskModel::onAssigneeChanged()
+        $listeners['task.assignee_change'][0](['task_id' => 73]);
+
+        $this->assertSame([73], $portfolioTaskModel->assigneeChangedCalls);
+    }
+
+    public function testTaskAssigneeChangeListenerIsNoopWhenTaskIdMissing(): void
+    {
+        $portfolioTaskModel = new FakePortfolioTaskModel();
+        $this->plugin->container['portfolioTaskModel'] = $portfolioTaskModel;
+
+        /** @var FakeDispatcher $dispatcher */
+        $dispatcher = $this->plugin->container['dispatcher'];
+        $listeners  = $dispatcher->listeners;
+
+        $this->assertArrayHasKey('task.assignee_change', $listeners);
+
+        // Missing task_id → no-op
+        $listeners['task.assignee_change'][0]([]);
+        // Explicit zero → no-op
+        $listeners['task.assignee_change'][0](['task_id' => 0]);
+
+        $this->assertSame([], $portfolioTaskModel->assigneeChangedCalls);
     }
 }

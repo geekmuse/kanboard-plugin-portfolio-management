@@ -437,6 +437,36 @@ class Plugin extends Base
             }
         });
 
+        // task.update — hook point for critical-path cache invalidation.
+        // Fires when task fields are modified. If date_due or priority changes
+        // on a task in a portfolio milestone, the critical-path may need
+        // recomputation. The stub method returns early for now; the event
+        // wiring is in place so future functionality can be added without
+        // touching Plugin.php again.
+        // Guard: task_id absent → no-op.
+        $this->dispatcher->addListener('task.update', function ($event) use ($plugin) {
+            $taskId = (int) ($event['task_id'] ?? 0);
+            if ($taskId <= 0) {
+                return;
+            }
+
+            $plugin->dependencyModel->onTaskUpdated($taskId);
+        });
+
+        // task.assignee_change — hook point for real-time workload recalculation.
+        // Fires when a task is reassigned. The stub method returns early for now;
+        // the event wiring is in place so future workload-update logic can be
+        // added without touching Plugin.php again.
+        // Guard: task_id absent → no-op.
+        $this->dispatcher->addListener('task.assignee_change', function ($event) use ($plugin) {
+            $taskId = (int) ($event['task_id'] ?? 0);
+            if ($taskId <= 0) {
+                return;
+            }
+
+            $plugin->portfolioTaskModel->onAssigneeChanged($taskId);
+        });
+
         $this->eventManager->register(DependencyResolvedType::EVENT_NAME, DependencyResolvedType::getLabel());
         $this->actionManager->register(new NotifyDependencyResolved($this->container));
         $this->actionManager->register(new CommentDependencyResolved($this->container));

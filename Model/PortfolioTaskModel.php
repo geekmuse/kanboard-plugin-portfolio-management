@@ -1365,6 +1365,26 @@ class PortfolioTaskModel extends Base
         ];
     }
 
+    /**
+     * Hook point for future real-time workload recalculation.
+     *
+     * Called when a task's assignee changes for a task that belongs to one or
+     * more portfolios. Currently a no-op stub. Future implementation should
+     * invalidate or update the per-portfolio workload summary (getWorkload())
+     * so that workload dashboards reflect the new assignment without a full
+     * re-query of all portfolio tasks.
+     *
+     * TODO: Implement workload cache invalidation once a caching layer is added.
+     */
+    public function onAssigneeChanged(int $taskId): void
+    {
+        if ($taskId <= 0) {
+            return;
+        }
+
+        // No-op stub: future implementation will invalidate workload cache.
+    }
+
     private function getConfigValueAsInt(string $key, int $default): int
     {
         $configModel = $this->resolveContainerService('configModel');
