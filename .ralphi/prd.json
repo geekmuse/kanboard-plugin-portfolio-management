@@ -99,8 +99,8 @@
       "dependsOn": [],
       "notes": "Backend only. The dashboard template integration is in US-005.",
       "startedAt": "2026-03-25T18:56:41.389Z",
-      "updatedAt": "2026-03-25T19:12:00.000Z",
-      "completedAt": "2026-03-25T19:12:00.000Z"
+      "updatedAt": "2026-03-25T19:11:34.975Z",
+      "completedAt": "2026-03-25T19:11:34.975Z"
     },
     {
       "id": "US-005",
@@ -119,11 +119,14 @@
         "PHP lint passes, all existing tests pass"
       ],
       "priority": 5,
-      "status": "open",
+      "status": "in_progress",
       "dependsOn": [
         "US-004"
       ],
-      "notes": "Template + controller changes. Depends on US-004 for the getActivity() model method."
+      "notes": "Template + controller changes. Depends on US-004 for the getActivity() model method.",
+      "startedAt": "2026-03-25T19:11:35.297Z",
+      "updatedAt": "2026-03-25T19:11:35.297Z",
+      "completedAt": null
     },
     {
       "id": "US-006",

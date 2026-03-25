@@ -24,6 +24,7 @@ class PortfolioViewController extends BaseController
             'title' => t('Portfolio Dashboard'),
             'portfolio' => $portfolio,
             'overview' => $this->getOverview($portfolioId, $portfolio),
+            'activities' => $this->getPortfolioActivity($portfolioId, 10),
         ]));
     }
 
@@ -216,6 +217,20 @@ class PortfolioViewController extends BaseController
             'timeline_data' => $timelineData,
             'timeline_json' => $timelineJson,
         ]));
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function getPortfolioActivity(int $portfolioId, int $limit = 10): array
+    {
+        if (! is_object($this->portfolioTaskModel) || ! method_exists($this->portfolioTaskModel, 'getActivity')) {
+            return [];
+        }
+
+        $activities = $this->portfolioTaskModel->getActivity($portfolioId, $limit);
+
+        return is_array($activities) ? $activities : [];
     }
 
     /**

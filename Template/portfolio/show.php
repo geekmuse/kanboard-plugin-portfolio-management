@@ -141,5 +141,52 @@
                 </table>
             <?php endif ?>
         </div>
+        <div class="listing">
+            <h3><?= $this->text->e(t('Recent Activity')) ?></h3>
+            <?php $activityList = is_array($activities ?? null) ? ($activities ?? []) : []; ?>
+            <?php if ($activityList === []): ?>
+                <p class="alert portfolio-activity-empty"><?= $this->text->e(t('No recent activity.')) ?></p>
+            <?php else: ?>
+                <table class="table-striped table-scrolling portfolio-activity-table">
+                    <thead>
+                    <tr>
+                        <th><?= $this->text->e(t('Date')) ?></th>
+                        <th><?= $this->text->e(t('Event')) ?></th>
+                        <th><?= $this->text->e(t('Task')) ?></th>
+                        <th><?= $this->text->e(t('Project')) ?></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($activityList as $activity): ?>
+                        <?php
+                        $actDateCreation = (int) ($activity['date_creation'] ?? 0);
+                        $actTaskId = (int) ($activity['task_id'] ?? 0);
+                        $actProjectId = (int) ($activity['project_id'] ?? 0);
+                        ?>
+                        <tr class="portfolio-activity-row">
+                            <td class="portfolio-activity-date">
+                                <?= $this->text->e($actDateCreation > 0 ? date('Y-m-d H:i', $actDateCreation) : '') ?>
+                            </td>
+                            <td class="portfolio-activity-event">
+                                <?= $this->text->e((string) ($activity['event_name'] ?? '')) ?>
+                            </td>
+                            <td class="portfolio-activity-task">
+                                <?php if ($actTaskId > 0 && $actProjectId > 0): ?>
+                                    <a href="<?= $this->url->href('TaskViewController', 'show', ['task_id' => $actTaskId, 'project_id' => $actProjectId]) ?>">
+                                        <?= $this->text->e(t('Task') . ' #' . (string) $actTaskId) ?>
+                                    </a>
+                                <?php elseif ($actTaskId > 0): ?>
+                                    <?= $this->text->e(t('Task') . ' #' . (string) $actTaskId) ?>
+                                <?php endif ?>
+                            </td>
+                            <td class="portfolio-activity-project">
+                                <?= $this->text->e((string) ($activity['project_name'] ?? '')) ?>
+                            </td>
+                        </tr>
+                    <?php endforeach ?>
+                    </tbody>
+                </table>
+            <?php endif ?>
+        </div>
     </div>
 </section>

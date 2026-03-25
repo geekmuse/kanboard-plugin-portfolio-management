@@ -258,15 +258,20 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
         /** @var array<int, array{portfolio_id: int, status_id: int|null}> */
         public array $countCalls = [];
 
+        /** @var array<int, array{portfolio_id: int, limit: int}> */
+        public array $activityCalls = [];
+
         /**
          * @param array<string, mixed> $overview
          * @param array<int, array<string, mixed>> $tasks
          * @param array<string, int> $counts
+         * @param array<int, array<string, mixed>> $activities
          */
         public function __construct(
             private array $overview = [],
             private array $tasks = [],
-            private array $counts = ['total' => 0, 'active' => 0, 'closed' => 0, 'blocked' => 0]
+            private array $counts = ['total' => 0, 'active' => 0, 'closed' => 0, 'blocked' => 0],
+            private array $activities = []
         ) {
         }
 
@@ -302,6 +307,19 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             ];
 
             return $this->counts;
+        }
+
+        /**
+         * @return array<int, array<string, mixed>>
+         */
+        public function getActivity(int $portfolioId, int $limit = 25, int $offset = 0): array
+        {
+            $this->activityCalls[] = [
+                'portfolio_id' => $portfolioId,
+                'limit' => $limit,
+            ];
+
+            return $this->activities;
         }
     }
 
@@ -938,8 +956,7 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
                 'configModel' => $configModel ?? new PortfolioViewFakeConfigModel(),
                 'taskModificationModel' => $taskModificationModel ?? new PortfolioViewFakeTaskModificationModel(),
                 'dependencyModel' => $dependencyModel ?? new PortfolioViewFakeDependencyModel(),
-                'userModel' => new class
-                {
+                'userModel' => new class {
                     /** @return array<int,string> */
                     public function getActiveUsersList(): array
                     {
@@ -1105,6 +1122,89 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $this->assertStringContainsString('data-move-task-url=', $html);
             $this->assertStringContainsString('portfolio-board-column-count', $html);
             $this->assertStringContainsString('plugins/Portfolio/Asset/js/portfolio-board.js', $html);
+        }
+
+        public function testPortfolioDashboardPassesActivitiesToTemplate(): void
+        {
+            $request = new PortfolioViewFakeRequest([], ['portfolio_id' => 7]);
+            $portfolioModel = new PortfolioViewFakePortfolioModel([
+                ['id' => 7, 'name' => 'Alpha Portfolio', 'description' => '', 'is_active' => 1],
+            ]);
+
+            $activities = [
+                [
+                    'id' => 1,
+                    'project_id' => 10,
+                    'project_name' => 'Website',
+                    'task_id' => 42,
+                    'event_name' => 'task.move.column',
+                    'creator_id' => 1,
+                    'date_creation' => 1717200000,
+                    'data' => '',
+                ],
+                [
+                    'id' => 2,
+                    'project_id' => 10,
+                    'project_name' => 'Website',
+                    'task_id' => 43,
+                    'event_name' => 'task.create',
+                    'creator_id' => 1,
+                    'date_creation' => 1717100000,
+                    'data' => '',
+                ],
+            ];
+
+            $portfolioTaskModel = new PortfolioViewFakePortfolioTaskModel(
+                [],
+                [],
+                ['total' => 0, 'active' => 0, 'closed' => 0, 'blocked' => 0],
+                $activities
+            );
+
+            $services = $this->buildServices($portfolioModel, $portfolioTaskModel, $request);
+            $controller = new PortfolioViewController($services);
+            $html = $controller->show();
+
+            // Verify activity data was passed to template
+            $this->assertSame('Portfolio:portfolio/show', $services['helper']->layout->lastTemplate);
+            $this->assertArrayHasKey('activities', $services['helper']->layout->lastParams);
+            $this->assertCount(2, $services['helper']->layout->lastParams['activities']);
+
+            // Verify getActivity was called with correct args
+            $this->assertCount(1, $portfolioTaskModel->activityCalls);
+            $this->assertSame(7, $portfolioTaskModel->activityCalls[0]['portfolio_id']);
+            $this->assertSame(10, $portfolioTaskModel->activityCalls[0]['limit']);
+
+            // Verify rendered HTML contains activity items
+            $this->assertStringContainsString('Recent Activity', $html);
+            $this->assertStringContainsString('task.move.column', $html);
+            $this->assertStringContainsString('task.create', $html);
+            $this->assertStringContainsString('Website', $html);
+            $this->assertStringContainsString('Task #42', $html);
+            $this->assertStringContainsString('Task #43', $html);
+        }
+
+        public function testPortfolioDashboardShowsEmptyActivityStateWhenNoActivities(): void
+        {
+            $request = new PortfolioViewFakeRequest([], ['portfolio_id' => 7]);
+            $portfolioModel = new PortfolioViewFakePortfolioModel([
+                ['id' => 7, 'name' => 'Alpha Portfolio', 'description' => '', 'is_active' => 1],
+            ]);
+
+            $portfolioTaskModel = new PortfolioViewFakePortfolioTaskModel(
+                [],
+                [],
+                ['total' => 0, 'active' => 0, 'closed' => 0, 'blocked' => 0],
+                []
+            );
+
+            $services = $this->buildServices($portfolioModel, $portfolioTaskModel, $request);
+            $controller = new PortfolioViewController($services);
+            $html = $controller->show();
+
+            $this->assertStringContainsString('Recent Activity', $html);
+            $this->assertStringContainsString('No recent activity.', $html);
+            $this->assertStringNotContainsString('portfolio-activity-row', $html);
         }
     }
 }

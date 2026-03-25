@@ -1105,7 +1105,7 @@
     {
       "id": "iter-4ad14aa7",
       "phase": "ralphi-loop-iteration",
-      "status": "running",
+      "status": "completed",
       "sessionKey": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T18-44-58-599Z_2ab7bf04-712e-48ac-9317-97a9e4c30e27.jsonl",
       "sessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T18-44-58-599Z_2ab7bf04-712e-48ac-9317-97a9e4c30e27.jsonl",
       "checkpointLeafId": null,
@@ -1116,7 +1116,69 @@
       "loopId": "loop-cfe4d683",
       "iteration": 3,
       "storyId": "US-003",
-      "storyTitle": "Add weight-mode selector to milestone templates"
+      "storyTitle": "Add weight-mode selector to milestone templates",
+      "summary": "Implemented US-003: Add weight-mode selector to milestone templates. Updated MilestoneController::show() to read weight_by from request and pass to getProgress() and template. Added weight-mode dropdown (Count/Story Points/Time Estimated) to Template/milestone/show.php with GET form reload, visual progress bar, and no-data messages. Updated Template/portfolio/show.php Milestone Health table with conditional Score and Est. Hours columns (shown when data exists). Added 3 translation strings. Added 2 new controller tests. All 158 tests pass, lint/PHPCS/PHPStan clean.",
+      "outputs": [
+        "Controller/MilestoneController.php",
+        "Template/milestone/show.php",
+        "Template/portfolio/show.php",
+        "Locale/en_US/translations.php",
+        "Test/Controller/MilestoneControllerTest.php"
+      ],
+      "complete": false,
+      "reviewPasses": 1,
+      "trajectory": "ON_TRACK",
+      "reflectionSummary": "All 9 acceptance criteria met. Controller reads weight_by via getValue(), passes to model and template. Template shows dropdown with correct selected state, progress bar for normal mode, no-data message for score/time modes when no_data=true. Portfolio dashboard conditionally adds Score/Est. Hours columns. Tests cover weight_by pass-through and no-data rendering. No scope creep. Existing 156 tests unaffected.",
+      "nextIterationPlan": "US-004: Add portfolio activity stream (model + API) — getActivity() method on PortfolioTaskModel querying project_activities table, JSON-RPC registration, 3+ unit tests.",
+      "completedAt": "2026-03-25T18:56:38.665Z"
+    },
+    {
+      "id": "iter-b3a3e465",
+      "phase": "ralphi-loop-iteration",
+      "status": "completed",
+      "sessionKey": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T18-56-41-388Z_85abd44a-5835-424c-9bd2-1d24db1ada35.jsonl",
+      "sessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T18-56-41-388Z_85abd44a-5835-424c-9bd2-1d24db1ada35.jsonl",
+      "checkpointLeafId": null,
+      "checkpointSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-24T20-27-01-539Z_29a1079d-f934-4143-ad25-8a9d7ae75c37.jsonl",
+      "cwd": "/Users/bradmatic/Dev/geekmuse/kanboard-plugin-portfolio-mgmt",
+      "createdAt": "2026-03-25T18:56:41.388Z",
+      "autoConfirm": true,
+      "loopId": "loop-cfe4d683",
+      "iteration": 4,
+      "storyId": "US-004",
+      "storyTitle": "Add portfolio activity stream (model + API)",
+      "summary": "Implemented US-004: Add portfolio activity stream (model + API). Added getActivity() to PortfolioTaskModel (limit clamped [1,100], defensive try/catch, project_name enrichment, DESC sort), registered getPortfolioActivity JSON-RPC callback in Plugin.php (30 total methods), added project_activities table to test schema + 3 unit tests, updated ApiRegistrationTest to expect 30 methods, fixed scripts/docker-phpstan.sh to use --memory-limit=512M. All 161 tests pass, lint clean, PHPStan level 5 clean.",
+      "outputs": [
+        "Model/PortfolioTaskModel.php",
+        "Plugin.php",
+        "Test/Model/PortfolioTaskModelTest.php",
+        "Test/Plugin/ApiRegistrationTest.php",
+        "scripts/docker-phpstan.sh",
+        ".ralphi/prd.json",
+        ".ralphi/progress.txt"
+      ],
+      "complete": false,
+      "reviewPasses": 1,
+      "trajectory": "ON_TRACK",
+      "reflectionSummary": "All 10 acceptance criteria for US-004 are met. Implementation is minimal, focused, and follows established codebase patterns (in-memory scan + filter, defensive try/catch, PicoDb). No scope creep. 5 open stories remain (US-005 through US-009).",
+      "nextIterationPlan": "Implement US-005: Add activity feed to portfolio dashboard template. Requires PortfolioViewController::show() to call getActivity(portfolio_id, 10) and pass to template. Add Recent Activity section to Template/portfolio/show.php with empty state, portfolio- prefixed CSS, escaped output, localized strings. Add 1+ controller test. Depends on US-004 (done).",
+      "completedAt": "2026-03-25T19:11:32.513Z"
+    },
+    {
+      "id": "iter-0951cd49",
+      "phase": "ralphi-loop-iteration",
+      "status": "running",
+      "sessionKey": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-11-35-295Z_8947aedc-07c6-4e23-8711-8cc8fdd1d258.jsonl",
+      "sessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-11-35-295Z_8947aedc-07c6-4e23-8711-8cc8fdd1d258.jsonl",
+      "checkpointLeafId": null,
+      "checkpointSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-24T20-27-01-539Z_29a1079d-f934-4143-ad25-8a9d7ae75c37.jsonl",
+      "cwd": "/Users/bradmatic/Dev/geekmuse/kanboard-plugin-portfolio-mgmt",
+      "createdAt": "2026-03-25T19:11:35.295Z",
+      "autoConfirm": true,
+      "loopId": "loop-cfe4d683",
+      "iteration": 5,
+      "storyId": "US-005",
+      "storyTitle": "Add activity feed to portfolio dashboard template"
     }
   ],
   "loops": [
@@ -1177,18 +1239,20 @@
       "id": "loop-cfe4d683",
       "controllerSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-24T20-27-01-539Z_29a1079d-f934-4143-ad25-8a9d7ae75c37.jsonl",
       "maxIterations": 50,
-      "iteration": 3,
+      "iteration": 5,
       "active": true,
       "stopRequested": false,
       "createdAt": "2026-03-25T18:16:45.766Z",
       "iterationSessionFiles": [
         "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T18-16-46-020Z_cab94e15-5986-4528-a2b2-03ec1aa0939e.jsonl",
         "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T18-33-11-524Z_cb7c968e-e873-4bc0-84b2-6470e29c6b3b.jsonl",
-        "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T18-44-58-599Z_2ab7bf04-712e-48ac-9317-97a9e4c30e27.jsonl"
+        "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T18-44-58-599Z_2ab7bf04-712e-48ac-9317-97a9e4c30e27.jsonl",
+        "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T18-56-41-388Z_85abd44a-5835-424c-9bd2-1d24db1ada35.jsonl",
+        "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-11-35-295Z_8947aedc-07c6-4e23-8711-8cc8fdd1d258.jsonl"
       ],
-      "currentIterationStartedAt": "2026-03-25T18:44:58.600Z",
-      "activeIterationSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T18-44-58-599Z_2ab7bf04-712e-48ac-9317-97a9e4c30e27.jsonl"
+      "currentIterationStartedAt": "2026-03-25T19:11:35.295Z",
+      "activeIterationSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-11-35-295Z_8947aedc-07c6-4e23-8711-8cc8fdd1d258.jsonl"
     }
   ],
-  "savedAt": "2026-03-25T18:44:58.603Z"
+  "savedAt": "2026-03-25T19:11:35.298Z"
 }
