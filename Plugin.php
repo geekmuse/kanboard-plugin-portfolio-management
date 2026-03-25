@@ -180,24 +180,37 @@ class Plugin extends Base
         $this->registerTaskSearchFilter();
 
         // Task/dependency lifecycle events
-        $this->on('task.close', function ($event) {
+        //
+        // IMPORTANT: We use $this->dispatcher->addListener() instead of
+        // $this->on() because Kanboard\Core\Plugin\Base::on() wraps the
+        // callback and passes the DI $container — NOT the event object.
+        // We need the actual TaskEvent (which implements ArrayAccess) to
+        // read task_id and other event data.
+        //
+        // We capture $plugin (not $this->container) because:
+        // - Pimple Container is an object (passed by reference, auto-resolves closures)
+        // - The test stub uses __get() for lazy service resolution
+        // - Both work correctly when we access $plugin->dependencyModel
+        $plugin = $this;
+
+        $this->dispatcher->addListener('task.close', function ($event) use ($plugin) {
             $taskId = (int) ($event['task_id'] ?? 0);
-            $this->dependencyModel->onTaskClosed($taskId);
+            $plugin->dependencyModel->onTaskClosed($taskId);
         });
 
-        $this->on('task.open', function ($event) {
+        $this->dispatcher->addListener('task.open', function ($event) use ($plugin) {
             $taskId = (int) ($event['task_id'] ?? 0);
-            $this->dependencyModel->onTaskOpened($taskId);
+            $plugin->dependencyModel->onTaskOpened($taskId);
         });
 
-        $this->on('task_internal_link.create_update', function ($event) {
+        $this->dispatcher->addListener('task_internal_link.create_update', function ($event) use ($plugin) {
             $taskId = (int) ($event['task_id'] ?? 0);
-            $this->dependencyModel->onLinkChanged($taskId);
+            $plugin->dependencyModel->onLinkChanged($taskId);
         });
 
-        $this->on('task_internal_link.delete', function ($event) {
+        $this->dispatcher->addListener('task_internal_link.delete', function ($event) use ($plugin) {
             $taskId = (int) ($event['task_id'] ?? 0);
-            $this->dependencyModel->onLinkChanged($taskId);
+            $plugin->dependencyModel->onLinkChanged($taskId);
         });
 
         $this->eventManager->register(DependencyResolvedType::EVENT_NAME, DependencyResolvedType::getLabel());
@@ -350,7 +363,7 @@ class Plugin extends Base
 
     public function getPluginName()
     {
-        return '1.17.0';
+        return 'Portfolio';
     }
 
     public function getPluginDescription()
@@ -365,7 +378,7 @@ class Plugin extends Base
 
     public function getPluginVersion()
     {
-        return '1.19.0';
+        return '1.20.0';
     }
 
     public function getPluginHomepage()

@@ -266,6 +266,19 @@ final class FakeHook
     }
 }
 
+final class FakeDispatcher
+{
+    /**
+     * @var array<string, list<callable>>
+     */
+    public array $listeners = [];
+
+    public function addListener(string $eventName, callable $callback): void
+    {
+        $this->listeners[$eventName][] = $callback;
+    }
+}
+
 final class FakeEventManager
 {
     /**
@@ -418,11 +431,13 @@ final class ApiRegistrationTest extends TestCase
         $this->hookRegistry              = new FakeHook();
 
         $this->plugin = new Plugin();
+        $dispatcher = new FakeDispatcher();
         $this->plugin->container = [
             'template' => $this->templateHookRegistry,
             'eventManager' => $this->eventManager,
             'actionManager' => $this->actionManager,
             'userNotificationTypeModel' => $this->userNotificationTypeModel,
+            'dispatcher' => $dispatcher,
         ];
         $this->plugin->api = new FakeApi($this->procedureHandler);
         $this->plugin->apiAccessMap = $this->apiAccessMap;
@@ -705,17 +720,20 @@ final class ApiRegistrationTest extends TestCase
         $dependencyModel = new FakeDependencyModel();
         $this->plugin->container['dependencyModel'] = $dependencyModel;
 
-        $registeredEvents = $this->plugin->registeredEvents;
+        /** @var FakeDispatcher $dispatcher */
+        $dispatcher = $this->plugin->container['dispatcher'];
+        $listeners = $dispatcher->listeners;
 
-        $this->assertArrayHasKey('task.close', $registeredEvents);
-        $this->assertArrayHasKey('task.open', $registeredEvents);
-        $this->assertArrayHasKey('task_internal_link.create_update', $registeredEvents);
-        $this->assertArrayHasKey('task_internal_link.delete', $registeredEvents);
+        $this->assertArrayHasKey('task.close', $listeners);
+        $this->assertArrayHasKey('task.open', $listeners);
+        $this->assertArrayHasKey('task_internal_link.create_update', $listeners);
+        $this->assertArrayHasKey('task_internal_link.delete', $listeners);
 
-        $registeredEvents['task.close'][0](['task_id' => 17]);
-        $registeredEvents['task.open'][0](['task_id' => 29]);
-        $registeredEvents['task_internal_link.create_update'][0](['task_id' => 41]);
-        $registeredEvents['task_internal_link.delete'][0]([]);
+        // Simulate TaskEvent objects (ArrayAccess-compatible arrays work for testing)
+        $listeners['task.close'][0](['task_id' => 17]);
+        $listeners['task.open'][0](['task_id' => 29]);
+        $listeners['task_internal_link.create_update'][0](['task_id' => 41]);
+        $listeners['task_internal_link.delete'][0]([]);
 
         $this->assertSame([17], $dependencyModel->closedCalls);
         $this->assertSame([29], $dependencyModel->openedCalls);

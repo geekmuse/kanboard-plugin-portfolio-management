@@ -3,3 +3,7 @@ vendor/
 
 # PHPStan cache
 .phpstan/
+
+# Ideas / proposals — confidential, not for public repos
+ideas
+ideas/
