@@ -175,14 +175,14 @@
         "PHP lint passes, all existing tests pass"
       ],
       "priority": 7,
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": [
         "US-006"
       ],
       "notes": "Template + controller + route + CSS. Depends on US-006 for the getWorkload() model method.",
       "startedAt": "2026-03-25T19:47:47.074Z",
-      "updatedAt": "2026-03-25T19:47:47.074Z",
-      "completedAt": null
+      "updatedAt": "2026-03-25T19:55:35.937Z",
+      "completedAt": "2026-03-25T19:55:35.937Z"
     },
     {
       "id": "US-008",
@@ -201,9 +201,12 @@
         "PHP lint passes, all existing tests pass"
       ],
       "priority": 8,
-      "status": "open",
+      "status": "in_progress",
       "dependsOn": [],
-      "notes": "Controller + route + template shell. The D3 rendering is in US-009."
+      "notes": "Controller + route + template shell. The D3 rendering is in US-009.",
+      "startedAt": "2026-03-25T19:55:36.194Z",
+      "updatedAt": "2026-03-25T19:55:36.194Z",
+      "completedAt": null
     },
     {
       "id": "US-009",

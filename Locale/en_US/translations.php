@@ -206,6 +206,12 @@ return [
     'Task #%d "%s" is no longer blocked because task #%d "%s" in project "%s" was completed.' =>
         'Task #%d "%s" is no longer blocked because task #%d "%s" in project "%s" was completed.',
 
+    // Roadmap view
+    'Roadmap' => 'Roadmap',
+    'Portfolio Roadmap' => 'Portfolio Roadmap',
+    'No milestones with target dates found. Add a target date to a milestone to populate the roadmap.' =>
+        'No milestones with target dates found. Add a target date to a milestone to populate the roadmap.',
+
     // Workload view
     'Team' => 'Team',
     'Portfolio Team Workload' => 'Portfolio Team Workload',

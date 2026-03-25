@@ -361,11 +361,17 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
         /** @var array<int, int> */
         public array $getByPortfolioIdCalls = [];
 
+        /** @var array<int, int> */
+        public array $getProgressCalls = [];
+
         /**
          * @param array<int, array<int, array<string, mixed>>> $milestonesByPortfolio
+         * @param array<int, array<string, mixed>> $progressByMilestone
          */
-        public function __construct(private array $milestonesByPortfolio = [])
-        {
+        public function __construct(
+            private array $milestonesByPortfolio = [],
+            private array $progressByMilestone = []
+        ) {
         }
 
         /**
@@ -376,6 +382,16 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
             $this->getByPortfolioIdCalls[] = $portfolioId;
 
             return $this->milestonesByPortfolio[$portfolioId] ?? [];
+        }
+
+        /**
+         * @return array<string, mixed>|null
+         */
+        public function getProgress(int $milestoneId, string $weightBy = 'count'): ?array
+        {
+            $this->getProgressCalls[] = $milestoneId;
+
+            return $this->progressByMilestone[$milestoneId] ?? null;
         }
     }
 
@@ -1327,6 +1343,114 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
                 (string) $services['response']->redirectUrl
             );
             $this->assertEmpty($portfolioTaskModel->workloadCalls);
+        }
+
+        public function testRoadmapRendersItemsWithCorrectDataStructure(): void
+        {
+            $request = new PortfolioViewFakeRequest([], ['portfolio_id' => 5]);
+            $portfolioModel = new PortfolioViewFakePortfolioModel([
+                ['id' => 5, 'name' => 'Q3 Portfolio', 'description' => '', 'is_active' => 1],
+            ]);
+
+            // One milestone with a far-future target_date (on_track), one without a date (excluded)
+            $milestoneModel = new PortfolioViewFakeMilestoneModel(
+                [
+                    5 => [
+                        ['id' => 10, 'name' => 'Phase 1', 'color_id' => 'green', 'target_date' => 1900000000],
+                        ['id' => 11, 'name' => 'No Date', 'color_id' => 'blue', 'target_date' => 0],
+                    ],
+                ],
+                [
+                    10 => ['percent' => 60.0, 'no_data' => false],
+                ]
+            );
+
+            $services = $this->buildServices(
+                $portfolioModel,
+                new PortfolioViewFakePortfolioTaskModel(),
+                $request,
+                null,
+                $milestoneModel
+            );
+            $controller = new PortfolioViewController($services);
+            $html = $controller->roadmap();
+
+            // Verify template rendered
+            $this->assertSame('Portfolio:portfolio/roadmap', $services['helper']->layout->lastTemplate);
+
+            // Verify roadmap_json contains exactly one item (milestone with date=0 excluded)
+            $roadmapJson = (string) ($services['helper']->layout->lastParams['roadmap_json'] ?? '[]');
+            $data = json_decode($roadmapJson, true);
+            $this->assertIsArray($data);
+            $this->assertCount(1, $data);
+
+            // Verify item structure
+            $item = $data[0];
+            $this->assertSame(10, $item['id']);
+            $this->assertSame('Phase 1', $item['name']);
+            $this->assertSame('green', $item['color_id']);
+            $this->assertEquals(60.0, $item['percent']); // assertEquals handles int/float from json_decode
+            $this->assertSame('on_track', $item['health']); // far-future target_date
+            $this->assertSame(0, $item['task_count']); // milestoneTaskModel returns []
+            $this->assertSame(1900000000, $item['end_date']);
+            $this->assertSame(1900000000, $item['start_date']); // falls back to target_date (no task due dates)
+
+            // Verify has_items is true
+            $this->assertTrue((bool) ($services['helper']->layout->lastParams['has_items'] ?? false));
+
+            // Verify getProgress was called for milestone 10
+            $this->assertContains(10, $milestoneModel->getProgressCalls);
+
+            // Verify rendered HTML contains chart container
+            $this->assertStringContainsString('portfolio-roadmap-chart', $html);
+            $this->assertStringContainsString('data-roadmap=', $html);
+            $this->assertStringContainsString('portfolio-gantt.js', $html);
+        }
+
+        public function testRoadmapRedirectsWhenPortfolioNotFound(): void
+        {
+            $request = new PortfolioViewFakeRequest([], ['portfolio_id' => 99]);
+            $portfolioModel = new PortfolioViewFakePortfolioModel();
+
+            $services = $this->buildServices($portfolioModel, new PortfolioViewFakePortfolioTaskModel(), $request);
+            $controller = new PortfolioViewController($services);
+
+            $controller->roadmap();
+
+            $this->assertSame(['Portfolio not found.'], $services['flash']->failureMessages);
+            $this->assertStringContainsString(
+                'controller=PortfolioListController',
+                (string) $services['response']->redirectUrl
+            );
+        }
+
+        public function testRoadmapShowsEmptyStateWhenNoMilestonesHaveTargetDates(): void
+        {
+            $request = new PortfolioViewFakeRequest([], ['portfolio_id' => 5]);
+            $portfolioModel = new PortfolioViewFakePortfolioModel([
+                ['id' => 5, 'name' => 'Empty Portfolio', 'description' => '', 'is_active' => 1],
+            ]);
+
+            // All milestones have target_date=0 → excluded
+            $milestoneModel = new PortfolioViewFakeMilestoneModel([
+                5 => [
+                    ['id' => 20, 'name' => 'No Date Milestone', 'color_id' => 'blue', 'target_date' => 0],
+                ],
+            ]);
+
+            $services = $this->buildServices(
+                $portfolioModel,
+                new PortfolioViewFakePortfolioTaskModel(),
+                $request,
+                null,
+                $milestoneModel
+            );
+            $controller = new PortfolioViewController($services);
+            $html = $controller->roadmap();
+
+            $this->assertFalse((bool) ($services['helper']->layout->lastParams['has_items'] ?? true));
+            $this->assertStringContainsString('No milestones with target dates found', $html);
+            $this->assertStringNotContainsString('portfolio-roadmap-chart', $html);
         }
     }
 }

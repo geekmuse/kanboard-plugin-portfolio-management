@@ -190,3 +190,28 @@ Corrective Plan: N/A
   - Conditional table columns in templates: pre-compute boolean flags in a PHP block before the table, then use `<?php if ($flag): ?><th>...</th><?php endif ?>` in both header and body rows
   - When adding keys to a controller's fallback array for model results, mirror all keys the model can return so `array_merge($fallback, $result)` always produces a complete/safe array
 ---
+
+## 2026-03-25 - US-007
+Session: iter-1300bc77 / loop-cfe4d683
+Review Outcome: PASS
+Trajectory: ON_TRACK
+Trajectory Notes: N/A
+Corrective Plan: N/A
+- Added `workload()` action to `PortfolioViewController` — fetches portfolio, validates existence, reads `portfolio_workload_threshold` config, calls `getWorkload()`, renders template
+- Added private `getWorkloadData()` helper following same `is_object()` + `method_exists()` + null-safe pattern
+- Registered route `/portfolio/:portfolio_id/workload` → `PortfolioViewController::workload()` in Plugin.php; access covered by existing `'PortfolioViewController', '*', Role::APP_USER`
+- Added 'Team' link to `Template/portfolio/_sidebar.php` (active when `$sidebar_active === 'workload'`), inserted between Gantt Chart and Milestones
+- Created `Template/portfolio/workload.php`: table (User, Active Tasks, Overdue, Blocked, Score, Est. Hours, Spent Hours), `portfolio-workload-row--overloaded` class on rows exceeding threshold, ⚠ overload indicator, per-user links to `/portfolio/:portfolio_id/tasks?assignee_id=:user_id`, Unassigned row at bottom, empty-state `<p class="alert portfolio-workload-empty">` when no tasks
+- Added `portfolio-workload-` CSS classes to `Asset/css/portfolio.css` (table, header, row, overloaded/unassigned variants, user link, overload indicator, legend)
+- Added 6 translation strings to `Locale/en_US/translations.php`: Team, Portfolio Team Workload, No tasks found for this portfolio., Overloaded, Overloaded: active tasks exceed threshold of %d, Spent Hours
+- Added `workloadCalls` tracker + `getWorkload()` method to `PortfolioViewFakePortfolioTaskModel`; added `$workload` as 5th constructor param (default `['users' => [], 'unassigned' => []]`)
+- Added 2 controller tests: `testWorkloadRendersTableWithUserMetricsAndOverloadIndicator` (verifies template rendered, overload row, links, workloadCalls), `testWorkloadRedirectsWhenPortfolioNotFound` (verifies flash + redirect, workloadCalls empty)
+- Updated `ApiRegistrationTest::testRegistersPortfolioCrudRoutes` to include workload route and `array_slice(..., 19)`
+- Test count: 169 (167 from US-006 + 2 new); 957 assertions; 0 errors; 1 pre-existing deprecation
+- Files changed: `Controller/PortfolioViewController.php`, `Plugin.php`, `Template/portfolio/_sidebar.php`, `Template/portfolio/workload.php`, `Asset/css/portfolio.css`, `Locale/en_US/translations.php`, `Test/Controller/PortfolioViewControllerTest.php`, `Test/Plugin/ApiRegistrationTest.php`
+- **Learnings for future iterations:**
+  - Route registration test (`testRegistersPortfolioCrudRoutes`) tracks exact route order + `array_slice` count — update both when adding new routes
+  - `PortfolioViewFakePortfolioTaskModel` now has a 5th constructor param `$workload = ['users' => [], 'unassigned' => []]` — all existing tests omit it safely (defaults are backward compatible)
+  - Workload empty-state check: `$hasData = $users !== [] || (int)($unassigned['task_count'] ?? 0) > 0` — both users array and unassigned bucket must be empty for the empty state to display
+  - Sidebar active-state key for workload: `'workload'` (matches `$sidebar_active` var in template); controller uses this as `sidebar_active` via the require pattern
+---

@@ -1233,7 +1233,7 @@
     {
       "id": "iter-1300bc77",
       "phase": "ralphi-loop-iteration",
-      "status": "running",
+      "status": "completed",
       "sessionKey": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-47-47-072Z_1d84973d-7980-46e4-b826-98a3b1c4a022.jsonl",
       "sessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-47-47-072Z_1d84973d-7980-46e4-b826-98a3b1c4a022.jsonl",
       "checkpointLeafId": null,
@@ -1244,7 +1244,40 @@
       "loopId": "loop-cfe4d683",
       "iteration": 7,
       "storyId": "US-007",
-      "storyTitle": "Add workload view template and route"
+      "storyTitle": "Add workload view template and route",
+      "summary": "Implemented US-007: Add workload view template and route. Added PortfolioViewController::workload() action, registered route /portfolio/:portfolio_id/workload in Plugin.php, added 'Team' sidebar link, created Template/portfolio/workload.php (table with User/Active Tasks/Overdue/Blocked/Score/Est. Hours/Spent Hours columns, overload indicator, unassigned row, empty state), added portfolio-workload- CSS classes, added 6 translation strings, and added 2 controller tests. All quality checks (lint, test, phpcs, phpstan) pass. 169 tests, 957 assertions, 0 errors.",
+      "outputs": [
+        "Controller/PortfolioViewController.php",
+        "Plugin.php",
+        "Template/portfolio/_sidebar.php",
+        "Template/portfolio/workload.php",
+        "Asset/css/portfolio.css",
+        "Locale/en_US/translations.php",
+        "Test/Controller/PortfolioViewControllerTest.php",
+        "Test/Plugin/ApiRegistrationTest.php",
+        ".ralphi/prd.json",
+        ".ralphi/progress.txt"
+      ],
+      "complete": false,
+      "reviewPasses": 1,
+      "trajectory": "ON_TRACK",
+      "completedAt": "2026-03-25T19:55:33.677Z"
+    },
+    {
+      "id": "iter-edcd8a54",
+      "phase": "ralphi-loop-iteration",
+      "status": "running",
+      "sessionKey": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-55-36-193Z_da7990fc-bc9f-4a0c-a51c-d392f0e4fe5b.jsonl",
+      "sessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-55-36-193Z_da7990fc-bc9f-4a0c-a51c-d392f0e4fe5b.jsonl",
+      "checkpointLeafId": null,
+      "checkpointSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-24T20-27-01-539Z_29a1079d-f934-4143-ad25-8a9d7ae75c37.jsonl",
+      "cwd": "/Users/bradmatic/Dev/geekmuse/kanboard-plugin-portfolio-mgmt",
+      "createdAt": "2026-03-25T19:55:36.193Z",
+      "autoConfirm": true,
+      "loopId": "loop-cfe4d683",
+      "iteration": 8,
+      "storyId": "US-008",
+      "storyTitle": "Add roadmap view — controller, route, and data preparation"
     }
   ],
   "loops": [
@@ -1305,7 +1338,7 @@
       "id": "loop-cfe4d683",
       "controllerSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-24T20-27-01-539Z_29a1079d-f934-4143-ad25-8a9d7ae75c37.jsonl",
       "maxIterations": 50,
-      "iteration": 7,
+      "iteration": 8,
       "active": true,
       "stopRequested": false,
       "createdAt": "2026-03-25T18:16:45.766Z",
@@ -1316,11 +1349,12 @@
         "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T18-56-41-388Z_85abd44a-5835-424c-9bd2-1d24db1ada35.jsonl",
         "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-11-35-295Z_8947aedc-07c6-4e23-8711-8cc8fdd1d258.jsonl",
         "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-35-14-636Z_5ef25701-6148-438f-ac09-d1e0f607e35f.jsonl",
-        "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-47-47-072Z_1d84973d-7980-46e4-b826-98a3b1c4a022.jsonl"
+        "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-47-47-072Z_1d84973d-7980-46e4-b826-98a3b1c4a022.jsonl",
+        "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-55-36-193Z_da7990fc-bc9f-4a0c-a51c-d392f0e4fe5b.jsonl"
       ],
-      "currentIterationStartedAt": "2026-03-25T19:47:47.073Z",
-      "activeIterationSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-47-47-072Z_1d84973d-7980-46e4-b826-98a3b1c4a022.jsonl"
+      "currentIterationStartedAt": "2026-03-25T19:55:36.193Z",
+      "activeIterationSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-55-36-193Z_da7990fc-bc9f-4a0c-a51c-d392f0e4fe5b.jsonl"
     }
   ],
-  "savedAt": "2026-03-25T19:47:47.075Z"
+  "savedAt": "2026-03-25T19:55:36.195Z"
 }

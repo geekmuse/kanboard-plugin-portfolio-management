@@ -546,6 +546,12 @@ final class ApiRegistrationTest extends TestCase
                     'plugin' => 'Portfolio',
                 ],
                 [
+                    'path' => '/portfolio/:portfolio_id/roadmap',
+                    'controller' => 'PortfolioViewController',
+                    'action' => 'roadmap',
+                    'plugin' => 'Portfolio',
+                ],
+                [
                     'path' => '/portfolio/:portfolio_id/gantt',
                     'controller' => 'PortfolioViewController',
                     'action' => 'gantt',
@@ -606,7 +612,7 @@ final class ApiRegistrationTest extends TestCase
                     'plugin' => 'Portfolio',
                 ],
             ],
-            array_slice($this->route->getRoutes(), 0, 19)
+            array_slice($this->route->getRoutes(), 0, 20)
         );
     }
 
