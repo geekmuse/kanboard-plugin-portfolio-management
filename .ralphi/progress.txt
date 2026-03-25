@@ -1,4 +1,7 @@
 ## Codebase Patterns
+- `DependencyTestQueryBuilder` in DependencyModelTest now has `in()` method (same shape as `PortfolioTaskTestQueryBuilder`): stores `operator='IN'` + value array; `buildWhereClause()` dispatches on `IN` vs scalar operator. Follow this pattern for any new IN-clause needs in DependencyModel tests.
+- `getDependencies()` IN-scoping pattern: fetch portfolio task IDs from `tasks->in('project_id', $projectIds)`, guard empty result, then use `task_has_links->in('task_id', $portfolioTaskIds)` with >1000 fallback to full-table scan. Same two-step pattern as `buildFilteredTaskRows()` + `buildTaskDependencyStats()` in PortfolioTaskModel.
+
 - `task.update` and `task.assignee_change` stub listeners follow the same pattern as other lifecycle listeners: read task_id, guard `<= 0`, delegate to model method. The model method itself is a no-op stub documented with TODO for future implementation.
 - `FakePortfolioTaskModel` in ApiRegistrationTest: exposes `$assigneeChangedCalls[]` public array; set in container after `initialize()` for listener tests. Same pattern as `FakeDependencyModel`.
 - `FakeDependencyModel::$updatedCalls[]` records `onTaskUpdated` call arguments (int task_id) — same pattern as existing `closedCalls`, `openedCalls`, `linkChangedCalls` arrays.
@@ -160,4 +163,27 @@ Corrective Plan: N/A
   - Empty IN list guard pattern: early return before `->in()` call; test builder maps empty array to `1=0` as a safety net
   - PHPStan cold Docker timeout: warm with one manual `bash scripts/docker-phpstan.sh` before committing — the second run is fast
   - `PortfolioTaskTestQueryBuilder` IN implementation: multi-placeholder approach `:in_{conditionIndex}_{valueIndex}` avoids placeholder collisions when multiple IN conditions are chained
+---
+
+## 2026-03-25 — US-007
+Session: N/A
+Review Outcome: PASS
+Trajectory: ON_TRACK
+Trajectory Notes: N/A
+Corrective Plan: N/A
+- In `getDependencies()`, added a two-step query scoping:
+  1. `tasks->in('project_id', $projectIds)->findAll()` fetches portfolio task IDs
+  2. Early return if `$portfolioTaskIds === []` (no tasks in portfolio's projects)
+  3. `task_has_links->in('task_id', $portfolioTaskIds)->findAll()` replaces the full-table scan
+  4. Fallback to full-table scan when `count($portfolioTaskIds) > 1000` (SQLite SQLITE_MAX_VARIABLE_NUMBER limit)
+- Added `in()` method to `DependencyTestQueryBuilder` in `Test/Model/DependencyModelTest.php`
+- Updated `buildWhereClause()` in `DependencyTestQueryBuilder` to dispatch on `IN` vs scalar operators (same logic as PortfolioTaskTestQueryBuilder)
+- All 189 existing tests pass unchanged — behavior identical, fewer rows scanned
+- PHP lint clean, PHPCS 0 errors, PHPStan clean
+- Files changed: `Model/DependencyModel.php`, `Test/Model/DependencyModelTest.php`
+- **Learnings for future iterations:**
+  - Both IN-scoping patterns (PortfolioTaskModel + DependencyModel) follow the same two-step fetch: portfolio task IDs first, then scoped link query with empty-guard + large-N fallback
+  - `DependencyTestQueryBuilder` and `PortfolioTaskTestQueryBuilder` are now structurally identical — any future IN needs in either test file should follow the same `in()` + `buildWhereClause()` dispatch pattern
+  - >1000 threshold is documented in comments but not tested explicitly (threshold testing would require >1000 fixture rows — impractical in unit tests; the comment is the contract)
+  - PHPStan cold Docker timeout: always warm image before commit when switching machines or after long idle
 ---

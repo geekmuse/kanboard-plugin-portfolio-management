@@ -135,8 +135,8 @@
       "dependsOn": [],
       "notes": "This is a performance optimization, not a behavior change. All existing tests should pass without modification. The ->in() clause generates standard SQL IN (...) which works identically on SQLite, MySQL, and PostgreSQL. For empty $projectIds arrays, PicoDb's ->in() generates IN (NULL) which matches nothing — the early return guard handles this case explicitly.",
       "startedAt": "2026-03-25T22:31:24.254Z",
-      "updatedAt": "2026-03-25T22:31:24.254Z",
-      "completedAt": "2026-03-25T22:41:17.676Z"
+      "updatedAt": "2026-03-25T22:43:56.234Z",
+      "completedAt": "2026-03-25T22:43:56.234Z"
     },
     {
       "id": "US-007",
@@ -152,9 +152,12 @@
         "PHP lint clean, PHPCS 0 errors, PHPStan clean"
       ],
       "priority": 7,
-      "status": "open",
+      "status": "done",
       "dependsOn": [],
-      "notes": "Same pattern as US-006 but for the DependencyModel. The fallback threshold for large IN clauses prevents issues with SQLite's SQLITE_MAX_VARIABLE_NUMBER limit (default 999). For portfolios with >1000 tasks, the full-table scan is acceptable since the in-memory filtering is already fast enough."
+      "notes": "Same pattern as US-006 but for the DependencyModel. The fallback threshold for large IN clauses prevents issues with SQLite's SQLITE_MAX_VARIABLE_NUMBER limit (default 999). For portfolios with >1000 tasks, the full-table scan is acceptable since the in-memory filtering is already fast enough.",
+      "startedAt": "2026-03-25T22:43:56.849Z",
+      "updatedAt": "2026-03-25T22:56:00.000Z",
+      "completedAt": "2026-03-25T22:56:00.000Z"
     }
   ]
 }
