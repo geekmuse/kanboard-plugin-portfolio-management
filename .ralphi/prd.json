@@ -65,12 +65,12 @@
         "All existing tests pass, PHP lint clean, PHPCS 0 errors, PHPStan clean"
       ],
       "priority": 3,
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": [],
       "notes": "The board:task:icons hook reuses PortfolioHelper's per-project lazy cache (same pattern as the existing board:task:footer blocked indicator). No new queries needed.",
       "startedAt": "2026-03-25T21:50:28.439Z",
-      "updatedAt": "2026-03-25T21:50:28.439Z",
-      "completedAt": null
+      "updatedAt": "2026-03-25T22:15:00.000Z",
+      "completedAt": "2026-03-25T22:15:00.000Z"
     },
     {
       "id": "US-004",

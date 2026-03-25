@@ -7,6 +7,9 @@
 - DependencyModel event chain: `onTaskClosed` calls `dispatchDependencyResolvedEvent` which routes through the container's 'dispatcher' service (if it has a `dispatch()` method) — use DependencyTestEventDispatcher or FakeDispatcher in tests.
 - Deep behavioral tests for Plugin event wiring live in `Test/Plugin/ApiRegistrationTest.php`; per-method DependencyModel behaviour tests live in `Test/Model/DependencyModelTest.php`.
 - When an acceptance criterion is already satisfied by an existing test, verify the mapping explicitly, run all quality gates, and mark the story done without adding redundant tests.
+- `template:task:show:top` and `template:project:header:after` hooks receive `params['task']`/`params['project']` respectively — use the same defensive `$params['task'] ?? $params` and `$params['project'] ?? $params` patterns as other task/project hooks.
+- `template:board:task:icons` callable is identical to `board:task:footer` callable — same config check, same `portfolioHelper->isTaskBlocked()` call, same `$params['task'] ?? $params` param extraction. PortfolioHelper lazy-loads per project on first call, so the second hook (icons) hits cache when footer already ran.
+- When adding new template hooks to ApiRegistrationTest: update BOTH `testRegistersAllRequiredTemplateHooks` (assertContains checks) AND `testTemplateHooksPointToCorrectWidgetTemplates` (assertSame on templateByHook map).
 ---
 
 ## PRD Run Context
@@ -53,4 +56,27 @@ Corrective Plan: N/A
   - `task.create` event data includes all form values; custom fields like `milestone_id` flow through from POST to event
   - `FakeMilestoneTaskModel` pattern: record `[$milestoneId, $taskId]` tuples in `$addCalls` for assertion; set in container AFTER `initialize()` runs (overrides the registered closure)
   - Closures inside `initialize()` auto-bind `$this` to the Plugin object — no explicit `use ($this)` needed
+---
+
+## 2026-03-25 — US-003
+Session: N/A
+Review Outcome: PASS
+Trajectory: ON_TRACK
+Trajectory Notes: N/A
+Corrective Plan: N/A
+- Registered `template:task:show:top` → `Portfolio:widget/task_context_banner`: shows "This task is in Portfolio: {name}" banner with links to portfolio dashboards; nothing when no portfolios
+- Registered `template:project:header:after` → `Portfolio:widget/project_header_badge`: shows portfolio membership badge(s) with links; nothing when no portfolios  
+- Registered `template:board:task:icons` → `Portfolio:widget/board_task_blocked_icon`: shows 🔴 icon using PortfolioHelper::isTaskBlocked cache (same callable as board:task:footer — no extra queries)
+- All three callables use defensive `$params['task|project'] ?? $params` param extraction
+- Added `'This task is in Portfolio:'` to `Locale/en_US/translations.php`
+- Added 6 template rendering tests to `WidgetHookTest.php` (2 per hook: render + nothing)
+- Updated `testRegistersAllRequiredTemplateHooks` + `testTemplateHooksPointToCorrectWidgetTemplates` in `ApiRegistrationTest.php`
+- 182 total tests pass (was 176), PHPCS 0 errors, PHPStan clean
+- Files changed: `Plugin.php`, `Template/widget/task_context_banner.php`, `Template/widget/project_header_badge.php`, `Template/widget/board_task_blocked_icon.php`, `Locale/en_US/translations.php`, `Test/Controller/WidgetHookTest.php`, `Test/Plugin/ApiRegistrationTest.php`
+- **Learnings for future iterations:**
+  - `template:task:show:top` params structure: `$params['task'] ?? $params` → read `project_id` from task array
+  - `template:project:header:after` params structure: `$params['project'] ?? $params` → read `id` from project array
+  - Board task icons hook is identical in structure to board task footer hook — reuse the same callable shape
+  - Use `&#x1F534;` HTML entity for 🔴 emoji in PHP template files to avoid file encoding issues
+  - Codebase patterns section in progress.txt: add reusable learnings about params structures and test update procedures
 ---
