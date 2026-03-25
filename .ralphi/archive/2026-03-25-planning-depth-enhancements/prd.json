@@ -18,12 +18,9 @@
         "PHP lint, PHPCS (0 errors), and PHPStan (level 5) pass"
       ],
       "priority": 1,
-      "status": "done",
+      "status": "open",
       "dependsOn": [],
-      "notes": "The FakeDispatcher and lifecycle listener test in ApiRegistrationTest already cover basic registration. This story adds deeper behavioral validation — especially around the DependencyModel event chain and the portfolio.dependency.resolved dispatch.",
-      "startedAt": "2026-03-25T21:26:37.217Z",
-      "updatedAt": "2026-03-25T21:36:49.914Z",
-      "completedAt": "2026-03-25T21:36:49.914Z"
+      "notes": "The FakeDispatcher and lifecycle listener test in ApiRegistrationTest already cover basic registration. This story adds deeper behavioral validation — especially around the DependencyModel event chain and the portfolio.dependency.resolved dispatch."
     },
     {
       "id": "US-002",
@@ -41,12 +38,9 @@
         "All existing tests pass, PHP lint clean, PHPCS 0 errors, PHPStan clean"
       ],
       "priority": 2,
-      "status": "in_progress",
+      "status": "open",
       "dependsOn": [],
-      "notes": "This is the highest-value template hook from Task 1 in the PRD. The task.create event listener must use $this->dispatcher->addListener() (not $this->on()). The milestone assignment uses milestoneTaskModel->add() which validates project-in-portfolio membership.",
-      "startedAt": "2026-03-25T21:36:50.107Z",
-      "updatedAt": "2026-03-25T21:36:50.107Z",
-      "completedAt": null
+      "notes": "This is the highest-value template hook from Task 1 in the PRD. The task.create event listener must use $this->dispatcher->addListener() (not $this->on()). The milestone assignment uses milestoneTaskModel->add() which validates project-in-portfolio membership."
     },
     {
       "id": "US-003",
@@ -105,9 +99,7 @@
       ],
       "priority": 5,
       "status": "open",
-      "dependsOn": [
-        "US-004"
-      ],
+      "dependsOn": ["US-004"],
       "notes": "These are stub listeners that provide hook points for future features. US-004 establishes the pattern for column-move event handling; this story follows the same pattern. The stubs ensure that when real functionality is added later, the event wiring is already in place and tested."
     },
     {

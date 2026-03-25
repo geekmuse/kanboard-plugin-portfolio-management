@@ -1266,7 +1266,7 @@
     {
       "id": "iter-edcd8a54",
       "phase": "ralphi-loop-iteration",
-      "status": "running",
+      "status": "completed",
       "sessionKey": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-55-36-193Z_da7990fc-bc9f-4a0c-a51c-d392f0e4fe5b.jsonl",
       "sessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-55-36-193Z_da7990fc-bc9f-4a0c-a51c-d392f0e4fe5b.jsonl",
       "checkpointLeafId": null,
@@ -1277,7 +1277,123 @@
       "loopId": "loop-cfe4d683",
       "iteration": 8,
       "storyId": "US-008",
-      "storyTitle": "Add roadmap view — controller, route, and data preparation"
+      "storyTitle": "Add roadmap view — controller, route, and data preparation",
+      "summary": "Implemented US-008: Add roadmap view — controller, route, and data preparation. Added `roadmap()` action to `PortfolioViewController` with `buildRoadmapItems()` and `computeMilestoneHealth()` private helpers. Registered route `/portfolio/:portfolio_id/roadmap` in Plugin.php. Added Roadmap sidebar link after Timeline. Created `Template/portfolio/roadmap.php` following the gantt.php pattern with `data-roadmap` attribute and D3 assets. Extended `PortfolioViewFakeMilestoneModel` with `getProgress()`. Added 3 controller tests. Updated `ApiRegistrationTest` route count. All 172 tests pass, lint clean, PHPCS 0 errors, PHPStan 0 errors.",
+      "outputs": [
+        "Controller/PortfolioViewController.php",
+        "Plugin.php",
+        "Template/portfolio/_sidebar.php",
+        "Template/portfolio/roadmap.php",
+        "Locale/en_US/translations.php",
+        "Test/Controller/PortfolioViewControllerTest.php",
+        "Test/Plugin/ApiRegistrationTest.php",
+        ".ralphi/prd.json",
+        ".ralphi/progress.txt"
+      ],
+      "complete": false,
+      "reviewPasses": 1,
+      "trajectory": "ON_TRACK",
+      "reflectionSummary": "US-008 fully implemented. All 9 acceptance criteria met: route registered, access map covered by wildcard entry, controller builds per-milestone date ranges from milestoneTaskModel, each item has all 8 required fields, JSON passed via data attribute, sidebar link added after Timeline, template renders chart container + D3 assets, empty state works, 3 controller tests added. One test fix needed: use assertEquals not assertSame for percent values decoded from JSON (float serialization issue).",
+      "nextIterationPlan": "Implement US-009: Add roadmap D3.js renderer and CSS. Add `window.PortfolioGantt.renderRoadmap(container, data)` to Asset/js/portfolio-gantt.js. Render milestone bars as horizontal bars from start_date to end_date, color-coded by health. Add progress fill, today line, labels, click navigation, bottom axis. Add portfolio-roadmap- CSS classes. Wire up in roadmap.php on DOMContentLoaded.",
+      "completedAt": "2026-03-25T20:05:47.905Z"
+    },
+    {
+      "id": "iter-d0c9d6c3",
+      "phase": "ralphi-loop-iteration",
+      "status": "completed",
+      "sessionKey": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T20-05-51-049Z_4e4c80d5-ad6d-4689-b546-dfd580eb6f91.jsonl",
+      "sessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T20-05-51-049Z_4e4c80d5-ad6d-4689-b546-dfd580eb6f91.jsonl",
+      "checkpointLeafId": null,
+      "checkpointSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-24T20-27-01-539Z_29a1079d-f934-4143-ad25-8a9d7ae75c37.jsonl",
+      "cwd": "/Users/bradmatic/Dev/geekmuse/kanboard-plugin-portfolio-mgmt",
+      "createdAt": "2026-03-25T20:05:51.050Z",
+      "autoConfirm": true,
+      "loopId": "loop-cfe4d683",
+      "iteration": 9,
+      "storyId": "US-009",
+      "storyTitle": "Add roadmap D3.js renderer and CSS",
+      "summary": "US-009 complete: Added renderRoadmap() D3.js function and CSS to the Portfolio plugin. Implemented an ES5-compatible milestone roadmap chart with horizontal progress bars (health-coded green/yellow/red), a dashed \"Today\" line, left-panel labels with health dots, click navigation via datum-bound handlers, and a responsive D3 time axis. Added portfolio-roadmap-* CSS classes, a legend section to the template, and a 'Today' translation string. All 9 PRD stories are now done — the PRD is fully complete.",
+      "outputs": [
+        "Asset/js/portfolio-gantt.js",
+        "Asset/css/portfolio.css",
+        "Template/portfolio/roadmap.php",
+        "Locale/en_US/translations.php",
+        ".ralphi/prd.json",
+        ".ralphi/progress.txt"
+      ],
+      "complete": true,
+      "reviewPasses": 1,
+      "trajectory": "ON_TRACK",
+      "reflectionSummary": "All 9 user stories in the PRD are now status=done. The planning-depth-enhancements branch contains: weighted milestone progress (US-001–003), activity stream (US-004–005), workload overview (US-006–007), and roadmap view with full D3 renderer (US-008–009). 172 tests passing, PHPStan level 5 clean, PHP lint clean.",
+      "nextIterationPlan": "No open stories remain. PRD is complete.",
+      "completedAt": "2026-03-25T20:18:02.152Z"
+    },
+    {
+      "id": "run-af1bd720",
+      "phase": "ralphi-convert",
+      "status": "completed",
+      "sessionKey": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-24T20-27-01-539Z_29a1079d-f934-4143-ad25-8a9d7ae75c37.jsonl",
+      "sessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-24T20-27-01-539Z_29a1079d-f934-4143-ad25-8a9d7ae75c37.jsonl",
+      "checkpointLeafId": "a27283dd",
+      "checkpointSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-24T20-27-01-539Z_29a1079d-f934-4143-ad25-8a9d7ae75c37.jsonl",
+      "cwd": "/Users/bradmatic/Dev/geekmuse/kanboard-plugin-portfolio-mgmt",
+      "createdAt": "2026-03-25T21:13:17.018Z",
+      "autoConfirm": true,
+      "summary": "Converted docs/tasks/003-code-health-and-integration.md into .ralphi/prd.json with 7 user stories on branch ralph/code-health-integration. Stories cover: event system regression tests (US-001), milestone assignment hook on task creation form (US-002), display-only template hooks (US-003), auto-complete milestones on column move (US-004), stub event listeners for task.update and assignee_change (US-005, depends on US-004), PortfolioTaskModel query optimization (US-006), and DependencyModel query optimization (US-007). Archived previous PRD (ralph/planning-depth-enhancements, 9 completed stories) to .ralphi/archive/2026-03-25-planning-depth-enhancements/. Reset progress.txt with all accumulated codebase patterns including the critical dispatcher->addListener lesson.",
+      "outputs": [
+        ".ralphi/prd.json",
+        ".ralphi/progress.txt",
+        ".ralphi/archive/2026-03-25-planning-depth-enhancements/prd.json",
+        ".ralphi/archive/2026-03-25-planning-depth-enhancements/progress.txt"
+      ],
+      "complete": true,
+      "reviewPasses": 1,
+      "completedAt": "2026-03-25T21:25:53.713Z"
+    },
+    {
+      "id": "iter-84bc8cdb",
+      "phase": "ralphi-loop-iteration",
+      "status": "completed",
+      "sessionKey": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T21-26-37-215Z_02a07d25-cc02-4e05-8bfd-58a81dd158bf.jsonl",
+      "sessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T21-26-37-215Z_02a07d25-cc02-4e05-8bfd-58a81dd158bf.jsonl",
+      "checkpointLeafId": null,
+      "checkpointSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-24T20-27-01-539Z_29a1079d-f934-4143-ad25-8a9d7ae75c37.jsonl",
+      "cwd": "/Users/bradmatic/Dev/geekmuse/kanboard-plugin-portfolio-mgmt",
+      "createdAt": "2026-03-25T21:26:37.216Z",
+      "autoConfirm": true,
+      "loopId": "loop-84e17566",
+      "iteration": 1,
+      "storyId": "US-001",
+      "storyTitle": "Add event system regression tests",
+      "summary": "US-001 (Add event system regression tests) verified complete. All 8 acceptance criteria were already satisfied by existing tests: testRegistersDependencyLifecycleListenersAndDelegatesToDependencyModel (ApiRegistrationTest) covers criteria 1–4 (task.close/open/link listeners delegate with correct task_id via FakeDependencyModel); testOnTaskClosedFiresDependencyResolvedEvent (DependencyModelTest) covers criterion 5 (portfolio.dependency.resolved dispatched). 172 tests pass, PHPCS 0 errors, PHPStan level 5 clean, lint clean. Marked US-001 done in prd.json and committed.",
+      "outputs": [
+        "Test/Plugin/ApiRegistrationTest.php",
+        "Test/Model/DependencyModelTest.php",
+        ".ralphi/prd.json",
+        ".ralphi/progress.txt"
+      ],
+      "complete": false,
+      "reviewPasses": 1,
+      "trajectory": "ON_TRACK",
+      "reflectionSummary": "US-001 acceptance criteria were already satisfied by tests added in the v1.21.0 planning phase. The PRD notes described the intended state (\"FakeDispatcher and lifecycle listener test already covers basic registration; this story adds deeper behavioral validation\"), and that deeper validation exists in testRegistersDependencyLifecycleListenersAndDelegatesToDependencyModel (which invokes listener closures with fake event data and asserts model delegation) and testOnTaskClosedFiresDependencyResolvedEvent. No new code was needed. Pattern documented in progress.txt: always check acceptance criteria directly against existing code before writing new tests.",
+      "nextIterationPlan": "Next story is US-002 (Add milestone assignment hook on task creation form, priority 2, status open). Plan: (1) Register template:task:form:first-column hook with attachCallable, (2) fetch portfolios for the task's project and active milestones from those portfolios, (3) render dropdown when portfolios exist / nothing when not, (4) add task.create event listener to assign the selected milestone, (5) add 2+ tests (render vs no-render), (6) run all quality gates.",
+      "completedAt": "2026-03-25T21:36:39.168Z"
+    },
+    {
+      "id": "iter-6f21c17b",
+      "phase": "ralphi-loop-iteration",
+      "status": "running",
+      "sessionKey": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T21-36-50-106Z_5baa883a-85fc-4e91-b814-e3ce8dfe81ae.jsonl",
+      "sessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T21-36-50-106Z_5baa883a-85fc-4e91-b814-e3ce8dfe81ae.jsonl",
+      "checkpointLeafId": null,
+      "checkpointSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-24T20-27-01-539Z_29a1079d-f934-4143-ad25-8a9d7ae75c37.jsonl",
+      "cwd": "/Users/bradmatic/Dev/geekmuse/kanboard-plugin-portfolio-mgmt",
+      "createdAt": "2026-03-25T21:36:50.107Z",
+      "autoConfirm": true,
+      "loopId": "loop-84e17566",
+      "iteration": 2,
+      "storyId": "US-002",
+      "storyTitle": "Add milestone assignment hook on task creation form"
     }
   ],
   "loops": [
@@ -1338,8 +1454,8 @@
       "id": "loop-cfe4d683",
       "controllerSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-24T20-27-01-539Z_29a1079d-f934-4143-ad25-8a9d7ae75c37.jsonl",
       "maxIterations": 50,
-      "iteration": 8,
-      "active": true,
+      "iteration": 9,
+      "active": false,
       "stopRequested": false,
       "createdAt": "2026-03-25T18:16:45.766Z",
       "iterationSessionFiles": [
@@ -1350,11 +1466,26 @@
         "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-11-35-295Z_8947aedc-07c6-4e23-8711-8cc8fdd1d258.jsonl",
         "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-35-14-636Z_5ef25701-6148-438f-ac09-d1e0f607e35f.jsonl",
         "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-47-47-072Z_1d84973d-7980-46e4-b826-98a3b1c4a022.jsonl",
-        "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-55-36-193Z_da7990fc-bc9f-4a0c-a51c-d392f0e4fe5b.jsonl"
+        "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-55-36-193Z_da7990fc-bc9f-4a0c-a51c-d392f0e4fe5b.jsonl",
+        "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T20-05-51-049Z_4e4c80d5-ad6d-4689-b546-dfd580eb6f91.jsonl"
       ],
-      "currentIterationStartedAt": "2026-03-25T19:55:36.193Z",
-      "activeIterationSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T19-55-36-193Z_da7990fc-bc9f-4a0c-a51c-d392f0e4fe5b.jsonl"
+      "completedAt": "2026-03-25T20:18:12.748Z"
+    },
+    {
+      "id": "loop-84e17566",
+      "controllerSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-24T20-27-01-539Z_29a1079d-f934-4143-ad25-8a9d7ae75c37.jsonl",
+      "maxIterations": 50,
+      "iteration": 2,
+      "active": true,
+      "stopRequested": false,
+      "createdAt": "2026-03-25T21:26:36.619Z",
+      "iterationSessionFiles": [
+        "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T21-26-37-215Z_02a07d25-cc02-4e05-8bfd-58a81dd158bf.jsonl",
+        "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T21-36-50-106Z_5baa883a-85fc-4e91-b814-e3ce8dfe81ae.jsonl"
+      ],
+      "currentIterationStartedAt": "2026-03-25T21:36:50.106Z",
+      "activeIterationSessionFile": "/Users/bradmatic/.pi/agent/sessions/--Users-bradmatic-Dev-geekmuse-kanboard-plugin-portfolio-mgmt--/2026-03-25T21-36-50-106Z_5baa883a-85fc-4e91-b814-e3ce8dfe81ae.jsonl"
     }
   ],
-  "savedAt": "2026-03-25T19:55:36.195Z"
+  "savedAt": "2026-03-25T21:36:50.108Z"
 }

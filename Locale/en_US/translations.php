@@ -189,6 +189,7 @@ return [
         'No critical path found. Add cross-project task dependencies to compute the critical path.',
 
     // Widget / hook templates
+    'None' => 'None',
     'View all portfolios' => 'View all portfolios',
     'Blocked by cross-project dependency' => 'Blocked by cross-project dependency',
     'Portfolio Dependencies' => 'Portfolio Dependencies',

@@ -172,6 +172,41 @@ class Plugin extends Base
             }
         );
 
+        // Task creation form — optional milestone assignment dropdown.
+        // When the task's project belongs to one or more portfolios, renders a
+        // dropdown listing all active milestones across those portfolios.
+        // Milestones are pre-fetched once per portfolio (no N+1): one call to
+        // getPortfolios() then one getByPortfolioId() per portfolio found.
+        // When the project belongs to no portfolios, returns an empty list so
+        // the template renders nothing.
+        $this->template->hook->attachCallable(
+            'template:task:form:first-column',
+            'Portfolio:widget/task_form_milestone_dropdown',
+            function (array $params) {
+                $projectId = (int) ($params['project_id'] ?? ($params['task']['project_id'] ?? 0));
+                if ($projectId <= 0) {
+                    return ['milestones' => []];
+                }
+
+                $portfolios = $this->container['portfolioProjectModel']->getPortfolios($projectId);
+                if (empty($portfolios)) {
+                    return ['milestones' => []];
+                }
+
+                $milestones = [];
+                foreach ($portfolios as $portfolio) {
+                    $portfolioId = (int) ($portfolio['id'] ?? 0);
+                    if ($portfolioId > 0) {
+                        foreach ($this->container['milestoneModel']->getByPortfolioId($portfolioId) as $milestone) {
+                            $milestones[] = $milestone;
+                        }
+                    }
+                }
+
+                return ['milestones' => $milestones];
+            }
+        );
+
         // Header dropdown — quick links to portfolio list and create form
         $this->template->hook->attach('template:header:dropdown:menu', 'Portfolio:widget/header_dropdown');
 
@@ -213,6 +248,20 @@ class Plugin extends Base
         $this->dispatcher->addListener('task_internal_link.delete', function ($event) use ($plugin) {
             $taskId = (int) ($event['task_id'] ?? 0);
             $plugin->dependencyModel->onLinkChanged($taskId);
+        });
+
+        // task.create — assign the newly created task to a milestone if the
+        // user selected one from the task creation form dropdown. The event
+        // data includes all form values submitted to TaskCreationModel::create()
+        // (including the milestone_id field injected by the hook above).
+        // milestoneTaskModel->add() validates project-in-portfolio membership
+        // so no additional guard is needed here.
+        $this->dispatcher->addListener('task.create', function ($event) use ($plugin) {
+            $taskId      = (int) ($event['task_id'] ?? 0);
+            $milestoneId = (int) ($event['milestone_id'] ?? 0);
+            if ($taskId > 0 && $milestoneId > 0) {
+                $plugin->milestoneTaskModel->add($milestoneId, $taskId);
+            }
         });
 
         $this->eventManager->register(DependencyResolvedType::EVENT_NAME, DependencyResolvedType::getLabel());

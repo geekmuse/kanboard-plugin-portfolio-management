@@ -567,6 +567,42 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
         }
 
         // -------------------------------------------------------------------
+        // task_form_milestone_dropdown template
+        // -------------------------------------------------------------------
+
+        public function testTaskFormMilestoneDropdownRendersMilestones(): void
+        {
+            $milestones = [
+                ['id' => 5, 'name' => 'Q2 Launch'],
+                ['id' => 6, 'name' => 'Beta <release>'],
+            ];
+
+            $context = new WidgetFakeContext();
+            $html    = $context->renderWidget(
+                $this->templateDir . '/task_form_milestone_dropdown.php',
+                ['milestones' => $milestones]
+            );
+
+            $this->assertStringContainsString('portfolio-milestone-form-field', $html);
+            $this->assertStringContainsString('name="milestone_id"', $html);
+            $this->assertStringContainsString('Q2 Launch', $html);
+            // XSS in milestone name must be escaped
+            $this->assertStringContainsString('&lt;release&gt;', $html);
+            $this->assertStringNotContainsString('<release>', $html);
+        }
+
+        public function testTaskFormMilestoneDropdownRendersNothingWhenNoMilestones(): void
+        {
+            $context = new WidgetFakeContext();
+            $html    = $context->renderWidget(
+                $this->templateDir . '/task_form_milestone_dropdown.php',
+                ['milestones' => []]
+            );
+
+            $this->assertSame('', trim($html));
+        }
+
+        // -------------------------------------------------------------------
         // PortfolioHelper unit tests — caching / N+1 prevention
         // -------------------------------------------------------------------
 

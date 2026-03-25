@@ -352,6 +352,21 @@ final class FakeDependencyModel
     }
 }
 
+final class FakeMilestoneTaskModel
+{
+    /**
+     * @var array<int, array{0: int, 1: int}>
+     */
+    public array $addCalls = [];
+
+    public function add(int $milestoneId, int $taskId, int $isCritical = 0, int $position = 0): bool
+    {
+        $this->addCalls[] = [$milestoneId, $taskId];
+
+        return true;
+    }
+}
+
 final class FakePortfolioModel
 {
     /**
@@ -783,6 +798,42 @@ final class ApiRegistrationTest extends TestCase
         );
     }
 
+    public function testTaskCreateListenerAddsMilestoneTask(): void
+    {
+        $milestoneTaskModel = new FakeMilestoneTaskModel();
+        $this->plugin->container['milestoneTaskModel'] = $milestoneTaskModel;
+
+        /** @var FakeDispatcher $dispatcher */
+        $dispatcher = $this->plugin->container['dispatcher'];
+        $listeners  = $dispatcher->listeners;
+
+        $this->assertArrayHasKey('task.create', $listeners, 'task.create listener must be registered');
+
+        // Listener adds task to milestone when both task_id and milestone_id are valid
+        $listeners['task.create'][0](['task_id' => 42, 'milestone_id' => 7]);
+
+        $this->assertSame([[7, 42]], $milestoneTaskModel->addCalls);
+    }
+
+    public function testTaskCreateListenerIsNoopWhenMilestoneIdMissing(): void
+    {
+        $milestoneTaskModel = new FakeMilestoneTaskModel();
+        $this->plugin->container['milestoneTaskModel'] = $milestoneTaskModel;
+
+        /** @var FakeDispatcher $dispatcher */
+        $dispatcher = $this->plugin->container['dispatcher'];
+        $listeners  = $dispatcher->listeners;
+
+        $this->assertArrayHasKey('task.create', $listeners);
+
+        // Missing milestone_id → no-op
+        $listeners['task.create'][0](['task_id' => 42]);
+        // Explicit zero milestone_id → no-op
+        $listeners['task.create'][0](['task_id' => 42, 'milestone_id' => 0]);
+
+        $this->assertSame([], $milestoneTaskModel->addCalls);
+    }
+
     public function testRepresentativeReadAndWriteCallbacksDelegateToModels(): void
     {
         $portfolioModel = new FakePortfolioModel();
@@ -846,6 +897,9 @@ final class ApiRegistrationTest extends TestCase
         // Project sidebar
         $this->assertContains('template:project:sidebar', $hookNames);
 
+        // Task creation form — milestone assignment dropdown
+        $this->assertContains('template:task:form:first-column', $hookNames);
+
         // Header dropdown
         $this->assertContains('template:header:dropdown:menu', $hookNames);
 
@@ -879,6 +933,10 @@ final class ApiRegistrationTest extends TestCase
         );
         $this->assertSame(['Portfolio:widget/board_blocked_indicator'], $templateByHook['template:board:task:footer']);
         $this->assertSame(['Portfolio:widget/project_sidebar'], $templateByHook['template:project:sidebar']);
+        $this->assertSame(
+            ['Portfolio:widget/task_form_milestone_dropdown'],
+            $templateByHook['template:task:form:first-column']
+        );
         $this->assertSame(['Portfolio:widget/header_dropdown'], $templateByHook['template:header:dropdown:menu']);
         $this->assertSame(['Portfolio:widget/config_sidebar'], $templateByHook['template:config:sidebar']);
 
