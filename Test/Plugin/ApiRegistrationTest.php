@@ -448,7 +448,7 @@ final class ApiRegistrationTest extends TestCase
         $this->plugin->initialize();
     }
 
-    public function testRegistersAllTwentyNineJsonRpcMethods(): void
+    public function testRegistersAllThirtyJsonRpcMethods(): void
     {
         $expected = [
             'createPortfolio',
@@ -480,6 +480,7 @@ final class ApiRegistrationTest extends TestCase
             'getPortfolioTaskCount',
             'getPortfolioOverview',
             'getPortfolioStatusReport',
+            'getPortfolioActivity',
         ];
 
         $this->assertSame($expected, $this->procedureHandler->getMethodNames());

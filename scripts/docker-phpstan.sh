@@ -6,4 +6,4 @@ docker run --rm \
   -v "${REPO_ROOT}:/app" \
   -w /app \
   php:8.3-cli-alpine \
-  ./vendor/bin/phpstan analyse --configuration phpstan.neon --no-progress
+  ./vendor/bin/phpstan analyse --configuration phpstan.neon --no-progress --memory-limit=512M

@@ -339,6 +339,18 @@ class PortfolioTaskModelTest extends TestCase
             )"
         );
 
+        $this->pdo->exec(
+            "CREATE TABLE project_activities (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                project_id INTEGER NOT NULL DEFAULT 0,
+                task_id INTEGER NOT NULL DEFAULT 0,
+                event_name TEXT NOT NULL DEFAULT '',
+                creator_id INTEGER NOT NULL DEFAULT 0,
+                date_creation INTEGER NOT NULL DEFAULT 0,
+                data TEXT NOT NULL DEFAULT ''
+            )"
+        );
+
         version_1($this->pdo);
 
         $this->model = $this->createModel();
@@ -609,6 +621,90 @@ class PortfolioTaskModelTest extends TestCase
         $this->assertSame(1, $report['dependency_health']['resolved']);
         $this->assertSame(2, $report['dependency_health']['unresolved']);
         $this->assertSame(2, $report['dependency_health']['critical_path_length']);
+    }
+
+    public function testGetActivityReturnsEmptyArrayForPortfolioWithNoProjects(): void
+    {
+        $this->insertPortfolio(1, 'Empty Portfolio');
+        // No projects added to portfolio — getPortfolioProjectIds returns []
+
+        $activities = $this->model->getActivity(1);
+
+        $this->assertSame([], $activities);
+    }
+
+    public function testGetActivityReturnsActivitiesEnrichedWithProjectName(): void
+    {
+        $now = time();
+
+        $this->insertPortfolio(1, 'Activity Portfolio');
+        $this->insertProject(10, 'Alpha');
+        $this->insertProject(20, 'Beta');
+        $this->insertProject(30, 'Gamma');
+        $this->insertPortfolioProject(1, 10, 1);
+        $this->insertPortfolioProject(1, 20, 2);
+        // project 30 is NOT in portfolio
+
+        $this->insertActivity(1, 10, 101, 'task.create', 5, $now - 300, 'data-a');
+        $this->insertActivity(2, 20, 201, 'task.close', 6, $now - 200, 'data-b');
+        $this->insertActivity(3, 30, 301, 'task.open', 7, $now - 100, 'data-c'); // excluded
+
+        $activities = $this->model->getActivity(1);
+
+        $this->assertCount(2, $activities);
+
+        // Ordered newest-first: activity 2 (now-200) before activity 1 (now-300)
+        $this->assertSame(2, (int) $activities[0]['id']);
+        $this->assertSame('Beta', $activities[0]['project_name']);
+        $this->assertSame('task.close', $activities[0]['event_name']);
+        $this->assertSame(6, (int) $activities[0]['creator_id']);
+        $this->assertSame(201, (int) $activities[0]['task_id']);
+        $this->assertSame('data-b', $activities[0]['data']);
+
+        $this->assertSame(1, (int) $activities[1]['id']);
+        $this->assertSame('Alpha', $activities[1]['project_name']);
+        $this->assertSame('task.create', $activities[1]['event_name']);
+    }
+
+    public function testGetActivityPaginatesResults(): void
+    {
+        $now = time();
+
+        $this->insertPortfolio(1, 'Paged Portfolio');
+        $this->insertProject(10, 'Alpha');
+        $this->insertPortfolioProject(1, 10, 1);
+
+        // Insert 5 activities at different timestamps
+        for ($i = 1; $i <= 5; $i++) {
+            $this->insertActivity($i, 10, 100 + $i, 'task.move', 5, $now - (600 - ($i * 100)), '');
+        }
+        // Activities ordered newest-first: id 5 (now-100), 4 (now-200), 3 (now-300), 2 (now-400), 1 (now-500)
+
+        // Default limit=25, offset=0 returns all 5
+        $all = $this->model->getActivity(1);
+        $this->assertCount(5, $all);
+        $this->assertSame(5, (int) $all[0]['id']);
+        $this->assertSame(1, (int) $all[4]['id']);
+
+        // limit=2, offset=0 returns top 2 newest
+        $page1 = $this->model->getActivity(1, 2, 0);
+        $this->assertCount(2, $page1);
+        $this->assertSame(5, (int) $page1[0]['id']);
+        $this->assertSame(4, (int) $page1[1]['id']);
+
+        // limit=2, offset=2 returns items 3 and 4 (by newest-first rank)
+        $page2 = $this->model->getActivity(1, 2, 2);
+        $this->assertCount(2, $page2);
+        $this->assertSame(3, (int) $page2[0]['id']);
+        $this->assertSame(2, (int) $page2[1]['id']);
+
+        // limit clamped to 100 max: passing 200 still returns all 5
+        $clamped = $this->model->getActivity(1, 200, 0);
+        $this->assertCount(5, $clamped);
+
+        // limit clamped to minimum 1
+        $minLimit = $this->model->getActivity(1, 0, 0);
+        $this->assertCount(1, $minLimit);
     }
 
     /**
@@ -893,6 +989,29 @@ class PortfolioTaskModelTest extends TestCase
             ':task_id' => $taskId,
             ':opposite_task_id' => $oppositeTaskId,
             ':link_id' => $linkId,
+        ]);
+    }
+
+    private function insertActivity(
+        int $id,
+        int $projectId,
+        int $taskId,
+        string $eventName,
+        int $creatorId,
+        int $dateCreation,
+        string $data
+    ): void {
+        $this->pdo->prepare(
+            'INSERT INTO project_activities (id, project_id, task_id, event_name, creator_id, date_creation, data)
+             VALUES (:id, :project_id, :task_id, :event_name, :creator_id, :date_creation, :data)'
+        )->execute([
+            ':id' => $id,
+            ':project_id' => $projectId,
+            ':task_id' => $taskId,
+            ':event_name' => $eventName,
+            ':creator_id' => $creatorId,
+            ':date_creation' => $dateCreation,
+            ':data' => $data,
         ]);
     }
 }

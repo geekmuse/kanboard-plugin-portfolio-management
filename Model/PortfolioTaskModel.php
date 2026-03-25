@@ -46,6 +46,69 @@ class PortfolioTaskModel extends Base
     }
 
     /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function getActivity(int $portfolioId, int $limit = 25, int $offset = 0): array
+    {
+        $projectIds = $this->getPortfolioProjectIds($portfolioId);
+        if ($projectIds === []) {
+            return [];
+        }
+
+        $projectScope = [];
+        foreach ($projectIds as $id) {
+            $projectScope[$id] = true;
+        }
+
+        $limit = max(1, min(100, $limit));
+        $offset = max(0, $offset);
+
+        try {
+            $activities = $this->db->table('project_activities')->findAll();
+        } catch (Throwable $exception) {
+            return [];
+        }
+
+        if (! is_array($activities) || $activities === []) {
+            return [];
+        }
+
+        $projectMap = $this->buildTableLookup('projects');
+        $result = [];
+
+        foreach ($activities as $activity) {
+            if (! is_array($activity)) {
+                continue;
+            }
+
+            $projectId = (int) ($activity['project_id'] ?? 0);
+            if (! array_key_exists($projectId, $projectScope)) {
+                continue;
+            }
+
+            $project = $projectMap[$projectId] ?? [];
+            $result[] = [
+                'id' => (int) ($activity['id'] ?? 0),
+                'project_id' => $projectId,
+                'project_name' => (string) ($project['name'] ?? ''),
+                'task_id' => (int) ($activity['task_id'] ?? 0),
+                'event_name' => (string) ($activity['event_name'] ?? ''),
+                'creator_id' => (int) ($activity['creator_id'] ?? 0),
+                'date_creation' => (int) ($activity['date_creation'] ?? 0),
+                'data' => $activity['data'] ?? '',
+            ];
+        }
+
+        usort(
+            $result,
+            static fn (array $a, array $b): int =>
+                (int) ($b['date_creation'] ?? 0) <=> (int) ($a['date_creation'] ?? 0)
+        );
+
+        return array_values(array_slice($result, $offset, $limit));
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function getStatusReport(int $portfolioId, int $periodDays = 7): array
