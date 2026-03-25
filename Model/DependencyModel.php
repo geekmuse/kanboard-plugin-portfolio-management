@@ -34,8 +34,45 @@ class DependencyModel extends Base
             return [];
         }
 
+        // Scope task_has_links query to portfolio tasks only.
+        // Fetching all tasks in the portfolio's projects first lets us use an
+        // IN (...) clause on task_has_links, avoiding a full-table scan.
+        // Fallback to the full-table scan for large portfolios to avoid exceeding
+        // SQLite's SQLITE_MAX_VARIABLE_NUMBER limit (default 999 variables).
+        // In-memory $projectScope filtering below still applies in the fallback path.
         try {
-            $taskLinks = $this->db->table('task_has_links')->findAll();
+            $portfolioTasks = $this->db->table('tasks')->in('project_id', $projectIds)->findAll();
+        } catch (Throwable $exception) {
+            return [];
+        }
+
+        if (! is_array($portfolioTasks)) {
+            return [];
+        }
+
+        $portfolioTaskIds = [];
+        foreach ($portfolioTasks as $portfolioTask) {
+            if (is_array($portfolioTask)) {
+                $portfolioTaskId = (int) ($portfolioTask['id'] ?? 0);
+                if ($portfolioTaskId > 0) {
+                    $portfolioTaskIds[] = $portfolioTaskId;
+                }
+            }
+        }
+
+        if ($portfolioTaskIds === []) {
+            return [];
+        }
+
+        try {
+            // For portfolios with >1000 tasks, fall back to the full-table scan to
+            // avoid overly large IN clauses (SQLite SQLITE_MAX_VARIABLE_NUMBER = 999).
+            // The $projectScope guard below handles scoping in that case.
+            if (count($portfolioTaskIds) > 1000) {
+                $taskLinks = $this->db->table('task_has_links')->findAll();
+            } else {
+                $taskLinks = $this->db->table('task_has_links')->in('task_id', $portfolioTaskIds)->findAll();
+            }
         } catch (Throwable $exception) {
             return [];
         }

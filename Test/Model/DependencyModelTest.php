@@ -99,6 +99,20 @@ final class DependencyTestQueryBuilder
         return $this;
     }
 
+    /**
+     * @param array<int, mixed> $values
+     */
+    public function in(string $column, array $values): self
+    {
+        $this->conditions[] = [
+            'column' => $column,
+            'operator' => 'IN',
+            'value' => $values,
+        ];
+
+        return $this;
+    }
+
     public function asc(string $column): self
     {
         $this->orderBy[] = $this->quoteIdentifier($column) . ' ASC';
@@ -204,14 +218,35 @@ final class DependencyTestQueryBuilder
         $params = [];
 
         foreach ($this->conditions as $index => $condition) {
-            $placeholder = ':where_' . $index;
-            $clauses[] = sprintf(
-                '%s %s %s',
-                $this->quoteIdentifier($condition['column']),
-                $condition['operator'],
-                $placeholder
-            );
-            $params[$placeholder] = $condition['value'];
+            if ($condition['operator'] === 'IN') {
+                $inValues = (array) $condition['value'];
+                if ($inValues === []) {
+                    // Empty IN list — nothing can match
+                    $clauses[] = '1=0';
+                } else {
+                    $inPlaceholders = [];
+                    foreach ($inValues as $vi => $val) {
+                        $placeholder = ':in_' . $index . '_' . $vi;
+                        $inPlaceholders[] = $placeholder;
+                        $params[$placeholder] = $val;
+                    }
+
+                    $clauses[] = sprintf(
+                        '%s IN (%s)',
+                        $this->quoteIdentifier($condition['column']),
+                        implode(', ', $inPlaceholders)
+                    );
+                }
+            } else {
+                $placeholder = ':where_' . $index;
+                $clauses[] = sprintf(
+                    '%s %s %s',
+                    $this->quoteIdentifier($condition['column']),
+                    $condition['operator'],
+                    $placeholder
+                );
+                $params[$placeholder] = $condition['value'];
+            }
         }
 
         return [' WHERE ' . implode(' AND ', $clauses), $params];
