@@ -47,12 +47,12 @@
         "New translation strings added to Locale/en_US/translations.php"
       ],
       "priority": 2,
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": [],
       "notes": "Backend-focused but includes config UI. The template milestone views (show.php, portfolio/show.php) are updated in US-003.",
       "startedAt": "2026-03-25T18:33:11.526Z",
-      "updatedAt": "2026-03-25T18:33:11.526Z",
-      "completedAt": null
+      "updatedAt": "2026-03-25T19:10:00.000Z",
+      "completedAt": "2026-03-25T19:10:00.000Z"
     },
     {
       "id": "US-003",

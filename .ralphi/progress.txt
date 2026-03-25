@@ -4,6 +4,10 @@
 - `insertTask()` in PortfolioTaskModelTest has an optional `$dateCompleted = 0` final parameter. All existing callers omit it safely (defaults to 0 via column DEFAULT 0).
 - Pre-existing PHPCS error in PortfolioViewControllerTest.php line 933 (inline anonymous class brace formatting) — fix on sight when editing that file.
 - API registration test is named `testRegistersAllTwentyNineJsonRpcMethods` (updated from 28). Update name + expected array when adding new JSON-RPC methods.
+- MilestoneModelTest tasks table needs `score INTEGER NOT NULL DEFAULT 0` and `time_estimated INTEGER NOT NULL DEFAULT 0` for weighted progress tests. PortfolioTaskModelTest tasks table needs `time_estimated INTEGER NOT NULL DEFAULT 0` for calculateMilestoneHealth to return time fields.
+- When extending MilestoneModel::getProgress() return array with new fields, all existing tests still pass because they check specific keys — new keys in the return array don't break assertions.
+- ConfigController getDefaultSettings/normalizeSubmittedSettings/getCurrentSettings follow a consistent pattern: add key to getDefaultSettings (int or string), getCurrentSettings handles generically, normalizeSubmittedSettings needs explicit normalization per key type.
+- Multi-line function declarations in PSR-12: `)` closing paren must be on the same line as `): ReturnType {` (i.e., `): void {` not `): void\n    {`).
 ---
 
 ## PRD Run Context
@@ -31,4 +35,36 @@ Corrective Plan: N/A
   - `computeDependencyHealth` follows the same `resolveContainerService` + `is_object/method_exists` pattern used in `getOverview` — reuse this pattern for all future dependencyModel calls
   - PHPUnit `D` markers = deprecation warnings (test passes but emits deprecation); harmless
   - Test count 151 = 147 original + 4 new — confirmed via isolated `--testdox` run
+---
+
+## 2026-03-25 - US-002
+Session: iter-5e6800ac / loop-cfe4d683
+Review Outcome: PASS
+Trajectory: ON_TRACK
+Trajectory Notes: N/A
+Corrective Plan: N/A
+- Extended `MilestoneModel::getProgress()` with optional `string $weightBy = 'count'` parameter
+- Added 'count' (backward compat), 'score' (tasks.score), 'time_estimated' (tasks.time_estimated) modes
+- Added `no_data` flag when total_score or total_time is 0
+- Added `weight_by`, `no_data`, `score_total`, `score_completed`, `time_total`, `time_completed` to return
+- Added private `normalizeWeightBy()` in MilestoneModel
+- Updated `PortfolioTaskModel::calculateMilestoneHealth()` to collect and return score_total, score_completed, time_total, time_completed
+- Updated `getMilestoneProgress` API callback in Plugin.php to accept and pass `$weight_by` parameter
+- Added `portfolio_milestone_weight_by` config setting (default 'count') to ConfigController
+- Added `normalizeWeightBy()` private method to ConfigController
+- Added dropdown (Count / Story Points / Time Estimated) to Template/config/settings.php
+- Added 4 new unit tests in MilestoneModelTest: count compat, score mode, time_estimated mode, no-data flag
+- Added 1 new test in ConfigControllerTest: testSaveNormalizesInvalidWeightByToCount
+- Updated testSaveNormalizesAndPersistsSettings to assert portfolio_milestone_weight_by saved correctly
+- Added score/time_estimated columns to MilestoneModelTest tasks CREATE TABLE
+- Added time_estimated column to PortfolioTaskModelTest tasks CREATE TABLE
+- Added 7 new translation strings to Locale/en_US/translations.php
+- Test count: 156 (151 from US-001 + 5 new)
+- Files changed: `Model/MilestoneModel.php`, `Model/PortfolioTaskModel.php`, `Plugin.php`, `Controller/ConfigController.php`, `Template/config/settings.php`, `Locale/en_US/translations.php`, `Test/Model/MilestoneModelTest.php`, `Test/Model/PortfolioTaskModelTest.php`, `Test/Controller/ConfigControllerTest.php`
+- **Learnings for future iterations:**
+  - MilestoneModelTest tasks table was minimal (id, project_id, is_active); add new columns when model methods need to read task fields
+  - PortfolioTaskModelTest::insertTask inserts explicit columns (score=0 hardcoded); adding time_estimated only needs schema DDL change since DEFAULT 0 handles inserts that omit the column
+  - getProgress() return array can safely grow with new keys — existing tests that assert specific keys are unaffected
+  - ConfigController pattern: getDefaultSettings (type determines auto-cast in getCurrentSettings), normalizeSubmittedSettings (explicit per-key), normalizeWeightBy-style validators belong in private methods
+  - Multi-line function declaration: must be `): ReturnType {` on one line per PSR-12
 ---
