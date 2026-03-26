@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.22.1] — 2026-03-25
+
+### Changed
+- Updated stale documentation references: spec version header, API method counts (28 → 31), install verification version
+
 ## [1.22.0] — 2026-03-25
 
 ### Added

@@ -1,6 +1,6 @@
 # Kanboard Portfolio Plugin — Complete Implementation Specification
 
-**Version:** 1.22.0
+**Version:** 1.22.1
 **Date:** 2026-03-25
 **Status:** Implemented — living reference document
 **Target Kanboard Version:** >= 1.2.20
@@ -2418,7 +2418,7 @@ class Plugin extends Base
 
     public function getPluginVersion()
     {
-        return '1.22.0';
+        return '1.22.1';
     }
 
     public function getPluginHomepage()
