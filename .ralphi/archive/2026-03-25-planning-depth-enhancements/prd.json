@@ -18,12 +18,9 @@
         "PHP lint, PHPCS (0 errors), and PHPStan (level 5) pass"
       ],
       "priority": 1,
-      "status": "done",
+      "status": "open",
       "dependsOn": [],
-      "notes": "The FakeDispatcher and lifecycle listener test in ApiRegistrationTest already cover basic registration. This story adds deeper behavioral validation — especially around the DependencyModel event chain and the portfolio.dependency.resolved dispatch.",
-      "startedAt": "2026-03-25T21:26:37.217Z",
-      "updatedAt": "2026-03-25T21:36:49.914Z",
-      "completedAt": "2026-03-25T21:36:49.914Z"
+      "notes": "The FakeDispatcher and lifecycle listener test in ApiRegistrationTest already cover basic registration. This story adds deeper behavioral validation — especially around the DependencyModel event chain and the portfolio.dependency.resolved dispatch."
     },
     {
       "id": "US-002",
@@ -41,12 +38,9 @@
         "All existing tests pass, PHP lint clean, PHPCS 0 errors, PHPStan clean"
       ],
       "priority": 2,
-      "status": "done",
+      "status": "open",
       "dependsOn": [],
-      "notes": "This is the highest-value template hook from Task 1 in the PRD. The task.create event listener must use $this->dispatcher->addListener() (not $this->on()). The milestone assignment uses milestoneTaskModel->add() which validates project-in-portfolio membership.",
-      "startedAt": "2026-03-25T21:36:50.107Z",
-      "updatedAt": "2026-03-25T21:50:27.941Z",
-      "completedAt": "2026-03-25T21:50:27.941Z"
+      "notes": "This is the highest-value template hook from Task 1 in the PRD. The task.create event listener must use $this->dispatcher->addListener() (not $this->on()). The milestone assignment uses milestoneTaskModel->add() which validates project-in-portfolio membership."
     },
     {
       "id": "US-003",
@@ -65,12 +59,9 @@
         "All existing tests pass, PHP lint clean, PHPCS 0 errors, PHPStan clean"
       ],
       "priority": 3,
-      "status": "done",
+      "status": "open",
       "dependsOn": [],
-      "notes": "The board:task:icons hook reuses PortfolioHelper's per-project lazy cache (same pattern as the existing board:task:footer blocked indicator). No new queries needed.",
-      "startedAt": "2026-03-25T21:50:28.439Z",
-      "updatedAt": "2026-03-25T22:02:20.069Z",
-      "completedAt": "2026-03-25T22:02:20.069Z"
+      "notes": "The board:task:icons hook reuses PortfolioHelper's per-project lazy cache (same pattern as the existing board:task:footer blocked indicator). No new queries needed."
     },
     {
       "id": "US-004",
@@ -87,12 +78,9 @@
         "All existing tests pass, PHP lint clean, PHPCS 0 errors, PHPStan clean"
       ],
       "priority": 4,
-      "status": "done",
+      "status": "open",
       "dependsOn": [],
-      "notes": "The task.move.column event provides task_id in the event data. The handler needs to resolve which milestones contain the task, then check completion status of all tasks in each milestone. Use milestoneTaskModel->getMilestones(taskId) and milestoneTaskModel->getTasks(milestoneId) for this.",
-      "startedAt": "2026-03-25T22:02:20.723Z",
-      "updatedAt": "2026-03-25T22:20:15.924Z",
-      "completedAt": "2026-03-25T22:20:15.924Z"
+      "notes": "The task.move.column event provides task_id in the event data. The handler needs to resolve which milestones contain the task, then check completion status of all tasks in each milestone. Use milestoneTaskModel->getMilestones(taskId) and milestoneTaskModel->getTasks(milestoneId) for this."
     },
     {
       "id": "US-005",
@@ -110,12 +98,9 @@
         "All existing tests pass, PHP lint clean, PHPCS 0 errors, PHPStan clean"
       ],
       "priority": 5,
-      "status": "done",
-      "dependsOn": [],
-      "notes": "These are stub listeners that provide hook points for future features. US-004 establishes the pattern for column-move event handling; this story follows the same pattern. The stubs ensure that when real functionality is added later, the event wiring is already in place and tested.",
-      "startedAt": "2026-03-25T22:20:16.793Z",
-      "updatedAt": "2026-03-25T22:31:23.599Z",
-      "completedAt": "2026-03-25T22:31:23.599Z"
+      "status": "open",
+      "dependsOn": ["US-004"],
+      "notes": "These are stub listeners that provide hook points for future features. US-004 establishes the pattern for column-move event handling; this story follows the same pattern. The stubs ensure that when real functionality is added later, the event wiring is already in place and tested."
     },
     {
       "id": "US-006",
@@ -131,12 +116,9 @@
         "PHP lint clean, PHPCS 0 errors, PHPStan clean"
       ],
       "priority": 6,
-      "status": "done",
+      "status": "open",
       "dependsOn": [],
-      "notes": "This is a performance optimization, not a behavior change. All existing tests should pass without modification. The ->in() clause generates standard SQL IN (...) which works identically on SQLite, MySQL, and PostgreSQL. For empty $projectIds arrays, PicoDb's ->in() generates IN (NULL) which matches nothing — the early return guard handles this case explicitly.",
-      "startedAt": "2026-03-25T22:31:24.254Z",
-      "updatedAt": "2026-03-25T22:43:56.234Z",
-      "completedAt": "2026-03-25T22:43:56.234Z"
+      "notes": "This is a performance optimization, not a behavior change. All existing tests should pass without modification. The ->in() clause generates standard SQL IN (...) which works identically on SQLite, MySQL, and PostgreSQL. For empty $projectIds arrays, PicoDb's ->in() generates IN (NULL) which matches nothing — the early return guard handles this case explicitly."
     },
     {
       "id": "US-007",
@@ -152,12 +134,9 @@
         "PHP lint clean, PHPCS 0 errors, PHPStan clean"
       ],
       "priority": 7,
-      "status": "done",
+      "status": "open",
       "dependsOn": [],
-      "notes": "Same pattern as US-006 but for the DependencyModel. The fallback threshold for large IN clauses prevents issues with SQLite's SQLITE_MAX_VARIABLE_NUMBER limit (default 999). For portfolios with >1000 tasks, the full-table scan is acceptable since the in-memory filtering is already fast enough.",
-      "startedAt": "2026-03-25T22:43:56.849Z",
-      "updatedAt": "2026-03-25T22:56:00.000Z",
-      "completedAt": "2026-03-25T22:56:00.000Z"
+      "notes": "Same pattern as US-006 but for the DependencyModel. The fallback threshold for large IN clauses prevents issues with SQLite's SQLITE_MAX_VARIABLE_NUMBER limit (default 999). For portfolios with >1000 tasks, the full-table scan is acceptable since the in-memory filtering is already fast enough."
     }
   ]
 }

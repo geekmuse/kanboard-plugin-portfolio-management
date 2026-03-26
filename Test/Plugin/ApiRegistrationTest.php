@@ -336,6 +336,9 @@ final class FakeDependencyModel
     /** @var array<int, int> */
     public array $linkChangedCalls = [];
 
+    /** @var array<int, int> */
+    public array $updatedCalls = [];
+
     public function onTaskClosed(int $taskId): void
     {
         $this->closedCalls[] = $taskId;
@@ -349,6 +352,105 @@ final class FakeDependencyModel
     public function onLinkChanged(int $taskId): void
     {
         $this->linkChangedCalls[] = $taskId;
+    }
+
+    public function onTaskUpdated(int $taskId): void
+    {
+        $this->updatedCalls[] = $taskId;
+    }
+}
+
+final class FakePortfolioTaskModel
+{
+    /** @var array<int, int> */
+    public array $assigneeChangedCalls = [];
+
+    public function onAssigneeChanged(int $taskId): void
+    {
+        $this->assigneeChangedCalls[] = $taskId;
+    }
+}
+
+final class FakeMilestoneTaskModel
+{
+    /**
+     * @var array<int, array{0: int, 1: int}>
+     */
+    public array $addCalls = [];
+
+    /**
+     * Milestones returned by getMilestones() — configure per-test.
+     *
+     * @var array<int, array<string, mixed>>
+     */
+    public array $milestonesForTask = [];
+
+    /**
+     * Tasks returned by getTasks() — configure per-test.
+     *
+     * @var array<int, array<string, mixed>>
+     */
+    public array $tasksForMilestone = [];
+
+    public function add(int $milestoneId, int $taskId, int $isCritical = 0, int $position = 0): bool
+    {
+        $this->addCalls[] = [$milestoneId, $taskId];
+
+        return true;
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function getMilestones(int $taskId): array
+    {
+        return $this->milestonesForTask;
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function getTasks(int $milestoneId): array
+    {
+        return $this->tasksForMilestone;
+    }
+}
+
+final class FakeMilestoneModel
+{
+    /**
+     * @var array<int, array{0: int, 1: array<string, mixed>}>
+     */
+    public array $updateCalls = [];
+
+    /**
+     * @param array<string, mixed> $values
+     */
+    public function update(int $milestoneId, array $values): bool
+    {
+        $this->updateCalls[] = [$milestoneId, $values];
+
+        return true;
+    }
+}
+
+final class FakeConfigModel
+{
+    /**
+     * @param array<string, mixed> $values
+     */
+    public function __construct(private array $values = [])
+    {
+    }
+
+    /**
+     * @param mixed $default
+     *
+     * @return mixed
+     */
+    public function get(string $key, $default = null)
+    {
+        return $this->values[$key] ?? $default;
     }
 }
 
@@ -783,6 +885,42 @@ final class ApiRegistrationTest extends TestCase
         );
     }
 
+    public function testTaskCreateListenerAddsMilestoneTask(): void
+    {
+        $milestoneTaskModel = new FakeMilestoneTaskModel();
+        $this->plugin->container['milestoneTaskModel'] = $milestoneTaskModel;
+
+        /** @var FakeDispatcher $dispatcher */
+        $dispatcher = $this->plugin->container['dispatcher'];
+        $listeners  = $dispatcher->listeners;
+
+        $this->assertArrayHasKey('task.create', $listeners, 'task.create listener must be registered');
+
+        // Listener adds task to milestone when both task_id and milestone_id are valid
+        $listeners['task.create'][0](['task_id' => 42, 'milestone_id' => 7]);
+
+        $this->assertSame([[7, 42]], $milestoneTaskModel->addCalls);
+    }
+
+    public function testTaskCreateListenerIsNoopWhenMilestoneIdMissing(): void
+    {
+        $milestoneTaskModel = new FakeMilestoneTaskModel();
+        $this->plugin->container['milestoneTaskModel'] = $milestoneTaskModel;
+
+        /** @var FakeDispatcher $dispatcher */
+        $dispatcher = $this->plugin->container['dispatcher'];
+        $listeners  = $dispatcher->listeners;
+
+        $this->assertArrayHasKey('task.create', $listeners);
+
+        // Missing milestone_id → no-op
+        $listeners['task.create'][0](['task_id' => 42]);
+        // Explicit zero milestone_id → no-op
+        $listeners['task.create'][0](['task_id' => 42, 'milestone_id' => 0]);
+
+        $this->assertSame([], $milestoneTaskModel->addCalls);
+    }
+
     public function testRepresentativeReadAndWriteCallbacksDelegateToModels(): void
     {
         $portfolioModel = new FakePortfolioModel();
@@ -846,6 +984,18 @@ final class ApiRegistrationTest extends TestCase
         // Project sidebar
         $this->assertContains('template:project:sidebar', $hookNames);
 
+        // Task creation form — milestone assignment dropdown
+        $this->assertContains('template:task:form:first-column', $hookNames);
+
+        // Task detail top — portfolio context banner
+        $this->assertContains('template:task:show:top', $hookNames);
+
+        // Project header — portfolio membership badge
+        $this->assertContains('template:project:header:after', $hookNames);
+
+        // Board card icons — blocked icon
+        $this->assertContains('template:board:task:icons', $hookNames);
+
         // Header dropdown
         $this->assertContains('template:header:dropdown:menu', $hookNames);
 
@@ -879,11 +1029,193 @@ final class ApiRegistrationTest extends TestCase
         );
         $this->assertSame(['Portfolio:widget/board_blocked_indicator'], $templateByHook['template:board:task:footer']);
         $this->assertSame(['Portfolio:widget/project_sidebar'], $templateByHook['template:project:sidebar']);
+        $this->assertSame(
+            ['Portfolio:widget/task_form_milestone_dropdown'],
+            $templateByHook['template:task:form:first-column']
+        );
         $this->assertSame(['Portfolio:widget/header_dropdown'], $templateByHook['template:header:dropdown:menu']);
         $this->assertSame(['Portfolio:widget/config_sidebar'], $templateByHook['template:config:sidebar']);
 
         // Two task-detail hooks for milestone info and dependency snippet
         $this->assertContains('Portfolio:widget/task_milestone_info', $templateByHook['template:task:details:second-column']);
         $this->assertContains('Portfolio:widget/task_dependency_snippet', $templateByHook['template:task:details:second-column']);
+
+        // Three new display-only hooks (US-003)
+        $this->assertSame(
+            ['Portfolio:widget/task_context_banner'],
+            $templateByHook['template:task:show:top']
+        );
+        $this->assertSame(
+            ['Portfolio:widget/project_header_badge'],
+            $templateByHook['template:project:header:after']
+        );
+        $this->assertSame(
+            ['Portfolio:widget/board_task_blocked_icon'],
+            $templateByHook['template:board:task:icons']
+        );
+    }
+
+    // -----------------------------------------------------------------------
+    // US-004: task.move.column — auto-complete milestones
+    // -----------------------------------------------------------------------
+
+    public function testTaskMoveColumnListenerAutoCompletesMilestoneWhenAllTasksDone(): void
+    {
+        // Set up milestoneTaskModel: task 42 is in milestone 10 (status=1, not yet done);
+        // both tasks in that milestone are closed (is_active=0).
+        $milestoneTaskModel = new FakeMilestoneTaskModel();
+        $milestoneTaskModel->milestonesForTask = [
+            ['id' => 10, 'status' => 1],
+        ];
+        $milestoneTaskModel->tasksForMilestone = [
+            ['id' => 5, 'is_active' => 0],
+            ['id' => 6, 'is_active' => 0],
+        ];
+
+        $milestoneModel = new FakeMilestoneModel();
+
+        $this->plugin->container['milestoneTaskModel'] = $milestoneTaskModel;
+        $this->plugin->container['milestoneModel']     = $milestoneModel;
+
+        /** @var FakeDispatcher $dispatcher */
+        $dispatcher = $this->plugin->container['dispatcher'];
+        $listeners  = $dispatcher->listeners;
+
+        $this->assertArrayHasKey('task.move.column', $listeners, 'task.move.column listener must be registered');
+
+        // Simulate task 42 moving to a "Done" column
+        $listeners['task.move.column'][0](['task_id' => 42, 'column_title' => 'Done']);
+
+        // Milestone 10 should be updated to status=0 (completed)
+        $this->assertSame([[10, ['status' => 0]]], $milestoneModel->updateCalls);
+    }
+
+    public function testTaskMoveColumnListenerNoopWhenConfigDisabled(): void
+    {
+        $milestoneTaskModel = new FakeMilestoneTaskModel();
+        $milestoneTaskModel->milestonesForTask = [
+            ['id' => 10, 'status' => 1],
+        ];
+        $milestoneTaskModel->tasksForMilestone = [
+            ['id' => 5, 'is_active' => 0],
+        ];
+
+        $milestoneModel = new FakeMilestoneModel();
+        $configModel    = new FakeConfigModel(['portfolio_auto_complete_milestones' => 0]);
+
+        $this->plugin->container['milestoneTaskModel'] = $milestoneTaskModel;
+        $this->plugin->container['milestoneModel']     = $milestoneModel;
+        $this->plugin->container['configModel']        = $configModel;
+
+        /** @var FakeDispatcher $dispatcher */
+        $dispatcher = $this->plugin->container['dispatcher'];
+        $listeners  = $dispatcher->listeners;
+
+        // Config disabled → listener must be a no-op
+        $listeners['task.move.column'][0](['task_id' => 42, 'column_title' => 'Done']);
+
+        $this->assertSame([], $milestoneModel->updateCalls);
+    }
+
+    public function testTaskMoveColumnListenerNoopWhenOtherTasksStillActive(): void
+    {
+        $milestoneTaskModel = new FakeMilestoneTaskModel();
+        $milestoneTaskModel->milestonesForTask = [
+            ['id' => 10, 'status' => 1],
+        ];
+        $milestoneTaskModel->tasksForMilestone = [
+            ['id' => 5, 'is_active' => 0],
+            ['id' => 6, 'is_active' => 1], // still active — milestone must NOT be completed
+        ];
+
+        $milestoneModel = new FakeMilestoneModel();
+
+        $this->plugin->container['milestoneTaskModel'] = $milestoneTaskModel;
+        $this->plugin->container['milestoneModel']     = $milestoneModel;
+
+        /** @var FakeDispatcher $dispatcher */
+        $dispatcher = $this->plugin->container['dispatcher'];
+        $listeners  = $dispatcher->listeners;
+
+        $listeners['task.move.column'][0](['task_id' => 42, 'column_title' => 'Done']);
+
+        // At least one task is still active — milestone must not be auto-completed
+        $this->assertSame([], $milestoneModel->updateCalls);
+    }
+
+    // -----------------------------------------------------------------------
+    // US-005: task.update and task.assignee_change listeners
+    // -----------------------------------------------------------------------
+
+    public function testTaskUpdateListenerDelegatesToDependencyModelOnTaskUpdated(): void
+    {
+        $dependencyModel = new FakeDependencyModel();
+        $this->plugin->container['dependencyModel'] = $dependencyModel;
+
+        /** @var FakeDispatcher $dispatcher */
+        $dispatcher = $this->plugin->container['dispatcher'];
+        $listeners  = $dispatcher->listeners;
+
+        $this->assertArrayHasKey('task.update', $listeners, 'task.update listener must be registered');
+
+        // Valid task_id → delegates to DependencyModel::onTaskUpdated()
+        $listeners['task.update'][0](['task_id' => 55]);
+
+        $this->assertSame([55], $dependencyModel->updatedCalls);
+    }
+
+    public function testTaskUpdateListenerIsNoopWhenTaskIdMissing(): void
+    {
+        $dependencyModel = new FakeDependencyModel();
+        $this->plugin->container['dependencyModel'] = $dependencyModel;
+
+        /** @var FakeDispatcher $dispatcher */
+        $dispatcher = $this->plugin->container['dispatcher'];
+        $listeners  = $dispatcher->listeners;
+
+        $this->assertArrayHasKey('task.update', $listeners);
+
+        // Missing task_id → no-op
+        $listeners['task.update'][0]([]);
+        // Explicit zero → no-op
+        $listeners['task.update'][0](['task_id' => 0]);
+
+        $this->assertSame([], $dependencyModel->updatedCalls);
+    }
+
+    public function testTaskAssigneeChangeListenerDelegatesToPortfolioTaskModelOnAssigneeChanged(): void
+    {
+        $portfolioTaskModel = new FakePortfolioTaskModel();
+        $this->plugin->container['portfolioTaskModel'] = $portfolioTaskModel;
+
+        /** @var FakeDispatcher $dispatcher */
+        $dispatcher = $this->plugin->container['dispatcher'];
+        $listeners  = $dispatcher->listeners;
+
+        $this->assertArrayHasKey('task.assignee_change', $listeners, 'task.assignee_change listener must be registered');
+
+        // Valid task_id → delegates to PortfolioTaskModel::onAssigneeChanged()
+        $listeners['task.assignee_change'][0](['task_id' => 73]);
+
+        $this->assertSame([73], $portfolioTaskModel->assigneeChangedCalls);
+    }
+
+    public function testTaskAssigneeChangeListenerIsNoopWhenTaskIdMissing(): void
+    {
+        $portfolioTaskModel = new FakePortfolioTaskModel();
+        $this->plugin->container['portfolioTaskModel'] = $portfolioTaskModel;
+
+        /** @var FakeDispatcher $dispatcher */
+        $dispatcher = $this->plugin->container['dispatcher'];
+        $listeners  = $dispatcher->listeners;
+
+        $this->assertArrayHasKey('task.assignee_change', $listeners);
+
+        // Missing task_id → no-op
+        $listeners['task.assignee_change'][0]([]);
+        // Explicit zero → no-op
+        $listeners['task.assignee_change'][0](['task_id' => 0]);
+
+        $this->assertSame([], $portfolioTaskModel->assigneeChangedCalls);
     }
 }

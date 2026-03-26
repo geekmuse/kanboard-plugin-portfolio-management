@@ -694,7 +694,8 @@ class PortfolioTaskModel extends Base
         $hasDependenciesFilter = $this->resolveBooleanFilter($filters['has_dependencies'] ?? null) === true;
 
         try {
-            $taskRows = $this->db->table('tasks')->findAll();
+            // Scope to portfolio projects only — avoids full-table scan on large instances
+            $taskRows = $this->db->table('tasks')->in('project_id', $projectIds)->findAll();
         } catch (Throwable $exception) {
             return [];
         }
@@ -886,8 +887,10 @@ class PortfolioTaskModel extends Base
             return $stats;
         }
 
+        // Scope link rows to portfolio task IDs only — avoids full-table scan
+        $scopedTaskIds = array_keys($stats);
         try {
-            $taskLinks = $this->db->table('task_has_links')->findAll();
+            $taskLinks = $this->db->table('task_has_links')->in('task_id', $scopedTaskIds)->findAll();
         } catch (Throwable $exception) {
             return $stats;
         }
@@ -1363,6 +1366,26 @@ class PortfolioTaskModel extends Base
             'time_total' => $timeTotal,
             'time_completed' => $timeCompleted,
         ];
+    }
+
+    /**
+     * Hook point for future real-time workload recalculation.
+     *
+     * Called when a task's assignee changes for a task that belongs to one or
+     * more portfolios. Currently a no-op stub. Future implementation should
+     * invalidate or update the per-portfolio workload summary (getWorkload())
+     * so that workload dashboards reflect the new assignment without a full
+     * re-query of all portfolio tasks.
+     *
+     * TODO: Implement workload cache invalidation once a caching layer is added.
+     */
+    public function onAssigneeChanged(int $taskId): void
+    {
+        if ($taskId <= 0) {
+            return;
+        }
+
+        // No-op stub: future implementation will invalidate workload cache.
     }
 
     private function getConfigValueAsInt(string $key, int $default): int

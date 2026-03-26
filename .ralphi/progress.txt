@@ -1,278 +1,189 @@
 ## Codebase Patterns
-- Roadmap controller pattern: use `getPortfolioMilestones()` (milestoneModel) + `milestoneTaskModel->getTasks()` per milestone for start_date (min date_due). Delegate progress to `milestoneModel->getProgress()`. Compute health inline in `computeMilestoneHealth()` with fixed 7-day/80% thresholds (no config needed for roadmap health).
-- `json_encode(60.0)` without `JSON_PRESERVE_ZERO_FRACTION` produces `60` (integer) in JSON. `json_decode` then returns `int(60)`. In tests: use `assertEquals` (type-flexible) not `assertSame` when asserting percent/float values decoded from JSON.
-- Route registration test (`testRegistersPortfolioCrudRoutes`) uses `array_slice(..., 0, N)` — update N when adding routes. After US-008: N=20. roadmap route is at index 9 (after timeline, before gantt).
-- `PortfolioViewFakeMilestoneModel` now has a 2nd constructor param `$progressByMilestone = []` and a `getProgress(int $milestoneId, string $weightBy = 'count'): ?array` method. All existing tests omit the 2nd param safely.
-- `getWorkload()` uses the same accumulator-style pattern as `buildTaskDependencyStats()`: initialize per-owner_id sub-arrays once, then mutate with `++$accumulators[$ownerId]['field']`. PHPStan level 5 allows `++` on inferred-int fields in such arrays without explicit `@var` annotation.
-- For per-user project breakdowns in workload accumulators: extract `$ownerProjects = (array) $accumulators[$ownerId]['projects']`, modify it, then reassign back. PHPStan flags `is_array(...) ? ... : []` as always-true when the value was initialized as `[]` — use `(array) $value` cast instead.
-- API registration test name after US-006: `testRegistersAllThirtyOneJsonRpcMethods` (31 methods). Update name + expected array when adding new JSON-RPC methods.
-- `time_spent INTEGER NOT NULL DEFAULT 0` must be in the test tasks table DDL for workload tests that check `total_spent_hours`. `insertTask()` omits it (defaults to 0 from schema).
-- Workload unassigned bucket: after extracting from `$accumulators[0]`, unset `user_id`, `username`, `name` keys before returning — the API contract for unassigned omits user identity fields.
-- `buildEmptyWorkloadResult()` helper returns the canonical empty workload structure — reuse it in all early-return paths of `getWorkload()`.
+- `DependencyTestQueryBuilder` in DependencyModelTest now has `in()` method (same shape as `PortfolioTaskTestQueryBuilder`): stores `operator='IN'` + value array; `buildWhereClause()` dispatches on `IN` vs scalar operator. Follow this pattern for any new IN-clause needs in DependencyModel tests.
+- `getDependencies()` IN-scoping pattern: fetch portfolio task IDs from `tasks->in('project_id', $projectIds)`, guard empty result, then use `task_has_links->in('task_id', $portfolioTaskIds)` with >1000 fallback to full-table scan. Same two-step pattern as `buildFilteredTaskRows()` + `buildTaskDependencyStats()` in PortfolioTaskModel.
+
+- `task.update` and `task.assignee_change` stub listeners follow the same pattern as other lifecycle listeners: read task_id, guard `<= 0`, delegate to model method. The model method itself is a no-op stub documented with TODO for future implementation.
+- `FakePortfolioTaskModel` in ApiRegistrationTest: exposes `$assigneeChangedCalls[]` public array; set in container after `initialize()` for listener tests. Same pattern as `FakeDependencyModel`.
+- `FakeDependencyModel::$updatedCalls[]` records `onTaskUpdated` call arguments (int task_id) — same pattern as existing `closedCalls`, `openedCalls`, `linkChangedCalls` arrays.
+- Pre-commit phpstan timeout pattern confirmed again: warm the Docker image with one manual `bash scripts/docker-phpstan.sh` run before committing when image is cold.
+- `task.move.column` event listener pattern: read `column_title` from event (lowercase/trim), check against `$donePatterns` with `str_contains`, then check all milestone tasks for `is_active=0`. Fall back to DB lookup via `column_id` if column_title is empty. Guard order: task_id → config → done-column → milestone lookup.
+- `FakeMilestoneTaskModel` in ApiRegistrationTest now supports `getMilestones()` and `getTasks()` via `$milestonesForTask` / `$tasksForMilestone` public arrays. Set these before invoking the listener under test.
+- `FakeMilestoneModel` in ApiRegistrationTest records `update()` calls in `$updateCalls` as `[$milestoneId, $values]` tuples — same pattern as `FakePortfolioModel::$updateCalls`.
+- `FakeConfigModel` in ApiRegistrationTest: construct with `['key' => value]` map; `get($key, $default)` returns configured value or default. Set `$this->plugin->container['configModel']` after `initialize()` to override config for specific tests.
+- Pre-commit hook (ralphi check) can timeout on phpstan if Docker image is cold; run `ralphi check` manually first to warm the image, then commit.
 
 
-- For `git commit` to succeed when the pre-commit hook runs `ralphi check` + phpstan Docker (which takes ~46s), call `git commit` with `timeout: 300` in the Bash tool. Using the default 30s timeout causes the tool to report "Command timed out" even though the commit may be in progress.
-
-- `docker-phpstan.sh` requires `--memory-limit=512M` flag; the default 128M container limit causes a crash/timeout. Fixed in scripts/docker-phpstan.sh — always use the updated script.
-- `project_activities` table schema for tests: `id INTEGER PRIMARY KEY AUTOINCREMENT, project_id, task_id, event_name TEXT, creator_id INTEGER, date_creation INTEGER, data TEXT`. The defensive try/catch in `getActivity()` handles both missing-table and wrong-table-name cases.
-- `getActivity()` follows the same in-memory scan pattern as `buildFilteredTaskRows()`: fetch all rows from the table, filter by projectScope map, then sort/paginate. This is consistent cross-driver behavior without raw SQL JOINs or IN clauses.
-- API registration test name tracks method count: after US-004 it is `testRegistersAllThirtyJsonRpcMethods` (30 methods). Update name + expected array when adding new JSON-RPC methods.
-- GET forms in templates use `$this->url->href(...)` as action; in real Kanboard path-based routing preserves controller/action/plugin in the URL path, so form fields only need to carry non-routing params. Follow the same pattern as `Template/portfolio/tasks.php` filter form.
-- For MilestoneControllerFakeMilestoneModel: when extending `getProgress()` to accept `$weightBy`, add a separate `getProgressWeightByCalls: array<int, string>` so existing tests that assert `getProgressCalls` (milestone IDs) still pass.
-- `MilestoneController::getMilestoneProgress()` fallback array should mirror all keys returned by `MilestoneModel::getProgress()` (incl. `no_data`, `weight_by`, `score_*`, `time_*`) so `array_merge($fallback, $progress)` always produces a complete result regardless of what the model returns.
-- All model methods that delegate to dependencyModel use `resolveContainerService('dependencyModel')` + `is_object() && method_exists()` guard + `try/catch Throwable`. PHPStan level 5 is satisfied because `is_object()` narrows `mixed` to `object`.
-- The test harness for PortfolioTaskModel: create stub classes in the same file (PSR1.Classes.ClassDeclaration is relaxed for Test/), use in-memory SQLite with manual DDL in setUp(). Pass overrides via `createModel(['serviceKey' => $stub])`.
-- `insertTask()` in PortfolioTaskModelTest has an optional `$dateCompleted = 0` final parameter. All existing callers omit it safely (defaults to 0 via column DEFAULT 0).
-- Pre-existing PHPCS error in PortfolioViewControllerTest.php line 933 (inline anonymous class brace formatting) — fix on sight when editing that file.
-- API registration test is named `testRegistersAllTwentyNineJsonRpcMethods` (updated from 28). Update name + expected array when adding new JSON-RPC methods.
-- MilestoneModelTest tasks table needs `score INTEGER NOT NULL DEFAULT 0` and `time_estimated INTEGER NOT NULL DEFAULT 0` for weighted progress tests. PortfolioTaskModelTest tasks table needs `time_estimated INTEGER NOT NULL DEFAULT 0` for calculateMilestoneHealth to return time fields.
-- When extending MilestoneModel::getProgress() return array with new fields, all existing tests still pass because they check specific keys — new keys in the return array don't break assertions.
-- ConfigController getDefaultSettings/normalizeSubmittedSettings/getCurrentSettings follow a consistent pattern: add key to getDefaultSettings (int or string), getCurrentSettings handles generically, normalizeSubmittedSettings needs explicit normalization per key type.
-- Multi-line function declarations in PSR-12: `)` closing paren must be on the same line as `): ReturnType {` (i.e., `): void {` not `): void\n    {`).
+- Task form hooks use `template:task:form:first-column` to inject fields into Kanboard's task creation form; `params['project_id']` carries the project context (also check `params['task']['project_id']` defensively).
+- `task.create` event receives all form values including custom fields added by hook templates; listener can read `$event['milestone_id']` to process post-creation side effects.
+- Widget templates that receive pre-fetched data via `attachCallable` follow the pattern: check `! empty($varName)` at top → render content → close endif; this keeps templates minimal and testable.
+- New FakeMilestoneTaskModel in ApiRegistrationTest: `$addCalls[]` records `[$milestoneId, $taskId]` tuples; set in container after `initialize()` for listener behavioral tests.
+- Event listener tests: use FakeDispatcher.listeners[eventName][0](array) to invoke registered callbacks with an ArrayAccess-compatible plain array (no Kanboard runtime needed).
+- DependencyModel event chain: `onTaskClosed` calls `dispatchDependencyResolvedEvent` which routes through the container's 'dispatcher' service (if it has a `dispatch()` method) — use DependencyTestEventDispatcher or FakeDispatcher in tests.
+- Deep behavioral tests for Plugin event wiring live in `Test/Plugin/ApiRegistrationTest.php`; per-method DependencyModel behaviour tests live in `Test/Model/DependencyModelTest.php`.
+- When an acceptance criterion is already satisfied by an existing test, verify the mapping explicitly, run all quality gates, and mark the story done without adding redundant tests.
+- `template:task:show:top` and `template:project:header:after` hooks receive `params['task']`/`params['project']` respectively — use the same defensive `$params['task'] ?? $params` and `$params['project'] ?? $params` patterns as other task/project hooks.
+- `template:board:task:icons` callable is identical to `board:task:footer` callable — same config check, same `portfolioHelper->isTaskBlocked()` call, same `$params['task'] ?? $params` param extraction. PortfolioHelper lazy-loads per project on first call, so the second hook (icons) hits cache when footer already ran.
+- When adding new template hooks to ApiRegistrationTest: update BOTH `testRegistersAllRequiredTemplateHooks` (assertContains checks) AND `testTemplateHooksPointToCorrectWidgetTemplates` (assertSame on templateByHook map).
 ---
-
----
-
-## 2026-03-25 - US-009
-Session: iter-d0c9d6c3 / loop-cfe4d683
-Review Outcome: PASS
-Trajectory: ON_TRACK
-Trajectory Notes: N/A
-Corrective Plan: N/A
-- Added `renderRoadmap(container, data)` to `Asset/js/portfolio-gantt.js` — D3 v7 based, ES5-compatible
-- Each milestone renders as a horizontal bar from `start_date` to `end_date` on a time scale
-- Bar rendering: background rect (22% opacity), progress fill rect (75% opacity), border outline, percent label inside when wide enough
-- Health colors: `#22c55e` on_track, `#eab308` at_risk, `#ef4444` overdue
-- Left label panel: milestone name (truncated at 24 chars with ellipsis) + health status dot per row
-- Vertical today line (dashed red, `stroke-dasharray: 5 4`) + "Today" text label
-- Click navigation via `.datum({ id })` binding on transparent hit rect → `?controller=MilestoneController&action=show&milestone_id=X&plugin=Portfolio`
-- D3 `axisBottom(xScale)` with auto-tick density (`Math.min(8, floor(innerW / 80))`) for month/week labels
-- Responsive: `Math.max(container.offsetWidth || 900, 500)` sets container width
-- DOMContentLoaded handler added: reads `portfolio-roadmap-chart` element, parses `data-roadmap` attribute, calls `renderRoadmap()`
-- `window.PortfolioGantt.renderRoadmap` exposed in public API
-- Added roadmap legend HTML to `Template/portfolio/roadmap.php`: On Track / At Risk / Overdue dots + Today dashed line indicator
-- Added `portfolio-roadmap-` CSS classes to `Asset/css/portfolio.css`: chart, SVG, grid lines, axis, today line/label, bar variants, label, health dot, legend/legend-item/legend-dot/legend-today
-- Added `'Today' => 'Today'` to `Locale/en_US/translations.php` (legend label)
-- Test count: 172 (unchanged — US-009 is client-side only, no PHP changes); all 172 pass, 978 assertions
-- Files changed: `Asset/js/portfolio-gantt.js`, `Asset/css/portfolio.css`, `Template/portfolio/roadmap.php`, `Locale/en_US/translations.php`
-- **Learnings for future iterations:**
-  - ES5 click handlers in D3 for-loops: use `.datum({ id: ms.id, ... })` on the hit element and `function(event, d) { ... d.id ... }` in the handler — avoids closure-captured var issues from loop variables
-  - D3 v7 event handlers: `(event, datum)` signature; `event` is first, `datum` is second
-  - Clip path IDs in SVG must be unique per page — use element-specific IDs (e.g., `roadmap-clip` vs `gantt-clip`) when multiple D3 charts coexist on the same page
-  - For transparent click areas on top of visual elements: use `attr('fill', 'transparent')` (not `attr('opacity', 0)`) so the element still captures mouse events
-  - Legend HTML in templates: use `<span>` elements with CSS dots (not SVG) for simpler portable markup; translate label text via `t()` in PHP
----
-
-## 2026-03-25 - US-008
-Session: iter-edcd8a54 / loop-cfe4d683
-Review Outcome: PASS
-Trajectory: ON_TRACK
-Trajectory Notes: N/A
-Corrective Plan: N/A
-- Added `roadmap()` public action to `PortfolioViewController` — fetches portfolio, calls `getPortfolioMilestones()`, builds roadmap items, renders template
-- Added `buildRoadmapItems(array $milestones): array` private method — filters milestones without target_date, queries milestoneTaskModel for each (start_date = min date_due, task_count = count), gets percent from `milestoneModel->getProgress()`, computes health via `computeMilestoneHealth()`
-- Added `computeMilestoneHealth(float $percent, int $targetDate, int $now): string` private method — returns 'overdue', 'at_risk', or 'on_track' using fixed 7-day/80% thresholds
-- Each roadmap item: id, name, color_id, start_date (earliest task due date or falls back to target_date), end_date (target_date), percent, health, task_count
-- Registered route `/portfolio/:portfolio_id/roadmap` → `PortfolioViewController::roadmap()` in Plugin.php (after timeline, before gantt; index 9)
-- Access covered by existing `'PortfolioViewController', '*', Role::APP_USER` — no new access map entry
-- Added 'Roadmap' link to `Template/portfolio/_sidebar.php` after Timeline entry (active when `$sidebar_active === 'roadmap'`)
-- Created `Template/portfolio/roadmap.php`: chart container with `data-roadmap` attribute (same pattern as gantt.php), loads D3 + portfolio-gantt.js, empty state when `$has_items` is false
-- Added 3 translation strings: 'Roadmap', 'Portfolio Roadmap', empty-state message
-- Extended `PortfolioViewFakeMilestoneModel` with 2nd constructor param `$progressByMilestone = []` and `getProgress(int $milestoneId, string $weightBy = 'count'): ?array` method + `getProgressCalls` tracker
-- Added 3 controller tests: `testRoadmapRendersItemsWithCorrectDataStructure` (verifies JSON structure, fields, health, start_date fallback, template rendered), `testRoadmapRedirectsWhenPortfolioNotFound` (redirect + flash), `testRoadmapShowsEmptyStateWhenNoMilestonesHaveTargetDates` (empty state)
-- Updated `ApiRegistrationTest::testRegistersPortfolioCrudRoutes` to include roadmap route and changed `array_slice(..., 0, 19)` to `array_slice(..., 0, 20)`
-- Test count: 172 (169 from US-007 + 3 new); 978 assertions; 0 errors; 1 pre-existing deprecation
-- Fixed test assertion: used `assertEquals` (not `assertSame`) for percent float decoded from JSON (PHP json_encode without JSON_PRESERVE_ZERO_FRACTION outputs `60` not `60.0`)
-- Files changed: `Controller/PortfolioViewController.php`, `Plugin.php`, `Template/portfolio/_sidebar.php`, `Template/portfolio/roadmap.php` (new), `Locale/en_US/translations.php`, `Test/Controller/PortfolioViewControllerTest.php`, `Test/Plugin/ApiRegistrationTest.php`
-- **Learnings for future iterations:**
-  - `json_encode(float)` without `JSON_PRESERVE_ZERO_FRACTION` drops `.0` for whole-number floats. Use `assertEquals` in tests when asserting numeric values decoded from JSON.
-  - Route registration test: `array_slice(..., 0, N)` — N must be updated when inserting routes. roadmap is at index 9 (0-based), so N went from 19 to 20.
-  - `PortfolioViewFakeMilestoneModel` now has `getProgress()` — safe to use in roadmap tests without touching other tests (default 2nd param is `[]`).
----
-
-## 2026-03-25 - US-006
-Session: iter-0b61c12a / loop-cfe4d683
-Review Outcome: PASS
-Trajectory: ON_TRACK
-Trajectory Notes: N/A
-Corrective Plan: N/A
-- Added `getWorkload(int $portfolioId): array` to `PortfolioTaskModel`
-- Method fetches all tasks in portfolio member projects, builds dependency stats via existing `buildTaskDependencyStats()`, groups by `owner_id` into accumulators
-- Each user entry: user_id, username, name, task_count, active_task_count, overdue_task_count, blocked_task_count, total_score, total_estimated_hours, total_spent_hours, projects[] breakdown
-- Overdue: `$isActive && $dateDue > 0 && $dateDue < $now`
-- Blocked count from `buildTaskDependencyStats()` `blocked_by_count` field
-- Unassigned bucket (owner_id=0): same counts but no user identity fields (user_id/username/name unset before return)
-- Users sorted alphabetically by name for determinism
-- Added `buildEmptyWorkloadResult()` private helper for all early-return paths
-- Registered `getPortfolioWorkload` JSON-RPC callback in Plugin.php (read-only, no apiAccessMap entry) — 31st method
-- Added `portfolio_workload_threshold` config setting (int, default 15) to ConfigController `getDefaultSettings()` and `normalizeSubmittedSettings()`
-- Added threshold number input to `Template/config/settings.php` (min 1, max 500)
-- Added 2 translation strings to `Locale/en_US/translations.php`
-- Added `time_spent INTEGER NOT NULL DEFAULT 0` to PortfolioTaskModelTest tasks DDL
-- Added 3 workload unit tests: `testGetWorkloadReturnsEmptyResultForPortfolioWithNoProjects`, `testGetWorkloadAggregatesMetricsPerUserWithOverdueAndBlocked`, `testGetWorkloadGroupsUnassignedTasksSeparately`
-- Added 1 ConfigControllerTest: `testSaveNormalizesOutOfRangeWorkloadThresholdToDefault`; updated `testSaveNormalizesAndPersistsSettings` to assert `portfolio_workload_threshold` saved correctly
-- Updated ApiRegistrationTest to expect 31 methods (`testRegistersAllThirtyOneJsonRpcMethods`)
-- Fixed PHPStan "else branch always true" errors: replaced `is_array($x) ? $x : []` with `(array) $x` for projects sub-arrays already known to be arrays
-- Test count: 167 (163 from US-005 + 4 new); 944 assertions; 0 errors; 1 pre-existing deprecation
-- Files changed: `Model/PortfolioTaskModel.php`, `Plugin.php`, `Controller/ConfigController.php`, `Template/config/settings.php`, `Locale/en_US/translations.php`, `Test/Model/PortfolioTaskModelTest.php`, `Test/Plugin/ApiRegistrationTest.php`, `Test/Controller/ConfigControllerTest.php`
-- **Learnings for future iterations:**
-  - PHPStan flags `is_array($arr) ? $arr : []` as "else branch always true" when PHPStan already knows `$arr` is an array (e.g., from `@var` annotation or initialization context). Use `(array) $arr` cast instead.
-  - For accumulator patterns with mixed-key sub-arrays, avoid `@var array<int, array<string, mixed>>` on the outer array if you also use `++` on inner keys — let PHPStan infer from initialization to get precise types.
-  - Always unset identity fields (user_id/username/name) from the unassigned bucket before returning — the API contract intentionally omits them for owner_id=0.
----
-
-## 2026-03-25 - US-005
-Session: iter-0951cd49 / loop-cfe4d683
-Review Outcome: PASS
-Trajectory: ON_TRACK
-Trajectory Notes: N/A
-Corrective Plan: N/A
-- Updated `PortfolioViewController::show()` to call `getPortfolioActivity($portfolioId, 10)` and pass `activities` to template
-- Added private `getPortfolioActivity(int $portfolioId, int $limit = 10): array` helper method following the same `is_object()` + `method_exists()` + null-safe pattern used throughout the controller
-- Added 'Recent Activity' section to `Template/portfolio/show.php` below Milestone Health section
-- Section shows: date, event_name, task link (TaskViewController::show with task_id+project_id), project_name
-- Empty state: "No recent activity." in `<p class="alert portfolio-activity-empty">`
-- All CSS classes prefixed with `portfolio-activity-`: table, row, date, event, task, project, empty
-- All output escaped via `$this->text->e()`; all strings wrapped in `t()`
-- Added 3 translation strings to `Locale/en_US/translations.php`: 'Recent Activity', 'No recent activity.', 'Event'
-- Added `getActivity()` method + `activityCalls` tracking + `$activities` constructor param to `PortfolioViewFakePortfolioTaskModel` (new 4th param with default `[]` — fully backward compatible)
-- Added 2 controller tests: `testPortfolioDashboardPassesActivitiesToTemplate` (verifies activity data passthrough + HTML rendering), `testPortfolioDashboardShowsEmptyActivityStateWhenNoActivities` (verifies empty state)
-- Fixed pre-existing PHPCS brace error: `new class\n{` → `new class {` in `buildServices()` userModel entry
-- Test count: 163 (161 from US-004 + 2 new); 897 assertions; 0 errors; 1 pre-existing deprecation
-- Files changed: `Controller/PortfolioViewController.php`, `Template/portfolio/show.php`, `Locale/en_US/translations.php`, `Test/Controller/PortfolioViewControllerTest.php`
-- **Learnings for future iterations:**
-  - `git commit` requires `timeout: 300` in the Bash tool call — phpstan Docker takes ~46s, so default 30s tool timeout kills the process
-  - `PortfolioViewFakePortfolioTaskModel` now has a 4th constructor param `$activities = []` — add it when constructing in tests that need activity data
-  - Template defensive pattern for optional controller vars: `$activityList = is_array($activities ?? null) ? ($activities ?? []) : [];`
-  - The `activityCalls` tracking array records `portfolio_id` and `limit` (not `offset`) — consistent with how other call trackers in the fake model work
----
-
-## 2026-03-25 - US-004
-Session: iter-b3a3e465 / loop-cfe4d683
-Review Outcome: PASS
-Trajectory: ON_TRACK
-Trajectory Notes: N/A
-Corrective Plan: N/A
-- Added `getActivity(int $portfolioId, int $limit = 25, int $offset = 0): array` to `PortfolioTaskModel`
-- Method fetches all `project_activities` rows, filters to portfolio-member projects in-memory, enriches with `project_name` from projects table, sorts by `date_creation DESC`, paginates with clamped limit [1, 100]
-- Defensive try/catch returns [] if `project_activities` table doesn't exist
-- Registered `getPortfolioActivity` JSON-RPC callback in Plugin.php (read-only, no apiAccessMap entry)
-- Added `project_activities` table DDL to `PortfolioTaskModelTest` `setUp()`
-- Added `insertActivity()` helper method to test class
-- Added 3 unit tests: `testGetActivityReturnsEmptyArrayForPortfolioWithNoProjects`, `testGetActivityReturnsActivitiesEnrichedWithProjectName`, `testGetActivityPaginatesResults`
-- Updated `ApiRegistrationTest` to expect 30 methods (`testRegistersAllThirtyJsonRpcMethods`) — added `getPortfolioActivity` to expected array
-- Fixed `scripts/docker-phpstan.sh` to use `--memory-limit=512M` (default 128M caused OOM crash)
-- Test count: 161 (158 from US-003 + 3 new); 882 assertions; 0 errors
-- Files changed: `Model/PortfolioTaskModel.php`, `Plugin.php`, `Test/Model/PortfolioTaskModelTest.php`, `Test/Plugin/ApiRegistrationTest.php`, `scripts/docker-phpstan.sh`
-- **Learnings for future iterations:**
-  - `scripts/docker-phpstan.sh` now uses `--memory-limit=512M` — this is already applied, no action needed
-  - `getActivity()` uses the same in-memory scan pattern as other PortfolioTaskModel methods; do not try to use PicoDb JOINs or IN clauses
-  - `project_activities` test schema: use AUTOINCREMENT on id (for insert tests without explicit id) or explicit id (as done here for clarity in assertions)
-  - API test: always sync test name and expected array length when adding new JSON-RPC methods
 
 ## PRD Run Context
-PRD Branch: ralph/planning-depth-enhancements
-Started: 2026-03-25T18:16:45.763Z
+PRD Branch: ralph/code-health-integration
+Started: 2026-03-25T21:26:36.616Z
 ---
 
-## 2026-03-25 - US-001
-Session: iter-a0a0b260 / loop-cfe4d683
+## 2026-03-25 — US-001
+Session: N/A
 Review Outcome: PASS
 Trajectory: ON_TRACK
 Trajectory Notes: N/A
 Corrective Plan: N/A
-- Added `getStatusReport(int $portfolioId, int $periodDays = 7): array` to `PortfolioTaskModel`
-- Added 4 private helpers: `filterCompletedTasksInPeriod`, `buildCriticalBlockers`, `buildAtRiskItems`, `computeDependencyHealth`
-- Registered `getPortfolioStatusReport` JSON-RPC callback in `Plugin.php` (read-only, no apiAccessMap entry)
-- Added 4 unit tests to `PortfolioTaskModelTest`: empty portfolio zeros, period filtering, custom period_days, dependency health stub
-- Added `date_completed INTEGER NOT NULL DEFAULT 0` to test schema; added optional `$dateCompleted = 0` param to `insertTask()`
-- Added `PortfolioTaskDependencyModelStub` for dependency health testing
-- Updated `ApiRegistrationTest` to expect 29 methods (was 28)
-- Fixed pre-existing PSR-12 error in `PortfolioViewControllerTest.php` line 933 (inline anonymous class brace)
-- Files changed: `Model/PortfolioTaskModel.php`, `Plugin.php`, `Test/Model/PortfolioTaskModelTest.php`, `Test/Plugin/ApiRegistrationTest.php`, `Test/Controller/PortfolioViewControllerTest.php`
+- Verified all 8 acceptance criteria are already satisfied by existing tests:
+  - Criteria 1–4 (listener wiring + task_id delegation): `testRegistersDependencyLifecycleListenersAndDelegatesToDependencyModel` in `Test/Plugin/ApiRegistrationTest.php`
+  - Criterion 5 (portfolio.dependency.resolved dispatch): `testOnTaskClosedFiresDependencyResolvedEvent` in `Test/Model/DependencyModelTest.php`
+  - Criteria 6–8 (stubs only, 172 tests pass, PHPCS/PHPStan/lint clean): confirmed by running all quality gates
+- No source code changes were required; the tests were implemented as part of the v1.21.0 planning work.
+- Files verified (no edits needed): `Test/Plugin/ApiRegistrationTest.php`, `Test/Model/DependencyModelTest.php`
 - **Learnings for future iterations:**
-  - The tasks table needs `date_completed` in the test schema to support completion-based filtering
-  - `computeDependencyHealth` follows the same `resolveContainerService` + `is_object/method_exists` pattern used in `getOverview` — reuse this pattern for all future dependencyModel calls
-  - PHPUnit `D` markers = deprecation warnings (test passes but emits deprecation); harmless
-  - Test count 151 = 147 original + 4 new — confirmed via isolated `--testdox` run
+  - The PRD notes section may describe prior state ("already covers X"); always check acceptance criteria directly against existing code/tests before writing new code.
+  - `testRegistersDependencyLifecycleListenersAndDelegatesToDependencyModel` provides full behavioral validation (not just registration): it invokes the listener closures with fake event data and asserts delegation to the model.
+  - DependencyModel's `dispatchDependencyResolvedEvent()` checks for `dispatch()` first (Symfony-style dispatcher), then falls back to `fire()` (Kanboard eventManager) — tests must supply a dispatcher with `dispatch()` to capture events reliably.
 ---
 
-## 2026-03-25 - US-002
-Session: iter-5e6800ac / loop-cfe4d683
+## 2026-03-25 — US-002
+Session: N/A
 Review Outcome: PASS
 Trajectory: ON_TRACK
 Trajectory Notes: N/A
 Corrective Plan: N/A
-- Extended `MilestoneModel::getProgress()` with optional `string $weightBy = 'count'` parameter
-- Added 'count' (backward compat), 'score' (tasks.score), 'time_estimated' (tasks.time_estimated) modes
-- Added `no_data` flag when total_score or total_time is 0
-- Added `weight_by`, `no_data`, `score_total`, `score_completed`, `time_total`, `time_completed` to return
-- Added private `normalizeWeightBy()` in MilestoneModel
-- Updated `PortfolioTaskModel::calculateMilestoneHealth()` to collect and return score_total, score_completed, time_total, time_completed
-- Updated `getMilestoneProgress` API callback in Plugin.php to accept and pass `$weight_by` parameter
-- Added `portfolio_milestone_weight_by` config setting (default 'count') to ConfigController
-- Added `normalizeWeightBy()` private method to ConfigController
-- Added dropdown (Count / Story Points / Time Estimated) to Template/config/settings.php
-- Added 4 new unit tests in MilestoneModelTest: count compat, score mode, time_estimated mode, no-data flag
-- Added 1 new test in ConfigControllerTest: testSaveNormalizesInvalidWeightByToCount
-- Updated testSaveNormalizesAndPersistsSettings to assert portfolio_milestone_weight_by saved correctly
-- Added score/time_estimated columns to MilestoneModelTest tasks CREATE TABLE
-- Added time_estimated column to PortfolioTaskModelTest tasks CREATE TABLE
-- Added 7 new translation strings to Locale/en_US/translations.php
-- Test count: 156 (151 from US-001 + 5 new)
-- Files changed: `Model/MilestoneModel.php`, `Model/PortfolioTaskModel.php`, `Plugin.php`, `Controller/ConfigController.php`, `Template/config/settings.php`, `Locale/en_US/translations.php`, `Test/Model/MilestoneModelTest.php`, `Test/Model/PortfolioTaskModelTest.php`, `Test/Controller/ConfigControllerTest.php`
+- Registered `template:task:form:first-column` hook via `attachCallable` in Plugin.php
+- Callable pre-fetches portfolios (one `getPortfolios()` call) then milestones (one `getByPortfolioId()` per portfolio) — no N+1
+- Returns `['milestones' => []]` when project belongs to no portfolios; template guards with `! empty($milestones)`
+- Registered `task.create` dispatcher listener; reads `milestone_id` from event, calls `milestoneTaskModel->add()` if both IDs > 0
+- Created `Template/widget/task_form_milestone_dropdown.php` — standard `<select>` with `portfolio-milestone-form-field` CSS class
+- Added `'None' => 'None'` to `Locale/en_US/translations.php`
+- Added 4 new tests (176 total): 2 template rendering (`WidgetHookTest`) + 2 event listener behavioral (`ApiRegistrationTest`)
+- Updated `testRegistersAllRequiredTemplateHooks` and `testTemplateHooksPointToCorrectWidgetTemplates` in ApiRegistrationTest
+- Added `FakeMilestoneTaskModel` to ApiRegistrationTest for listener tests
+- Files changed: `Plugin.php`, `Template/widget/task_form_milestone_dropdown.php`, `Locale/en_US/translations.php`, `Test/Controller/WidgetHookTest.php`, `Test/Plugin/ApiRegistrationTest.php`
 - **Learnings for future iterations:**
-  - MilestoneModelTest tasks table was minimal (id, project_id, is_active); add new columns when model methods need to read task fields
-  - PortfolioTaskModelTest::insertTask inserts explicit columns (score=0 hardcoded); adding time_estimated only needs schema DDL change since DEFAULT 0 handles inserts that omit the column
-  - getProgress() return array can safely grow with new keys — existing tests that assert specific keys are unaffected
-  - ConfigController pattern: getDefaultSettings (type determines auto-cast in getCurrentSettings), normalizeSubmittedSettings (explicit per-key), normalizeWeightBy-style validators belong in private methods
-  - Multi-line function declaration: must be `): ReturnType {` on one line per PSR-12
+  - Task creation form hook provides `params['project_id']` directly (also defensively check `params['task']['project_id']`)
+  - `task.create` event data includes all form values; custom fields like `milestone_id` flow through from POST to event
+  - `FakeMilestoneTaskModel` pattern: record `[$milestoneId, $taskId]` tuples in `$addCalls` for assertion; set in container AFTER `initialize()` runs (overrides the registered closure)
+  - Closures inside `initialize()` auto-bind `$this` to the Plugin object — no explicit `use ($this)` needed
 ---
 
-## 2026-03-25 - US-003
-Session: iter-4ad14aa7 / loop-cfe4d683
+## 2026-03-25 — US-003
+Session: N/A
 Review Outcome: PASS
 Trajectory: ON_TRACK
 Trajectory Notes: N/A
 Corrective Plan: N/A
-- Updated `MilestoneController::show()` to read `weight_by` from `$this->request->getValue('weight_by', 'count')` and pass to `getMilestoneProgress()` and template
-- Extended `getMilestoneProgress()` private method to accept `string $weightBy = 'count'` and pass to `milestoneModel->getProgress()`; added new fallback keys (`no_data`, `weight_by`, `score_*`, `time_*`)
-- Added weight-mode selector dropdown (Count / Story Points / Time Estimated) to `Template/milestone/show.php` as a GET form that reloads on `onchange`
-- Added visual progress bar (`portfolio-progress-bar-container` / `portfolio-progress-bar`) to show.php, shown only when `no_data` is false
-- Added no-data message display ("No score data available" / "No time estimates available") replacing the progress bar when `no_data` is true
-- Updated `Template/portfolio/show.php` Milestone Health table: pre-computes `$hasScoreData` and `$hasTimeData` from milestone list; conditionally adds Score and Est. Hours columns
-- Added 3 new translation strings: `Progress Weight`, `Score`, `Est. Hours`
-- Updated `MilestoneControllerFakeMilestoneModel::getProgress()` to accept `$weightBy` param; added `getProgressWeightByCalls` array to track it separately (preserving existing `getProgressCalls` assertions)
-- Added 2 new controller tests: `testMilestoneShowPassesWeightByParameterToGetProgress` and `testMilestoneShowRendersNoDataMessageForScoreMode`
-- Test count: 158 (156 from US-002 + 2 new); 860 assertions; 0 errors
-- Files changed: `Controller/MilestoneController.php`, `Template/milestone/show.php`, `Template/portfolio/show.php`, `Locale/en_US/translations.php`, `Test/Controller/MilestoneControllerTest.php`
+- Registered `template:task:show:top` → `Portfolio:widget/task_context_banner`: shows "This task is in Portfolio: {name}" banner with links to portfolio dashboards; nothing when no portfolios
+- Registered `template:project:header:after` → `Portfolio:widget/project_header_badge`: shows portfolio membership badge(s) with links; nothing when no portfolios  
+- Registered `template:board:task:icons` → `Portfolio:widget/board_task_blocked_icon`: shows 🔴 icon using PortfolioHelper::isTaskBlocked cache (same callable as board:task:footer — no extra queries)
+- All three callables use defensive `$params['task|project'] ?? $params` param extraction
+- Added `'This task is in Portfolio:'` to `Locale/en_US/translations.php`
+- Added 6 template rendering tests to `WidgetHookTest.php` (2 per hook: render + nothing)
+- Updated `testRegistersAllRequiredTemplateHooks` + `testTemplateHooksPointToCorrectWidgetTemplates` in `ApiRegistrationTest.php`
+- 182 total tests pass (was 176), PHPCS 0 errors, PHPStan clean
+- Files changed: `Plugin.php`, `Template/widget/task_context_banner.php`, `Template/widget/project_header_badge.php`, `Template/widget/board_task_blocked_icon.php`, `Locale/en_US/translations.php`, `Test/Controller/WidgetHookTest.php`, `Test/Plugin/ApiRegistrationTest.php`
 - **Learnings for future iterations:**
-  - `request->getValue('param', 'default')` is the pattern for reading optional GET query params in controllers
-  - Conditional table columns in templates: pre-compute boolean flags in a PHP block before the table, then use `<?php if ($flag): ?><th>...</th><?php endif ?>` in both header and body rows
-  - When adding keys to a controller's fallback array for model results, mirror all keys the model can return so `array_merge($fallback, $result)` always produces a complete/safe array
+  - `template:task:show:top` params structure: `$params['task'] ?? $params` → read `project_id` from task array
+  - `template:project:header:after` params structure: `$params['project'] ?? $params` → read `id` from project array
+  - Board task icons hook is identical in structure to board task footer hook — reuse the same callable shape
+  - Use `&#x1F534;` HTML entity for 🔴 emoji in PHP template files to avoid file encoding issues
+  - Codebase patterns section in progress.txt: add reusable learnings about params structures and test update procedures
 ---
 
-## 2026-03-25 - US-007
-Session: iter-1300bc77 / loop-cfe4d683
+## 2026-03-25 — US-004
+Session: N/A
 Review Outcome: PASS
 Trajectory: ON_TRACK
 Trajectory Notes: N/A
 Corrective Plan: N/A
-- Added `workload()` action to `PortfolioViewController` — fetches portfolio, validates existence, reads `portfolio_workload_threshold` config, calls `getWorkload()`, renders template
-- Added private `getWorkloadData()` helper following same `is_object()` + `method_exists()` + null-safe pattern
-- Registered route `/portfolio/:portfolio_id/workload` → `PortfolioViewController::workload()` in Plugin.php; access covered by existing `'PortfolioViewController', '*', Role::APP_USER`
-- Added 'Team' link to `Template/portfolio/_sidebar.php` (active when `$sidebar_active === 'workload'`), inserted between Gantt Chart and Milestones
-- Created `Template/portfolio/workload.php`: table (User, Active Tasks, Overdue, Blocked, Score, Est. Hours, Spent Hours), `portfolio-workload-row--overloaded` class on rows exceeding threshold, ⚠ overload indicator, per-user links to `/portfolio/:portfolio_id/tasks?assignee_id=:user_id`, Unassigned row at bottom, empty-state `<p class="alert portfolio-workload-empty">` when no tasks
-- Added `portfolio-workload-` CSS classes to `Asset/css/portfolio.css` (table, header, row, overloaded/unassigned variants, user link, overload indicator, legend)
-- Added 6 translation strings to `Locale/en_US/translations.php`: Team, Portfolio Team Workload, No tasks found for this portfolio., Overloaded, Overloaded: active tasks exceed threshold of %d, Spent Hours
-- Added `workloadCalls` tracker + `getWorkload()` method to `PortfolioViewFakePortfolioTaskModel`; added `$workload` as 5th constructor param (default `['users' => [], 'unassigned' => []]`)
-- Added 2 controller tests: `testWorkloadRendersTableWithUserMetricsAndOverloadIndicator` (verifies template rendered, overload row, links, workloadCalls), `testWorkloadRedirectsWhenPortfolioNotFound` (verifies flash + redirect, workloadCalls empty)
-- Updated `ApiRegistrationTest::testRegistersPortfolioCrudRoutes` to include workload route and `array_slice(..., 19)`
-- Test count: 169 (167 from US-006 + 2 new); 957 assertions; 0 errors; 1 pre-existing deprecation
-- Files changed: `Controller/PortfolioViewController.php`, `Plugin.php`, `Template/portfolio/_sidebar.php`, `Template/portfolio/workload.php`, `Asset/css/portfolio.css`, `Locale/en_US/translations.php`, `Test/Controller/PortfolioViewControllerTest.php`, `Test/Plugin/ApiRegistrationTest.php`
+- Registered `task.move.column` dispatcher listener in Plugin.php
+  - Guards: task_id absent → return; config disabled → return; column not done-pattern → return; no milestones → return
+  - Done-pattern list matches `PortfolioViewController::resolveCanonicalLane`: ['done','completed','closed','finished','deployed','released']
+  - Column title: reads `$event['column_title']` first; falls back to DB lookup via `column_id` if empty
+  - For each non-completed milestone containing the task: checks all tasks for is_active=0; calls milestoneModel->update($id, ['status'=>0]) if all done
+- Added `portfolio_auto_complete_milestones` config (default 1) to ConfigController::getDefaultSettings(), normalizeSubmittedSettings()
+- Added checkbox to Template/config/settings.php with portfolio-config-help text
+- Added 2 new translation strings to Locale/en_US/translations.php
+- Updated FakeMilestoneTaskModel (added getMilestones/getTasks + milestonesForTask/tasksForMilestone props)
+- Added FakeMilestoneModel (updateCalls recording), FakeConfigModel (get() with defaults)
+- Added 3 new tests to ApiRegistrationTest (185 total, was 182): auto-complete triggers, no-op on disabled config, no-op when tasks still active
+- PHP lint clean, PHPCS 0 errors, PHPStan clean
+- Files changed: Plugin.php, Controller/ConfigController.php, Template/config/settings.php, Locale/en_US/translations.php, Test/Plugin/ApiRegistrationTest.php
 - **Learnings for future iterations:**
-  - Route registration test (`testRegistersPortfolioCrudRoutes`) tracks exact route order + `array_slice` count — update both when adding new routes
-  - `PortfolioViewFakePortfolioTaskModel` now has a 5th constructor param `$workload = ['users' => [], 'unassigned' => []]` — all existing tests omit it safely (defaults are backward compatible)
-  - Workload empty-state check: `$hasData = $users !== [] || (int)($unassigned['task_count'] ?? 0) > 0` — both users array and unassigned bucket must be empty for the empty state to display
-  - Sidebar active-state key for workload: `'workload'` (matches `$sidebar_active` var in template); controller uses this as `sidebar_active` via the require pattern
+  - `task.move.column` event data: include `column_title` in test events; production Kanboard event likely includes it from task row joins
+  - When adding listener tests with fake configModel: set `$this->plugin->container['configModel'] = $fake` AFTER `initialize()` (overrides lazy container entry)
+  - Pre-commit phpstan timeout: cold Docker image needs ~40s; warm `ralphi check` first if needed (run it once before commit)
+  - FakeMilestoneTaskModel is reused across US-002 (add tests) and US-004 (getMilestones/getTasks tests) — it's the shared stub for milestone-task relationship testing
+---
+
+## 2026-03-25 — US-005
+Session: N/A
+Review Outcome: PASS
+Trajectory: ON_TRACK
+Trajectory Notes: N/A
+Corrective Plan: N/A
+- Registered `task.update` listener in Plugin.php → delegates to `DependencyModel::onTaskUpdated(int $taskId)` (stub, no-op, returns early)
+- Registered `task.assignee_change` listener in Plugin.php → delegates to `PortfolioTaskModel::onAssigneeChanged(int $taskId)` (stub, no-op, returns early)
+- Both listeners guard: `task_id <= 0` → return (defensive no-op)
+- Added `onTaskUpdated()` stub to `Model/DependencyModel.php` with TODO comment (future: invalidate critical-path cache)
+- Added `onAssigneeChanged()` stub to `Model/PortfolioTaskModel.php` with TODO comment (future: invalidate workload cache)
+- Added `FakePortfolioTaskModel` to `Test/Plugin/ApiRegistrationTest.php` (assigneeChangedCalls tracking)
+- Extended `FakeDependencyModel` with `$updatedCalls[]` + `onTaskUpdated()` method
+- Added 4 new tests (189 total, was 185): testTaskUpdateListenerDelegatesToDependencyModelOnTaskUpdated, testTaskUpdateListenerIsNoopWhenTaskIdMissing, testTaskAssigneeChangeListenerDelegatesToPortfolioTaskModelOnAssigneeChanged, testTaskAssigneeChangeListenerIsNoopWhenTaskIdMissing
+- PHP lint clean, PHPCS 0 errors, PHPStan clean, 189 tests pass
+- Files changed: Plugin.php, Model/DependencyModel.php, Model/PortfolioTaskModel.php, Test/Plugin/ApiRegistrationTest.php
+- **Learnings for future iterations:**
+  - Stub listener pattern: register in Plugin.php → guard task_id → call model method → model method returns early with TODO doc comment
+  - When adding new fake model classes to ApiRegistrationTest, follow the same stub shape: public array for call recording, method matching the real signature
+  - For stub methods on existing models (DependencyModel, PortfolioTaskModel), insert before private helper methods so public API stays grouped at the top
+---
+
+## 2026-03-25 — US-006
+Session: N/A
+Review Outcome: PASS
+Trajectory: ON_TRACK
+Trajectory Notes: N/A
+Corrective Plan: N/A
+- Added `->in('project_id', $projectIds)` to `buildFilteredTaskRows()` tasks query — eliminates full-table scan, scopes to portfolio projects before fetching
+- Added `->in('task_id', $scopedTaskIds)` (where `$scopedTaskIds = array_keys($stats)`) to `buildTaskDependencyStats()` task_has_links query — scopes link lookup to portfolio task IDs only
+- Empty-projectIds early return (already present before the `->in()` call) and empty-stats early return (already present before the link query) guard against empty IN lists
+- `buildTableLookup()` for 'projects', 'columns', 'users' unchanged (small reference tables)
+- Added `in()` method to `PortfolioTaskTestQueryBuilder` in test harness with proper `IN (...)` SQL generation; handles empty-values edge case with `1=0`
+- Updated `buildWhereClause()` in test builder to dispatch on `IN` vs scalar operators
+- All 189 existing tests pass unchanged — behavior identical, just fewer rows scanned
+- PHP lint clean, PHPCS 0 errors, PHPStan clean
+- Files changed: `Model/PortfolioTaskModel.php`, `Test/Model/PortfolioTaskModelTest.php`
+- **Learnings for future iterations:**
+  - `array_keys($stats)` gives portfolio-scoped task IDs for the `buildTaskDependencyStats()` IN clause — `$stats` is already filtered by `$projectScope`, so its keys are correct regardless of whether `$taskMap` came from a scoped or full-table query
+  - Empty IN list guard pattern: early return before `->in()` call; test builder maps empty array to `1=0` as a safety net
+  - PHPStan cold Docker timeout: warm with one manual `bash scripts/docker-phpstan.sh` before committing — the second run is fast
+  - `PortfolioTaskTestQueryBuilder` IN implementation: multi-placeholder approach `:in_{conditionIndex}_{valueIndex}` avoids placeholder collisions when multiple IN conditions are chained
+---
+
+## 2026-03-25 — US-007
+Session: N/A
+Review Outcome: PASS
+Trajectory: ON_TRACK
+Trajectory Notes: N/A
+Corrective Plan: N/A
+- In `getDependencies()`, added a two-step query scoping:
+  1. `tasks->in('project_id', $projectIds)->findAll()` fetches portfolio task IDs
+  2. Early return if `$portfolioTaskIds === []` (no tasks in portfolio's projects)
+  3. `task_has_links->in('task_id', $portfolioTaskIds)->findAll()` replaces the full-table scan
+  4. Fallback to full-table scan when `count($portfolioTaskIds) > 1000` (SQLite SQLITE_MAX_VARIABLE_NUMBER limit)
+- Added `in()` method to `DependencyTestQueryBuilder` in `Test/Model/DependencyModelTest.php`
+- Updated `buildWhereClause()` in `DependencyTestQueryBuilder` to dispatch on `IN` vs scalar operators (same logic as PortfolioTaskTestQueryBuilder)
+- All 189 existing tests pass unchanged — behavior identical, fewer rows scanned
+- PHP lint clean, PHPCS 0 errors, PHPStan clean
+- Files changed: `Model/DependencyModel.php`, `Test/Model/DependencyModelTest.php`
+- **Learnings for future iterations:**
+  - Both IN-scoping patterns (PortfolioTaskModel + DependencyModel) follow the same two-step fetch: portfolio task IDs first, then scoped link query with empty-guard + large-N fallback
+  - `DependencyTestQueryBuilder` and `PortfolioTaskTestQueryBuilder` are now structurally identical — any future IN needs in either test file should follow the same `in()` + `buildWhereClause()` dispatch pattern
+  - >1000 threshold is documented in comments but not tested explicitly (threshold testing would require >1000 fixture rows — impractical in unit tests; the comment is the contract)
+  - PHPStan cold Docker timeout: always warm image before commit when switching machines or after long idle
 ---

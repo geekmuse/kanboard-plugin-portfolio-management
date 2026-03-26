@@ -172,6 +172,92 @@ class Plugin extends Base
             }
         );
 
+        // Task detail — portfolio context banner (top of page, above task body).
+        // Shows "This task is in Portfolio: {name}" with links to portfolio dashboards.
+        // Renders nothing when the task's project belongs to no portfolios.
+        $this->template->hook->attachCallable(
+            'template:task:show:top',
+            'Portfolio:widget/task_context_banner',
+            function (array $params) {
+                $task      = $params['task'] ?? $params;
+                $projectId = (int) ($task['project_id'] ?? 0);
+                return [
+                    'portfolios' => $projectId > 0
+                        ? $this->container['portfolioProjectModel']->getPortfolios($projectId)
+                        : [],
+                ];
+            }
+        );
+
+        // Project header — portfolio membership badge(s) with links to dashboards.
+        // Renders nothing when the project belongs to no portfolios.
+        $this->template->hook->attachCallable(
+            'template:project:header:after',
+            'Portfolio:widget/project_header_badge',
+            function (array $params) {
+                $project   = $params['project'] ?? $params;
+                $projectId = (int) ($project['id'] ?? 0);
+                return [
+                    'portfolios' => $projectId > 0
+                        ? $this->container['portfolioProjectModel']->getPortfolios($projectId)
+                        : [],
+                ];
+            }
+        );
+
+        // Board card icons — blocked icon alongside existing footer indicator.
+        // Reuses the PortfolioHelper per-project lazy cache (same instance as the
+        // board:task:footer hook above), so no additional DB queries are made.
+        $this->template->hook->attachCallable(
+            'template:board:task:icons',
+            'Portfolio:widget/board_task_blocked_icon',
+            function (array $params) {
+                $task      = $params['task'] ?? $params;
+                $taskId    = (int) ($task['id'] ?? 0);
+                $projectId = (int) ($task['project_id'] ?? 0);
+                $enabled   = (int) $this->container['configModel']->get('portfolio_board_show_blockers', 1) === 1;
+                return [
+                    'isBlocked' => $enabled && $taskId > 0 && $projectId > 0
+                        && $this->container['portfolioHelper']->isTaskBlocked($taskId, $projectId),
+                ];
+            }
+        );
+
+        // Task creation form — optional milestone assignment dropdown.
+        // When the task's project belongs to one or more portfolios, renders a
+        // dropdown listing all active milestones across those portfolios.
+        // Milestones are pre-fetched once per portfolio (no N+1): one call to
+        // getPortfolios() then one getByPortfolioId() per portfolio found.
+        // When the project belongs to no portfolios, returns an empty list so
+        // the template renders nothing.
+        $this->template->hook->attachCallable(
+            'template:task:form:first-column',
+            'Portfolio:widget/task_form_milestone_dropdown',
+            function (array $params) {
+                $projectId = (int) ($params['project_id'] ?? ($params['task']['project_id'] ?? 0));
+                if ($projectId <= 0) {
+                    return ['milestones' => []];
+                }
+
+                $portfolios = $this->container['portfolioProjectModel']->getPortfolios($projectId);
+                if (empty($portfolios)) {
+                    return ['milestones' => []];
+                }
+
+                $milestones = [];
+                foreach ($portfolios as $portfolio) {
+                    $portfolioId = (int) ($portfolio['id'] ?? 0);
+                    if ($portfolioId > 0) {
+                        foreach ($this->container['milestoneModel']->getByPortfolioId($portfolioId) as $milestone) {
+                            $milestones[] = $milestone;
+                        }
+                    }
+                }
+
+                return ['milestones' => $milestones];
+            }
+        );
+
         // Header dropdown — quick links to portfolio list and create form
         $this->template->hook->attach('template:header:dropdown:menu', 'Portfolio:widget/header_dropdown');
 
@@ -213,6 +299,172 @@ class Plugin extends Base
         $this->dispatcher->addListener('task_internal_link.delete', function ($event) use ($plugin) {
             $taskId = (int) ($event['task_id'] ?? 0);
             $plugin->dependencyModel->onLinkChanged($taskId);
+        });
+
+        // task.create — assign the newly created task to a milestone if the
+        // user selected one from the task creation form dropdown. The event
+        // data includes all form values submitted to TaskCreationModel::create()
+        // (including the milestone_id field injected by the hook above).
+        // milestoneTaskModel->add() validates project-in-portfolio membership
+        // so no additional guard is needed here.
+        $this->dispatcher->addListener('task.create', function ($event) use ($plugin) {
+            $taskId      = (int) ($event['task_id'] ?? 0);
+            $milestoneId = (int) ($event['milestone_id'] ?? 0);
+            if ($taskId > 0 && $milestoneId > 0) {
+                $plugin->milestoneTaskModel->add($milestoneId, $taskId);
+            }
+        });
+
+        // task.move.column — auto-complete milestones when all tasks are done.
+        //
+        // Fires when a task changes columns. If the destination column matches a
+        // done pattern (done, completed, closed, finished, deployed, released) AND
+        // all tasks in any of the task's milestones have is_active=0, the milestone
+        // status is set to 0 (completed) via milestoneModel->update().
+        //
+        // The column title is read from the event data (TaskEvent includes the full
+        // task row after the move, which typically includes column_title from the
+        // tasks query join). A DB fallback via column_id is provided for robustness.
+        //
+        // Guard order: task_id → config enabled → done column → milestone lookup
+        $this->dispatcher->addListener('task.move.column', function ($event) use ($plugin) {
+            $taskId = (int) ($event['task_id'] ?? 0);
+            if ($taskId <= 0) {
+                return;
+            }
+
+            // Check portfolio_auto_complete_milestones config (default 1 = enabled).
+            // Use the magic __get() accessor so the service is resolved lazily from
+            // the container at call time — consistent with other listener patterns.
+            /** @var mixed $configModel */
+            $configModel = $plugin->configModel;
+            if (is_object($configModel) && method_exists($configModel, 'get')) {
+                if ((int) $configModel->get('portfolio_auto_complete_milestones', 1) !== 1) {
+                    return;
+                }
+            }
+
+            // Resolve destination column title.
+            // TaskEvent data for task.move.column typically includes the full task
+            // row (column_title from joins). Fall back to a DB lookup via column_id
+            // if column_title is absent (defensive; handles stripped event payloads).
+            $columnTitle = strtolower(trim((string) ($event['column_title'] ?? '')));
+            if ($columnTitle === '') {
+                $columnId = (int) ($event['column_id'] ?? 0);
+                if ($columnId > 0) {
+                    try {
+                        /** @var mixed $db */
+                        $db = $plugin->db;
+                        if (is_object($db) && method_exists($db, 'table')) {
+                            $col = $db->table('columns')->eq('id', $columnId)->findOne();
+                            if (is_array($col)) {
+                                $columnTitle = strtolower(trim((string) ($col['title'] ?? '')));
+                            }
+                        }
+                    } catch (\Throwable $e) {
+                        // DB unavailable — skip
+                    }
+                }
+
+                if ($columnTitle === '') {
+                    return;
+                }
+            }
+
+            // Same done-pattern list as PortfolioViewController::resolveCanonicalLane()
+            $donePatterns = ['done', 'completed', 'closed', 'finished', 'deployed', 'released'];
+            $isDoneColumn = false;
+            foreach ($donePatterns as $donePattern) {
+                if (str_contains($columnTitle, $donePattern)) {
+                    $isDoneColumn = true;
+                    break;
+                }
+            }
+
+            if (! $isDoneColumn) {
+                return;
+            }
+
+            /** @var mixed $milestoneTaskModel */
+            $milestoneTaskModel = $plugin->milestoneTaskModel;
+            /** @var mixed $milestoneModel */
+            $milestoneModel = $plugin->milestoneModel;
+
+            if (! is_object($milestoneTaskModel) || ! method_exists($milestoneTaskModel, 'getMilestones')) {
+                return;
+            }
+
+            if (! is_object($milestoneModel) || ! method_exists($milestoneModel, 'update')) {
+                return;
+            }
+
+            $milestones = $milestoneTaskModel->getMilestones($taskId);
+            if (empty($milestones)) {
+                return;
+            }
+
+            foreach ($milestones as $milestone) {
+                $milestoneId = (int) ($milestone['id'] ?? 0);
+                if ($milestoneId <= 0) {
+                    continue;
+                }
+
+                // Skip milestones that are already completed (status = 0)
+                if ((int) ($milestone['status'] ?? 1) === 0) {
+                    continue;
+                }
+
+                if (! method_exists($milestoneTaskModel, 'getTasks')) {
+                    continue;
+                }
+
+                $tasks = $milestoneTaskModel->getTasks($milestoneId);
+                if (empty($tasks)) {
+                    continue;
+                }
+
+                $allDone = true;
+                foreach ($tasks as $task) {
+                    if ((int) ($task['is_active'] ?? 1) !== 0) {
+                        $allDone = false;
+                        break;
+                    }
+                }
+
+                if ($allDone) {
+                    $milestoneModel->update($milestoneId, ['status' => 0]);
+                }
+            }
+        });
+
+        // task.update — hook point for critical-path cache invalidation.
+        // Fires when task fields are modified. If date_due or priority changes
+        // on a task in a portfolio milestone, the critical-path may need
+        // recomputation. The stub method returns early for now; the event
+        // wiring is in place so future functionality can be added without
+        // touching Plugin.php again.
+        // Guard: task_id absent → no-op.
+        $this->dispatcher->addListener('task.update', function ($event) use ($plugin) {
+            $taskId = (int) ($event['task_id'] ?? 0);
+            if ($taskId <= 0) {
+                return;
+            }
+
+            $plugin->dependencyModel->onTaskUpdated($taskId);
+        });
+
+        // task.assignee_change — hook point for real-time workload recalculation.
+        // Fires when a task is reassigned. The stub method returns early for now;
+        // the event wiring is in place so future workload-update logic can be
+        // added without touching Plugin.php again.
+        // Guard: task_id absent → no-op.
+        $this->dispatcher->addListener('task.assignee_change', function ($event) use ($plugin) {
+            $taskId = (int) ($event['task_id'] ?? 0);
+            if ($taskId <= 0) {
+                return;
+            }
+
+            $plugin->portfolioTaskModel->onAssigneeChanged($taskId);
         });
 
         $this->eventManager->register(DependencyResolvedType::EVENT_NAME, DependencyResolvedType::getLabel());

@@ -1,0 +1,21 @@
+## Codebase Patterns
+- **REQUIRED READING**: Before writing any code each iteration, read `docs/references/kanboard-plugin-development-guidelines.md`. It contains authoritative agent feedback, known pitfalls, and hard-won patterns from previous work on this project. Do NOT commit or modify this file.
+- **POST forms — always use `getValues()` once**: `Request::getValue()` internally calls `getValues()` which validates and strips the CSRF token. Calling it multiple times means only the first call returns real data. Pattern: `$values = $this->request->getValues(); $field = (int)($values['field'] ?? 0);`
+- **Event listeners — NEVER use `$this->on()`**: Kanboard's `Plugin\Base::on()` wraps callbacks and passes the DI container, NOT the event object. Always use `$this->dispatcher->addListener('event.name', function ($event) use ($plugin) { ... })` where `$plugin = $this;`. Access services via `$plugin->serviceName` which resolves through `__get()` magic — works correctly with both Pimple (production) and test stub containers.
+- **PHPStan stubs** — `phpstan-kanboard-stubs.php` must declare `Kanboard\Controller\BaseController`, `Kanboard\Filter\BaseFilter`, and `Kanboard\Core\Filter\FilterInterface` for PHPStan to resolve the full type graph.
+- **Filter private properties** — never name a property `$container` in a class that extends `Kanboard\Core\Base`; it shadows the protected `$container` property. Use a distinct name like `$serviceContainer`.
+- **PHPCBF + manual** — PHPCBF auto-fixes multi-line-call indentation issues but cannot fix one-liner anonymous classes. Expand them to PSR-12 multi-line format manually before committing.
+- **FakeDispatcher in ApiRegistrationTest** — The test harness has a `FakeDispatcher` class (with `$listeners` array and `addListener()` method) wired into `$this->plugin->container['dispatcher']`. Lifecycle listener tests read from `$dispatcher->listeners` rather than `$this->plugin->registeredEvents`.
+- **JSON_HEX_TAG encoding** — `json_encode()` with `JSON_HEX_TAG` converts `<` to `\u003C`. When the resulting string is HTML-attribute-escaped by `$this->text->e()`, the backslash survives — XSS tests should check for `\u003C` NOT `&lt;` inside data attributes.
+- **Route registration tests** — `ApiRegistrationTest::testRegistersPortfolioCrudRoutes` asserts the exact ordered route list with `array_slice()`; adding a route requires updating both the expected array AND the slice count.
+- **D3.js loading** — Load D3 per-page via `$this->asset->js()` in the specific template, not globally via `hook->on`. Prevents double-execution on every Kanboard page.
+- **Column done-patterns** — The resolveCanonicalLane() method in PortfolioViewController matches done columns by: 'done', 'completed', 'closed', 'finished', 'deployed', 'released'. Reuse this list when checking column-move events for auto-complete logic.
+- **Config settings** — New settings go in: (1) ConfigController::show/save, (2) Template/config/settings.php, (3) Locale/en_US/translations.php. Access via `$this->configModel->get('key', default)` with try/catch in models.
+- **API method count** — Currently 31 JSON-RPC methods. ApiRegistrationTest expects exactly this count. Update test when adding methods.
+- **Test count** — Currently 172 tests, 978 assertions. Track this in progress entries.
+---
+
+## PRD Run Context
+PRD Branch: ralph/code-health-integration
+Started: (pending first iteration)
+---
