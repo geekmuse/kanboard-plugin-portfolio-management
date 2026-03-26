@@ -45,7 +45,7 @@ ralphi check
 | `README.md` | User & contributor guide — install, config, usage, architecture, troubleshooting |
 | `CLAUDE.md` | Agent context — project summary, commands, code style, architectural constraints, gotchas |
 | `.ralphi/config.yaml` | Ralphi loop configuration — commands, rules, boundaries |
-| `docs/specs/001-kanboard-portfolio.md` | **Complete implementation spec** — data model DDL (§3), all 28 API methods with params/returns (§4), controller routes (§5), template & UI hooks (§6), event system (§7), configuration (§8), dependencies (§9), error handling & edge cases (§10), security model (§11), testing strategy (§12), localization (§13), future considerations (§14), full `Plugin.php` registration (Appendix A), CSS conventions (Appendix C) |
+| `docs/specs/001-kanboard-portfolio.md` | **Complete implementation spec** — data model DDL (§3), all 31 API methods with params/returns (§4), controller routes (§5), template & UI hooks (§6), event system (§7), configuration (§8), dependencies (§9), error handling & edge cases (§10), security model (§11), testing strategy (§12), localization (§13), future considerations (§14), full `Plugin.php` registration (Appendix A), CSS conventions (Appendix C) |
 
 ---
 
@@ -76,7 +76,7 @@ ralphi check
 | `Model/MilestoneTaskModel.php` | Milestone ↔ Task junction + validation |
 | `Model/DependencyModel.php` | Cross-project dependency queries, critical path, event handling |
 | `Model/PortfolioTaskModel.php` | Unified cross-project task queries (filterable, paginated) |
-| `docs/specs/001-kanboard-portfolio.md` §4 | All 28 API method contracts (params, returns, validation, PicoDb examples) |
+| `docs/specs/001-kanboard-portfolio.md` §4 | All 31 API method contracts (params, returns, validation, PicoDb examples) |
 | `Validator/PortfolioValidator.php` | Input validation rules |
 
 **Rules:**
@@ -176,7 +176,7 @@ ralphi check
 
 | Look at | For |
 |---------|-----|
-| `Plugin.php` (API registration section) | All 28 `withCallback()` registrations |
+| `Plugin.php` (API registration section) | All 31 `withCallback()` registrations |
 | `docs/specs/001-kanboard-portfolio.md` §4 | Full method contracts: params, types, defaults, returns, failure conditions |
 
 **Rules:**

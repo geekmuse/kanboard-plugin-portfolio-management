@@ -2,7 +2,7 @@
 
 ## Project Summary
 
-Kanboard plugin ("Portfolio") adding cross-project portfolio management to Kanboard. Introduces portfolios (project groups), cross-project milestones with progress tracking, and dependency visualization (D3.js graphs, blocked task lists, critical path analysis). Pure PHP plugin — no Composer dependencies. Four new DB tables, 28 JSON-RPC API methods, 5 controllers, template hooks only (no overrides).
+Kanboard plugin ("Portfolio") adding cross-project portfolio management to Kanboard. Introduces portfolios (project groups), cross-project milestones with progress tracking, and dependency visualization (D3.js graphs, blocked task lists, critical path analysis). Pure PHP plugin — no Composer dependencies. Four new DB tables, 31 JSON-RPC API methods, 5 controllers, template hooks only (no overrides).
 
 **Target:** Kanboard >= 1.2.20 · PHP >= 7.4 · SQLite / MySQL / PostgreSQL
 
@@ -141,6 +141,6 @@ find plugins/Portfolio/ -name "*.php" -exec php -l {} \;
 
 | File | Contents |
 |------|----------|
-| `docs/specs/001-kanboard-portfolio.md` | **Complete implementation spec:** data model DDL, all 28 API methods with params/returns, controller routes, template hooks, event system, config settings, security model, testing strategy, CSS conventions |
+| `docs/specs/001-kanboard-portfolio.md` | **Complete implementation spec:** data model DDL, all 31 API methods with params/returns, controller routes, template hooks, event system, config settings, security model, testing strategy, CSS conventions |
 | `README.md` | User/contributor guide: install, config, usage, architecture overview |
 | `AGENTS.md` | Multi-agent workflow guide: task-oriented project map, verification checklists |

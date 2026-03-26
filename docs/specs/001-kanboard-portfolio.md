@@ -1,8 +1,8 @@
 # Kanboard Portfolio Plugin — Complete Implementation Specification
 
-**Version:** 1.0.0-draft
-**Date:** 2026-03-22
-**Status:** Implementation-Ready Specification
+**Version:** 1.22.0
+**Date:** 2026-03-25
+**Status:** Implemented — living reference document
 **Target Kanboard Version:** >= 1.2.20
 **License:** MIT
 
@@ -178,7 +178,7 @@ plugins/Portfolio/
 │         │                  │                                              │
 │  ┌──────▼───────┐   ┌─────▼──────────┐   ┌───────────────┐              │
 │  │ portfolios   │   │ Event Listener │   │  JSON-RPC API │              │
-│  │ (new table)  │   │                │   │  (~28 methods)│              │
+│  │ (new table)  │   │                │   │  (~31 methods)│              │
 │  └──────┬───────┘   │ on task.close: │   └───────┬───────┘              │
 │         │           │  check deps →  │           │                      │
 │  ┌──────▼───────┐   │  fire event →  │   ┌───────▼───────┐              │
@@ -1990,7 +1990,7 @@ These tests use Kanboard's functional test helpers to simulate HTTP requests thr
 | Criterion | Verification |
 |-----------|-------------|
 | Four new DB tables created on install | Schema migration test |
-| All 28 JSON-RPC methods callable | API integration test per method |
+| All 31 JSON-RPC methods callable | API integration test per method |
 | Portfolio CRUD works end-to-end | Model + API + Controller tests |
 | Milestones with cross-project tasks | Model test with tasks from 3 projects |
 | Milestone progress computed correctly | Model test: 0%, 50%, 100%, at-risk, overdue |
@@ -2418,7 +2418,7 @@ class Plugin extends Base
 
     public function getPluginVersion()
     {
-        return '1.0.0';
+        return '1.22.0';
     }
 
     public function getPluginHomepage()
@@ -2445,7 +2445,7 @@ class Plugin extends Base
 | Milestone ↔ Task Membership | 5 |
 | Dependency Queries | 5 |
 | Unified Task Queries | 3 |
-| **Total JSON-RPC methods** | **28** |
+| **Total JSON-RPC methods** | **31** |
 
 ---
 
