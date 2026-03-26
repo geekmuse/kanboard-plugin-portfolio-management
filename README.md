@@ -45,6 +45,9 @@ The plugin is API-first (31 JSON-RPC endpoints), hook-only (no template override
 | **Activity Feed** | Recent activity across all portfolio projects on the dashboard |
 | **Workload / Team View** | Per-user task metrics with overload indicators; filterable by portfolio |
 | **Roadmap View** | Milestone-level D3.js timeline with health-coded progress bars and a "Today" marker |
+| **Milestone on Task Create** | Assign a task to a portfolio milestone directly from the task creation form |
+| **Portfolio Context** | Task detail pages, project headers, and board cards show portfolio membership at a glance |
+| **Auto-Complete Milestones** | Milestones automatically close when all their tasks reach a done-pattern column |
 
 ---
 
@@ -110,6 +113,7 @@ Navigate to **Settings → Portfolio Settings** in Kanboard to configure:
 | `portfolio_tasks_per_page` | `50` | Default pagination limit for task lists |
 | `portfolio_milestone_weight_by` | `count` | Default weight mode for milestone progress: `count`, `score`, or `time_estimated` |
 | `portfolio_workload_threshold` | `15` | Active-task count above which a user is flagged as overloaded in the Team view |
+| `portfolio_auto_complete_milestones` | `1` | Auto-transition milestone to completed when all its tasks reach a done-pattern column |
 
 All settings are stored in Kanboard's `settings` table (prefixed with `portfolio_`) and take effect immediately.
 

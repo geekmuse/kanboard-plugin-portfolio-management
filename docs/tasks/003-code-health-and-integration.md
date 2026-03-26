@@ -1,7 +1,7 @@
 # Code Health & Integration Improvements
 
 **Date:** 2026-03-24
-**Status:** Approved for Implementation
+**Status:** ✅ Complete — shipped in v1.22.0
 **Priority:** High (Enhancement 0 already applied)
 **Source:** Derived from codebase audit and cross-reference against Kanboard core source
 
@@ -24,7 +24,7 @@ Also fixed `getPluginName()` returning `'1.17.0'` instead of `'Portfolio'`.
 
 ---
 
-## Task 1: Leverage Unused Template Hooks
+## Task 1: Leverage Unused Template Hooks ✅ DONE — v1.22.0
 
 **Severity:** Low
 **Effort:** Small (1-2 iterations)
@@ -46,7 +46,7 @@ The following Kanboard template hooks are available but not currently used by th
 
 ---
 
-## Task 2: Leverage Unused Core Events
+## Task 2: Leverage Unused Core Events ✅ DONE — v1.22.0
 
 **Severity:** Medium
 **Effort:** Medium (2 iterations)
@@ -68,7 +68,7 @@ The plugin currently listens to 4 events. Additional core events could improve m
 
 ---
 
-## Task 3: Query Performance Optimization
+## Task 3: Query Performance Optimization ✅ DONE — v1.22.0
 
 **Severity:** Medium (becomes High at scale)
 **Effort:** Medium
@@ -95,7 +95,7 @@ This is safe for all three DB drivers (PicoDb's `->in()` generates standard SQL 
 
 ---
 
-## Task 4: Missing Test Coverage for Event System
+## Task 4: Missing Test Coverage for Event System ✅ DONE — v1.22.0
 
 **Severity:** Medium
 **Effort:** Small (1 iteration)
@@ -111,12 +111,14 @@ The event listener fix (Enhancement 0) changed how events are registered but no 
 
 ---
 
-## Implementation Order
+## Implementation Order — Complete ✅
 
 ```
-Enhancement 0 (event listener fix)    → ✅ DONE
-Task 4 (event system tests)           → validates the fix
-Task 1 (template hooks)               → low effort, incremental UX
-Task 2 (core events)                  → medium effort, enables future features
-Task 3 (query optimization)           → medium effort, important for scale
+Enhancement 0 (event listener fix)    → ✅ v1.20.0
+Task 4 (event system tests)           → ✅ v1.22.0 (US-001)
+Task 1 (template hooks)               → ✅ v1.22.0 (US-002, US-003)
+Task 2 (core events)                  → ✅ v1.22.0 (US-004, US-005)
+Task 3 (query optimization)           → ✅ v1.22.0 (US-006, US-007)
 ```
+
+All tasks complete. **Actual effort: 7 ralphi loop iterations** across 1 PRD run.

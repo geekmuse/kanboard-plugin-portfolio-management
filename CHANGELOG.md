@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.22.0] — 2026-03-25
+
+### Added
+- **Milestone assignment on task creation** — task creation form shows a milestone dropdown when the task's project belongs to a portfolio; selecting a milestone auto-adds the task on save (`template:task:form:first-column` hook + `task.create` listener)
+- **Portfolio context banner** — task detail pages show "This task is in Portfolio: {name}" when the task belongs to a portfolio project
+- **Project membership badge** — project header shows which portfolios the project belongs to
+- **Board blocked icon** — 🔴 icon on board task cards for blocked tasks (using PortfolioHelper lazy cache, no extra queries)
+- **Auto-complete milestones** — when all tasks in a milestone move to a done-pattern column, the milestone status automatically transitions to completed (configurable via `portfolio_auto_complete_milestones` setting, default `1`)
+- **`task.update` and `task.assignee_change` event listeners** — registered for future critical-path cache invalidation and workload cache invalidation respectively
+
+### Changed
+- **PortfolioTaskModel query scoping** — `buildFilteredTaskRows()` now queries only tasks from portfolio projects via `IN (project_ids)` instead of loading the full `tasks` table; `buildTaskDependencyStats()` similarly scopes `task_has_links` to portfolio task IDs
+- **DependencyModel query scoping** — `getDependencies()` now scopes `task_has_links` to portfolio task IDs via a two-step fetch (with >1000 task fallback to full-table for correctness)
+
+### Configuration
+
+| New Setting | Default | Description |
+|-------------|---------|-------------|
+| `portfolio_auto_complete_milestones` | `1` | Auto-transition milestone to completed when all its tasks reach a done column |
+
 ## [1.21.0] — 2026-03-25
 
 ### Added
