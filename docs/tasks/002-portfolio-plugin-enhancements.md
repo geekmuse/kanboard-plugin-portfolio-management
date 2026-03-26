@@ -11,7 +11,7 @@
 
 This task plan addresses gaps identified in the comprehensive analysis that should be built **within the Portfolio plugin** (not as separate plugins). These are enhancements that extend the plugin's existing capabilities without changing its architectural boundaries.
 
-> **VALIDATION UPDATE (2026-03-24):** Enhancement 0 (event listener fix) was added after cross-referencing Plugin.php against Kanboard core source code. See `VALIDATION-REPORT.md` for the full analysis. The fix has already been applied to Plugin.php.
+> **VALIDATION UPDATE (2026-03-24):** Enhancement 0 (event listener fix) was added after cross-referencing Plugin.php against Kanboard core source code. The fix has already been applied to Plugin.php.
 
 ---
 
@@ -392,9 +392,9 @@ The following are explicitly NOT part of this task plan:
 
 | Capability | Why Not Here |
 |-----------|-------------|
-| Epics | Different entity, different scope — see `PROPOSAL-epics-plugin.md` |
+| Epics | Different entity, different scope — separate project |
 | Sprint management | Project-scoped, not portfolio-scoped — separate plugin |
-| Agent access control | Auth infrastructure — see `PROPOSAL-agent-access-control.md` |
-| MCP server | External service — see `PROPOSAL-mcp-kanboard-server.md` |
+| Agent access control | Auth infrastructure — separate project |
+| MCP server | External service — separate project |
 | Burndown/velocity charts | Requires historical snapshot infrastructure — future phase |
 | Portfolio-level permissions | Significant complexity — future enhancement |
