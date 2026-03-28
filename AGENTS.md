@@ -4,6 +4,8 @@
 
 This is a Kanboard plugin (PHP) named "Portfolio" that adds cross-project portfolio management with grouped projects, shared milestones, and dependency visualization. Read `CLAUDE.md` for concise project context, commands, and constraints. Read `README.md` for user-facing docs. Read `docs/specs/001-kanboard-portfolio.md` for the authoritative implementation specification.
 
+> **⚠️ Required:** Load the `kanboard-dev` skill and read `docs/quick-ref/pitfalls.md` before writing any code.
+
 ---
 
 ## Commands

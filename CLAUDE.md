@@ -6,6 +6,10 @@ Kanboard plugin ("Portfolio") adding cross-project portfolio management to Kanbo
 
 **Target:** Kanboard >= 1.2.20 · PHP >= 7.4 · SQLite / MySQL / PostgreSQL
 
+## ⚠️ Required Reading
+
+Before writing or modifying any code, load the `kanboard-dev` skill: read its `SKILL.md`, then read `docs/quick-ref/pitfalls.md`. This documents 17 verified bugs and traps in Kanboard's core (e.g., the `$this->on()` event bug, DI name collisions, CSRF gotchas) that will silently break your plugin if you don't know about them. The skill also contains architecture deep-dives and project-specific context for this plugin at `docs/projects/portfolio-plugin.md`.
+
 ## Repository Layout
 
 ```
