@@ -1056,7 +1056,8 @@ class PortfolioTaskModel extends Base
 
         $resolvedMilestoneId = (int) $milestoneId;
         if ($resolvedMilestoneId <= 0) {
-            return [];
+            // 0 means "no milestone filter" — treat same as null
+            return null;
         }
 
         $milestone = $this->db->table(self::MILESTONE_TABLE)
