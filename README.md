@@ -51,6 +51,27 @@ The plugin is API-first (31 JSON-RPC endpoints), hook-only (no template override
 
 ---
 
+## Screenshots
+
+See **[docs/screenshots.md](docs/screenshots.md)** for annotated screenshots of every view.
+
+| View | Description |
+|------|-------------|
+| [Portfolio List](docs/screenshots.md#portfolio-list) | Top-level index of all portfolios |
+| [Dashboard](docs/screenshots.md#portfolio-dashboard) | Metrics grid, project summary, milestone health |
+| [Task List](docs/screenshots.md#cross-project-task-list) | Unified filterable task table across all projects |
+| [Board](docs/screenshots.md#aggregate-board-view) | Aggregate kanban board with blocked indicators |
+| [Timeline](docs/screenshots.md#portfolio-timeline) | Dot-on-axis view of tasks and milestones by due date |
+| [Gantt Chart](docs/screenshots.md#gantt-chart) | Duration bars with dependency arrows |
+| [Milestones](docs/screenshots.md#milestone-list) | Milestone list and detail with progress metrics |
+| [Dependency Graph](docs/screenshots.md#dependency-graph) | D3 force-directed cross-project dependency network |
+| [Blocked Tasks](docs/screenshots.md#blocked-tasks) | All tasks waiting on unresolved blockers |
+| [Critical Path](docs/screenshots.md#critical-path) | Longest dependency chain, rendered as a flow |
+| [Team Workload](docs/screenshots.md#team-workload) | Per-assignee task load with overload alerts |
+| [Roadmap](docs/screenshots.md#milestone-roadmap) | Milestone progress bars on a shared time axis |
+
+---
+
 ## Prerequisites & System Requirements
 
 | Requirement | Minimum Version | Notes |
