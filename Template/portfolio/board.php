@@ -26,7 +26,7 @@
         <?= $this->form->csrf() ?>
     </div>
     <div class="portfolio-board"
-         data-move-task-url="<?= $this->url->href('PortfolioViewController', 'moveTask', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']) ?>"
+         data-move-task-url="<?= htmlspecialchars($this->url->to('PortfolioViewController', 'moveTask', ['portfolio_id' => (int) ($portfolio['id'] ?? 0), 'plugin' => 'Portfolio']), ENT_QUOTES, 'UTF-8') ?>"
          data-move-error-label="<?= $this->text->e(t('Failed to move task.')) ?>"
          data-lane-column-map="<?= $this->text->e((string) ($lane_column_map_json ?? '{}')) ?>">
         <?php foreach ($board_columns as $column): ?>

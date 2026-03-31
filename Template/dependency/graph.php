@@ -48,7 +48,7 @@ $criticalPathLength = count((array) ($graphData['critical_path'] ?? []));
         id="portfolio-dependency-graph"
         class="portfolio-dependency-graph"
         data-graph="<?= htmlspecialchars((string) json_encode($graphData), ENT_QUOTES, 'UTF-8') ?>"
-        data-graph-data-url="<?= $this->text->e($graph_data_url ?? '') ?>"
+        data-graph-data-url="<?= htmlspecialchars($graph_data_url ?? '', ENT_QUOTES, 'UTF-8') ?>"
         aria-label="<?= $this->text->e(t('Dependency Graph')) ?>"
     ></div>
     <?= $this->asset->js('plugins/Portfolio/Asset/js/d3.v7.min.js') ?>

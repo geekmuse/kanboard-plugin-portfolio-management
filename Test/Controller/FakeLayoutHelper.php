@@ -36,6 +36,17 @@ namespace Kanboard\Plugin\Portfolio\Test\Controller {
                 'action' => $action,
             ], $params);
 
+            return '/?' . http_build_query($query, '', '&amp;');
+        }
+
+        /** @param array<string, mixed> $params */
+        public function to(string $controller, string $action, array $params = [], string $anchor = '', bool $absolute = false): string
+        {
+            $query = array_merge([
+                'controller' => $controller,
+                'action' => $action,
+            ], $params);
+
             return '/?' . http_build_query($query);
         }
     }

@@ -30,7 +30,7 @@ class PortfolioModificationController extends BaseController
         if ($portfolioId !== false) {
             $this->flash->success(t('Portfolio created successfully.'));
 
-            return $this->response->redirect($this->helper->url->href(
+            return $this->response->redirect($this->helper->url->to(
                 'PortfolioViewController',
                 'show',
                 ['portfolio_id' => (int) $portfolioId, 'plugin' => 'Portfolio']
@@ -50,7 +50,7 @@ class PortfolioModificationController extends BaseController
         if ($portfolio === null) {
             $this->flash->failure(t('Portfolio not found.'));
 
-            return $this->response->redirect($this->helper->url->href('PortfolioListController', 'index', ['plugin' => 'Portfolio']));
+            return $this->response->redirect($this->helper->url->to('PortfolioListController', 'index', ['plugin' => 'Portfolio']));
         }
 
         if ($values === []) {
@@ -79,7 +79,7 @@ class PortfolioModificationController extends BaseController
         if ($this->portfolioModel->update($portfolioId, $values)) {
             $this->flash->success(t('Portfolio updated successfully.'));
 
-            return $this->response->redirect($this->helper->url->href(
+            return $this->response->redirect($this->helper->url->to(
                 'PortfolioViewController',
                 'show',
                 ['portfolio_id' => $portfolioId, 'plugin' => 'Portfolio']
@@ -99,7 +99,7 @@ class PortfolioModificationController extends BaseController
         if ($portfolio === null) {
             $this->flash->failure(t('Portfolio not found.'));
 
-            return $this->response->redirect($this->helper->url->href('PortfolioListController', 'index', ['plugin' => 'Portfolio']));
+            return $this->response->redirect($this->helper->url->to('PortfolioListController', 'index', ['plugin' => 'Portfolio']));
         }
 
         $projects = $this->portfolioProjectModel->getProjects($portfolioId);
@@ -125,7 +125,7 @@ class PortfolioModificationController extends BaseController
             $this->flash->failure(t('Unable to add project to portfolio.'));
         }
 
-        return $this->response->redirect($this->helper->url->href(
+        return $this->response->redirect($this->helper->url->to(
             'PortfolioModificationController',
             'settings',
             ['portfolio_id' => $portfolioId, 'plugin' => 'Portfolio']
@@ -144,7 +144,7 @@ class PortfolioModificationController extends BaseController
             $this->flash->failure(t('Unable to remove project from portfolio.'));
         }
 
-        return $this->response->redirect($this->helper->url->href(
+        return $this->response->redirect($this->helper->url->to(
             'PortfolioModificationController',
             'settings',
             ['portfolio_id' => $portfolioId, 'plugin' => 'Portfolio']
@@ -159,7 +159,7 @@ class PortfolioModificationController extends BaseController
         if ($portfolio === null) {
             $this->flash->failure(t('Portfolio not found.'));
 
-            return $this->response->redirect($this->helper->url->href('PortfolioListController', 'index', ['plugin' => 'Portfolio']));
+            return $this->response->redirect($this->helper->url->to('PortfolioListController', 'index', ['plugin' => 'Portfolio']));
         }
 
         return $this->response->html($this->helper->layout->app('Portfolio:portfolio/remove', [
@@ -176,12 +176,12 @@ class PortfolioModificationController extends BaseController
         if ($this->portfolioModel->remove($portfolioId)) {
             $this->flash->success(t('Portfolio removed successfully.'));
 
-            return $this->response->redirect($this->helper->url->href('PortfolioListController', 'index', ['plugin' => 'Portfolio']));
+            return $this->response->redirect($this->helper->url->to('PortfolioListController', 'index', ['plugin' => 'Portfolio']));
         }
 
         $this->flash->failure(t('Unable to remove portfolio.'));
 
-        return $this->response->redirect($this->helper->url->href(
+        return $this->response->redirect($this->helper->url->to(
             'PortfolioModificationController',
             'remove',
             ['portfolio_id' => $portfolioId, 'plugin' => 'Portfolio']

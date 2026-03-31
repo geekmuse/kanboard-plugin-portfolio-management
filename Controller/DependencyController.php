@@ -27,7 +27,7 @@ class DependencyController extends BaseController
             'portfolio' => $portfolio,
             'cross_project_only' => $crossProjectOnly,
             'graph' => $graph,
-            'graph_data_url' => $this->helper->url->href(
+            'graph_data_url' => $this->helper->url->to(
                 'DependencyController',
                 'graphData',
                 ['portfolio_id' => $portfolioId, 'cross_project_only' => $crossProjectOnly ? 1 : 0, 'plugin' => 'Portfolio']
@@ -145,6 +145,6 @@ class DependencyController extends BaseController
 
     private function redirectToPortfolioList()
     {
-        return $this->response->redirect($this->helper->url->href('PortfolioListController', 'index', ['plugin' => 'Portfolio']));
+        return $this->response->redirect($this->helper->url->to('PortfolioListController', 'index', ['plugin' => 'Portfolio']));
     }
 }

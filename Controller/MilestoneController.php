@@ -219,7 +219,7 @@ class MilestoneController extends BaseController
 
         $this->flash->failure(t('Unable to remove milestone.'));
 
-        return $this->response->redirect($this->helper->url->href(
+        return $this->response->redirect($this->helper->url->to(
             'MilestoneController',
             'remove',
             ['milestone_id' => $milestoneId, 'plugin' => 'Portfolio']
@@ -401,12 +401,12 @@ class MilestoneController extends BaseController
 
     private function redirectToPortfolioList()
     {
-        return $this->response->redirect($this->helper->url->href('PortfolioListController', 'index', ['plugin' => 'Portfolio']));
+        return $this->response->redirect($this->helper->url->to('PortfolioListController', 'index', ['plugin' => 'Portfolio']));
     }
 
     private function redirectToPortfolioMilestones(int $portfolioId)
     {
-        return $this->response->redirect($this->helper->url->href(
+        return $this->response->redirect($this->helper->url->to(
             'MilestoneController',
             'index',
             ['portfolio_id' => $portfolioId, 'plugin' => 'Portfolio']
@@ -415,7 +415,7 @@ class MilestoneController extends BaseController
 
     private function redirectToMilestone(int $milestoneId)
     {
-        return $this->response->redirect($this->helper->url->href(
+        return $this->response->redirect($this->helper->url->to(
             'MilestoneController',
             'show',
             ['milestone_id' => $milestoneId, 'plugin' => 'Portfolio']
