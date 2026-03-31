@@ -1,5 +1,32 @@
 # Changelog
 
+## [1.22.2] — 2026-03-31
+
+### Fixed
+
+- **URL encoding bug in all redirect flows** — all 21 `response->redirect()` calls across 5 controllers were using `url->href()` (which returns `&amp;`-encoded URLs, correct for HTML attributes) instead of `url->to()` (raw `&`, required for HTTP `Location` headers). Browsers received `Location` headers with literal `&amp;` and navigated to URLs where Kanboard's router saw `amp;action` and `amp;plugin` as garbage query parameters, breaking every post-form redirect. Fixed by switching all redirect calls to `url->to()`.
+- **`data-move-task-url` in board template** — was using `url->href()` for a JS `data-*` attribute consumed by `getAttribute()`; functionally worked due to browser decoding but semantically wrong. Switched to `url->to()` + `htmlspecialchars()`.
+- **`data-graph-data-url` double-encoding** — `DependencyController` generated this attribute using `url->href()` output then further wrapped in `text->e()`, producing `&amp;amp;`. Switched source to `url->to()` and template to `htmlspecialchars()`. (Attribute is currently unused by the graph JS but corrected for future use.)
+- **Test harness `FakeLayoutUrlHelper`** — added `to()` method mirroring the real `UrlHelper::to()` signature; `href()` now uses `&amp;` as separator to accurately match Kanboard core behaviour.
+
+### Added
+
+- **MIT LICENSE file** — resolves `licenseInfo: null` on GitHub.
+- **`SECURITY.md`** — vulnerability disclosure policy with contact and response-time commitments.
+- **`.github/dependabot.yml`** — weekly Composer and GitHub Actions dependency bump PRs.
+- **`.github/workflows/codeql.yml`** — PHP CodeQL SAST scanning on push, PR, and weekly schedule; all Actions SHA-pinned.
+- **Screenshots** — `docs/screenshots.md` with 13 annotated screenshots covering every plugin view (portfolio list, dashboard, task list, board, timeline, Gantt, milestones, milestone detail, dependency graph, blocked tasks, critical path, team workload, roadmap).
+
+### Security
+
+- Enabled Dependabot vulnerability alerts and automated security-fix PRs.
+- Branch protection on `main`: force-push and deletion blocked.
+- Tag protection ruleset: `deletion` + `non_fast_forward` on `refs/tags/v*`.
+- `release` environment created with required reviewer gate.
+- Default GitHub Actions workflow token locked to `read` permissions; GITHUB_TOKEN cannot approve PRs.
+
+---
+
 ## [1.22.1] — 2026-03-25
 
 ### Changed

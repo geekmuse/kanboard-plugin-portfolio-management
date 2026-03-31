@@ -111,7 +111,7 @@ Once published, install directly from Kanboard's **Settings → Plugins → Plug
 ### Post-Install Verification
 
 1. Navigate to **Settings → Plugins** in Kanboard
-2. Confirm "Portfolio" appears in the installed plugins list with version `1.22.1`
+2. Confirm "Portfolio" appears in the installed plugins list with version `1.22.2`
 3. Check that the "Portfolios" link appears in the header navigation
 
 Database tables (`portfolios`, `portfolio_has_projects`, `milestones`, `milestone_has_tasks`) are created automatically on first page load.
