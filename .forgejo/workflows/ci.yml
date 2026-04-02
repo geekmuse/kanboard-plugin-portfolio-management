@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    name: Lint & Test (PHP ${{ matrix.php }})
+    runs-on: docker
+    container:
+      image: php:${{ matrix.php }}-cli-alpine
+    strategy:
+      matrix:
+        php: ['8.1', '8.2', '8.3']
+
+    steps:
+      - name: Install system dependencies
+        run: apk add --no-cache git unzip curl bash
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Composer
+        run: |
+          curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+          composer --version
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: PHP syntax lint
+        run: |
+          find . -name "*.php" -not -path "./vendor/*" -exec php -l {} \; > /tmp/lint-output.txt 2>&1
+          if grep -q "Parse error\|Fatal error" /tmp/lint-output.txt; then
+            grep "Parse error\|Fatal error" /tmp/lint-output.txt
+            exit 1
+          fi
+          echo "All PHP files passed syntax check."
+
+      - name: PHP_CodeSniffer (PSR-12)
+        run: ./vendor/bin/phpcs --standard=.phpcs.xml
+
+      - name: PHPStan (level 5)
+        run: ./vendor/bin/phpstan analyse --no-progress
+
+      - name: PHPUnit
+        run: ./vendor/bin/phpunit --configuration phpunit.xml
