@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
       - name: Set up PHP
-        uses: shivammathur/setup-php@cf4cade2721270509d5b1c766ab3549210a39a2a  # v2.34.1
+        uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f  # v2.37.0
         with:
           php-version: ${{ matrix.php }}
           tools: composer:v2
@@ -28,7 +28,13 @@ jobs:
         run: composer install --no-interaction --prefer-dist
 
       - name: PHP syntax lint
-        run: find . -name "*.php" -not -path "./vendor/*" -exec php -l {} \; | grep -v "No syntax errors"
+        run: |
+          find . -name "*.php" -not -path "./vendor/*" -exec php -l {} \; > /tmp/lint-output.txt 2>&1
+          if grep -q "Parse error\|Fatal error" /tmp/lint-output.txt; then
+            grep "Parse error\|Fatal error" /tmp/lint-output.txt
+            exit 1
+          fi
+          echo "All PHP files passed syntax check."
 
       - name: PHP_CodeSniffer (PSR-12)
         run: ./vendor/bin/phpcs --standard=.phpcs.xml
