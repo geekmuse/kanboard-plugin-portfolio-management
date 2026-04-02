@@ -29,3 +29,17 @@ parameters:
         - '#Instanceof between array<string, mixed> and ArrayAccess will always evaluate to false#'
         - '#Offset string on \*NEVER\* in isset\(\) always exists and is not nullable#'
         - '#Result of && is always false#'
+
+        # PHPStan 2.x stricter type narrowing: defensive is_array() guards on
+        # values whose PHPDoc type is already array.  These guards are
+        # intentional belt-and-suspenders checks for runtime safety.
+        - '#Call to function is_array\(\) with .+ will always evaluate to true#'
+
+        # PHPStan 2.x: array_values() on a value already typed as list<…>.
+        # Kept for clarity/explicitness after array_slice().
+        - '#of array_values is already a list, call has no effect#'
+
+        # PHPStan 2.x: @var mixed annotation on a variable whose native type
+        # is narrower (e.g. array).  Used to reset type inference so
+        # subsequent is_array()/instanceof checks are not flagged.
+        - '#PHPDoc tag @var with type mixed is not subtype of native type#'
