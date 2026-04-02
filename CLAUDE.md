@@ -4,7 +4,7 @@
 
 Kanboard plugin ("Portfolio") adding cross-project portfolio management to Kanboard. Introduces portfolios (project groups), cross-project milestones with progress tracking, and dependency visualization (D3.js graphs, blocked task lists, critical path analysis). Pure PHP plugin — no Composer dependencies. Four new DB tables, 31 JSON-RPC API methods, 5 controllers, template hooks only (no overrides).
 
-**Target:** Kanboard >= 1.2.20 · PHP >= 7.4 · SQLite / MySQL / PostgreSQL
+**Target:** Kanboard >= 1.2.20 · PHP >= 8.1 · SQLite / MySQL / PostgreSQL
 
 ## ⚠️ Required Reading
 
@@ -47,10 +47,16 @@ plugins/Portfolio/          ← Plugin root (deploy here inside Kanboard)
 find plugins/Portfolio/ -name "*.php" -exec php -l {} \;
 
 # PSR-12 code style (PHP_CodeSniffer)
-./vendor/bin/phpcs --standard=PSR12 plugins/Portfolio/
+./vendor/bin/phpcs --standard=.phpcs.xml
 
 # Static analysis (PHPStan level 5)
-./vendor/bin/phpstan analyse plugins/Portfolio/ --level=5
+./vendor/bin/phpstan analyse --no-progress
+
+# Docker-based equivalents (no local PHP required)
+./scripts/docker-lint.sh      # PHP syntax check
+./scripts/docker-phpcs.sh     # PHP_CodeSniffer (PSR-12)
+./scripts/docker-phpstan.sh   # PHPStan (level 5)
+./scripts/docker-test.sh      # PHPUnit tests
 
 # No build step — PHP templates render directly
 ```

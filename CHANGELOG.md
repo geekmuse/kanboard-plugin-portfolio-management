@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.22.3] — 2026-04-02
+
+### Changed
+
+- **Bumped dev dependencies** — PHPStan 1.12.33 → 2.1.45, PHP_CodeSniffer 3.13.5 → 4.0.1
+- **Updated `phpstan.neon` baseline** — added ignore patterns for PHPStan 2.x stricter type narrowing (defensive `is_array()` on PHPDoc-typed arrays, `array_values()` on known list types, `@var mixed` annotations)
+- **Bumped CI actions** — `actions/checkout` 4.3.1 → 6.0.2, `shivammathur/setup-php` 2.34.1 → 2.37.0
+- **Minimum PHP version** — updated to 8.1 to match dev tooling requirements (PHPStan 2.x, PHPCS 4.x)
+
+### Fixed
+
+- **Replaced broken CodeQL workflow** — CodeQL CLI dropped its PHP extractor, so the CodeQL SAST workflow never succeeded. Replaced with a proper CI pipeline running PHP lint, PHP_CodeSniffer (PSR-12), PHPStan (level 5), and PHPUnit across PHP 8.1/8.2/8.3
+
+### Added
+
+- **GitHub Actions CI pipeline** (`.github/workflows/ci.yml`) — lint, PHPCS, PHPStan, PHPUnit on PHP 8.1/8.2/8.3 matrix using `shivammathur/setup-php`
+- **Forgejo Actions CI pipeline** (`.forgejo/workflows/ci.yml`) — same steps using `php:*-cli-alpine` container images for self-hosted Forgejo runners
+
+---
+
 ## [1.22.2] — 2026-03-31
 
 ### Fixed

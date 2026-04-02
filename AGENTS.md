@@ -22,6 +22,26 @@ ralphi check
 - PHP_CodeSniffer (PSR-12) when installed
 - PHPStan (level 5) when installed
 
+Alternatively, use the Docker-based scripts (no local PHP required):
+
+```bash
+./scripts/docker-lint.sh      # PHP syntax check
+./scripts/docker-phpcs.sh     # PHP_CodeSniffer (PSR-12)
+./scripts/docker-phpstan.sh   # PHPStan (level 5)
+./scripts/docker-test.sh      # PHPUnit tests
+```
+
+### CI Pipelines
+
+CI runs automatically on push/PR to `main` on both remotes:
+
+| Platform | Workflow | Runner Strategy |
+|----------|----------|----------------|
+| **GitHub Actions** | `.github/workflows/ci.yml` | `shivammathur/setup-php` on `ubuntu-latest` |
+| **Forgejo Actions** | `.forgejo/workflows/ci.yml` | `php:*-cli-alpine` container on `docker` runner |
+
+Both run: PHP lint → PHPCS (PSR-12) → PHPStan (level 5) → PHPUnit across PHP 8.1, 8.2, 8.3.
+
 ---
 
 ## Conventions
@@ -48,6 +68,8 @@ ralphi check
 | `CLAUDE.md` | Agent context — project summary, commands, code style, architectural constraints, gotchas |
 | `.ralphi/config.yaml` | Ralphi loop configuration — commands, rules, boundaries |
 | `docs/specs/001-kanboard-portfolio.md` | **Complete implementation spec** — data model DDL (§3), all 31 API methods with params/returns (§4), controller routes (§5), template & UI hooks (§6), event system (§7), configuration (§8), dependencies (§9), error handling & edge cases (§10), security model (§11), testing strategy (§12), localization (§13), future considerations (§14), full `Plugin.php` registration (Appendix A), CSS conventions (Appendix C) |
+| `.github/workflows/ci.yml` | GitHub Actions CI pipeline (lint, PHPCS, PHPStan, PHPUnit × PHP 8.1/8.2/8.3) |
+| `.forgejo/workflows/ci.yml` | Forgejo Actions CI pipeline (same steps, container-based runner) |
 
 ---
 

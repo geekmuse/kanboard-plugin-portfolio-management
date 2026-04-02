@@ -3,7 +3,7 @@
 **Cross-project portfolio management for Kanboard** — portfolios, milestones, and dependency visualization.
 
 [![Kanboard >= 1.2.20](https://img.shields.io/badge/Kanboard-%3E%3D%201.2.20-blue)](https://kanboard.org)
-[![PHP >= 7.4](https://img.shields.io/badge/PHP-%3E%3D%207.4-purple)](https://www.php.net)
+[![PHP >= 8.1](https://img.shields.io/badge/PHP-%3E%3D%208.1-purple)](https://www.php.net)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ---
@@ -77,7 +77,7 @@ See **[docs/screenshots.md](docs/screenshots.md)** for annotated screenshots of 
 | Requirement | Minimum Version | Notes |
 |-------------|-----------------|-------|
 | **Kanboard** | >= 1.2.20 | Required for all template hooks used |
-| **PHP** | >= 7.4 | Matches Kanboard's own minimum |
+| **PHP** | >= 8.1 | Required by dev tooling (PHPStan 2.x, PHPCS 4.x) |
 | **Database** | SQLite 3.x, MySQL 5.7+ / MariaDB 10.2+, PostgreSQL 9.5+ | All three supported via separate migration files |
 
 No external PHP dependencies (Composer packages) are required. D3.js v7 is bundled in the plugin assets.
@@ -111,7 +111,7 @@ Once published, install directly from Kanboard's **Settings → Plugins → Plug
 ### Post-Install Verification
 
 1. Navigate to **Settings → Plugins** in Kanboard
-2. Confirm "Portfolio" appears in the installed plugins list with version `1.22.2`
+2. Confirm "Portfolio" appears in the installed plugins list with version `1.22.3`
 3. Check that the "Portfolios" link appears in the header navigation
 
 Database tables (`portfolios`, `portfolio_has_projects`, `milestones`, `milestone_has_tasks`) are created automatically on first page load.
@@ -182,6 +182,8 @@ See the [API specification](docs/specs/001-kanboard-portfolio.md#4-api-surface--
 
 ```
 plugins/Portfolio/
+├── .github/workflows/ci.yml        # GitHub Actions CI (lint, PHPCS, PHPStan, PHPUnit)
+├── .forgejo/workflows/ci.yml       # Forgejo Actions CI (same steps, container-based)
 ├── Plugin.php                      # Entry point: DI, routes, hooks, API, events
 ├── Schema/
 │   ├── Sqlite.php                  # SQLite migrations
@@ -254,9 +256,34 @@ plugins/Portfolio/
 # PHP syntax check
 find plugins/Portfolio/ -name "*.php" -exec php -l {} \;
 
-# PHP_CodeSniffer (if available)
-./vendor/bin/phpcs --standard=PSR12 plugins/Portfolio/
+# PHP_CodeSniffer (PSR-12)
+./vendor/bin/phpcs --standard=.phpcs.xml
+
+# PHPStan (level 5)
+./vendor/bin/phpstan analyse --no-progress
 ```
+
+### Docker Scripts
+
+If you don't have PHP/Composer installed locally, use the Docker-based scripts:
+
+```bash
+./scripts/docker-lint.sh      # PHP syntax check
+./scripts/docker-phpcs.sh     # PHP_CodeSniffer (PSR-12)
+./scripts/docker-phpstan.sh   # PHPStan (level 5)
+./scripts/docker-test.sh      # PHPUnit tests
+```
+
+### CI Pipelines
+
+CI runs automatically on push and pull request to `main`:
+
+| Platform | Workflow | Matrix |
+|----------|----------|--------|
+| **GitHub Actions** | `.github/workflows/ci.yml` | PHP 8.1, 8.2, 8.3 |
+| **Forgejo Actions** | `.forgejo/workflows/ci.yml` | PHP 8.1, 8.2, 8.3 |
+
+Both pipelines run: PHP lint → PHP_CodeSniffer (PSR-12) → PHPStan (level 5) → PHPUnit.
 
 ### Database Migrations
 
