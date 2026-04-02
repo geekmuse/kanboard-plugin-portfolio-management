@@ -1,0 +1,91 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+-*'
+
+jobs:
+  release:
+    runs-on: docker
+    container:
+      image: alpine:latest
+
+    steps:
+      - name: Install system dependencies
+        run: apk add --no-cache git zip curl bash
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          # Mark as prerelease if version contains a hyphen (e.g. 1.0.0-rc.1)
+          if [[ "$VERSION" == *-* ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Build a distributable plugin ZIP.
+      # Kanboard's plugin installer expects a ZIP containing a single root
+      # directory named exactly after the plugin class: Portfolio.
+      # This plugin has no production Composer dependencies (require-dev only),
+      # so vendor/ is intentionally excluded from the archive.
+      - name: Build plugin archive
+        run: |
+          ARCHIVE="Portfolio-${{ steps.version.outputs.version }}.zip"
+          PLUGIN_DIR="Portfolio"
+
+          mkdir -p "dist/$PLUGIN_DIR"
+          cp -r Action Asset Controller Filter Formatter Helper Locale Model Notification Schema Template Validator "dist/$PLUGIN_DIR/"
+          cp Plugin.php LICENSE README.md CHANGELOG.md composer.json "dist/$PLUGIN_DIR/"
+
+          cd dist
+          zip -r "../$ARCHIVE" "$PLUGIN_DIR/"
+          cd ..
+
+          echo "ARCHIVE=$ARCHIVE" >> "$GITHUB_ENV"
+
+      - name: Create Forgejo Release
+        run: |
+          PRERELEASE_FLAG=""
+          if [ "${{ steps.version.outputs.prerelease }}" = "true" ]; then
+            PRERELEASE_FLAG="-prerelease"
+          fi
+
+          # Create the release via Forgejo API
+          RELEASE_RESPONSE=$(curl -s -X POST \
+            "${GITHUB_SERVER_URL}/api/v1/repos/${GITHUB_REPOSITORY}/releases" \
+            -H "Authorization: token ${{ secrets.FORGEJO_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"tag_name\": \"${{ github.ref_name }}\",
+              \"name\": \"${{ github.ref_name }}\",
+              \"body\": \"\",
+              \"draft\": false,
+              \"prerelease\": ${{ steps.version.outputs.prerelease }}
+            }")
+
+          RELEASE_ID=$(echo "$RELEASE_RESPONSE" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2)
+
+          if [ -z "$RELEASE_ID" ]; then
+            echo "Failed to create release:"
+            echo "$RELEASE_RESPONSE"
+            exit 1
+          fi
+
+          echo "Created release ID: $RELEASE_ID"
+
+          # Upload the archive as a release asset
+          curl -s -X POST \
+            "${GITHUB_SERVER_URL}/api/v1/repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}/assets?name=${ARCHIVE}" \
+            -H "Authorization: token ${{ secrets.FORGEJO_TOKEN }}" \
+            -H "Content-Type: application/octet-stream" \
+            --data-binary "@${ARCHIVE}"
+
+          echo "Uploaded asset: $ARCHIVE"

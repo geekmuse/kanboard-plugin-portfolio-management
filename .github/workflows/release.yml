@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+-*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          # Mark as prerelease if version contains a hyphen (e.g. 1.0.0-rc.1)
+          if [[ "$VERSION" == *-* ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Build a distributable plugin ZIP.
+      # Kanboard's plugin installer expects a ZIP containing a single root
+      # directory named exactly after the plugin class: Portfolio.
+      # This plugin has no production Composer dependencies (require-dev only),
+      # so vendor/ is intentionally excluded from the archive.
+      - name: Build plugin archive
+        run: |
+          ARCHIVE="Portfolio-${{ steps.version.outputs.version }}.zip"
+          PLUGIN_DIR="Portfolio"
+
+          mkdir -p "dist/$PLUGIN_DIR"
+          cp -r Action Asset Controller Filter Formatter Helper Locale Model Notification Schema Template Validator "dist/$PLUGIN_DIR/"
+          cp Plugin.php LICENSE README.md CHANGELOG.md composer.json "dist/$PLUGIN_DIR/"
+
+          cd dist
+          zip -r "../$ARCHIVE" "$PLUGIN_DIR/"
+          cd ..
+
+          echo "ARCHIVE=$ARCHIVE" >> "$GITHUB_ENV"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PRERELEASE_FLAG=""
+          if [ "${{ steps.version.outputs.prerelease }}" = "true" ]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+
+          gh release create "${{ github.ref_name }}" \
+            --title "${{ github.ref_name }}" \
+            --generate-notes \
+            $PRERELEASE_FLAG \
+            "$ARCHIVE"
