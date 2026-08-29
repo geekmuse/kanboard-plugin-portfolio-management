@@ -84,7 +84,7 @@ foreach (
     ] as $actionClass
 ) {
     assertSmoke(
-        $container['actionManager']->getAction($actionClass) instanceof $actionClass,
+        $container['actionManager']->getAction('\\' . $actionClass) instanceof $actionClass,
         sprintf('Automatic action was not registered: %s', $actionClass)
     );
 }
