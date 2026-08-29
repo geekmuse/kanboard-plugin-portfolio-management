@@ -6,13 +6,17 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   lint-and-test:
     name: Lint & Test (PHP ${{ matrix.php }})
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        php: ['8.1', '8.2', '8.3']
+        php: ['8.1', '8.2', '8.3', '8.4', '8.5']
 
     steps:
       - name: Checkout code
@@ -24,8 +28,14 @@ jobs:
           php-version: ${{ matrix.php }}
           tools: composer:v2
 
+      - name: Validate Composer manifest
+        run: composer validate --strict --no-interaction
+
       - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Audit Composer dependencies
+        run: composer audit --locked --no-interaction
 
       - name: PHP syntax lint
         run: |
@@ -44,3 +54,18 @@ jobs:
 
       - name: PHPUnit
         run: ./vendor/bin/phpunit --configuration phpunit.xml
+
+  quality-gate:
+    name: CI Gate
+    if: ${{ always() }}
+    needs: [lint-and-test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify quality matrix
+        env:
+          MATRIX_RESULT: ${{ needs.lint-and-test.result }}
+        run: |
+          if [ "$MATRIX_RESULT" != "success" ]; then
+            echo "Quality matrix failed: $MATRIX_RESULT"
+            exit 1
+          fi
