@@ -2,7 +2,7 @@
 
 ## Project Summary
 
-Kanboard plugin ("Portfolio") adding cross-project portfolio management to Kanboard. Introduces portfolios (project groups), cross-project milestones with progress tracking, and dependency visualization (D3.js graphs, blocked task lists, critical path analysis). Pure PHP plugin — no Composer dependencies. Four new DB tables, 31 JSON-RPC API methods, 5 controllers, template hooks only (no overrides).
+Kanboard plugin ("Portfolio") adding cross-project portfolio management to Kanboard. Introduces portfolios (project groups), cross-project milestones with progress tracking, and dependency visualization (D3.js graphs, blocked task lists, critical path analysis). Pure PHP plugin — no production Composer dependencies. Four new DB tables, 31 JSON-RPC API methods, 5 controllers, template hooks only (no overrides).
 
 **Target:** Kanboard >= 1.2.20 · PHP >= 8.1 · SQLite / MySQL / PostgreSQL
 
@@ -67,10 +67,10 @@ find plugins/Portfolio/ -name "*.php" -exec php -l {} \;
 
 - **Namespace:** `Kanboard\Plugin\Portfolio\{Layer}` (e.g., `Kanboard\Plugin\Portfolio\Model`)
 - **Naming:** Classes = `PascalCase`, methods = `camelCase`, DB columns = `snake_case`
-- **PHP version:** 7.4 syntax (typed properties, arrow functions OK; no union types, enums, or named args)
-- **No Composer deps.** Only Kanboard built-ins: PicoDb, Pimple, Symfony EventDispatcher, JsonRPC
+- **PHP version:** PHP 8.1+ syntax, matching the declared runtime requirement
+- **No production Composer deps.** Runtime code uses only Kanboard built-ins: PicoDb, Pimple, Symfony EventDispatcher, JsonRPC
 - **Models** extend `Kanboard\Core\Base`; access DB via `$this->db->table(...)`
-- **Controllers** extend `Kanboard\Core\Base`; access models through DI container
+- **Controllers** extend `Kanboard\Controller\BaseController`; access models through the DI container
 - **Templates:** Pure PHP (`.php`), use `$this->text->e()` for HTML escaping, `$this->url->href()` for URLs
 - **Translations:** Wrap all user-visible strings in `t('...')`; define in `Locale/en_US/translations.php`
 
@@ -93,7 +93,7 @@ find plugins/Portfolio/ -name "*.php" -exec php -l {} \;
 4. **API-first.** Every model capability must have a corresponding JSON-RPC endpoint registered in `Plugin.php`.
 5. **Schema migrations are versioned.** Each `Schema/{Driver}.php` has `const VERSION = N` and `function version_N(\PDO $pdo)`. Never modify existing version functions; only add new ones.
 6. **D3.js is bundled.** No CDN references. Air-gapped installations must work.
-7. **CSRF on all form POSTs.** Controllers call `$this->checkCSRFParam()`.
+7. **CSRF on all form POSTs.** Read POST data once with `$this->request->getValues()`, which validates and consumes Kanboard's CSRF token. Reserve `$this->checkCSRFParam()` for token-protected GET actions.
 8. **XSS prevention.** All template output through `$this->text->e()` or `$this->text->markdown()`.
 
 ## Data Model (4 tables)

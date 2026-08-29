@@ -46,7 +46,7 @@ class MilestoneModel extends Base
 
         $timestamp = time();
 
-        return $this->db->table(self::TABLE)->insert([
+        return $this->db->table(self::TABLE)->persist([
             'portfolio_id' => $portfolioId,
             'name' => $name,
             'description' => (string) ($values['description'] ?? ''),

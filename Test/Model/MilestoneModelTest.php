@@ -135,10 +135,8 @@ final class MilestoneTestQueryBuilder
 
     /**
      * @param array<string, mixed> $values
-     *
-     * @return int|false
      */
-    public function insert(array $values)
+    public function insert(array $values): bool
     {
         if ($values === []) {
             return false;
@@ -166,6 +164,20 @@ final class MilestoneTestQueryBuilder
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute($params);
         } catch (PDOException $exception) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @param array<string, mixed> $values
+     *
+     * @return int|false
+     */
+    public function persist(array $values)
+    {
+        if (! $this->insert($values)) {
             return false;
         }
 

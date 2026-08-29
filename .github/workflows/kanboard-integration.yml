@@ -1,0 +1,138 @@
+name: Kanboard Integration
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  sqlite:
+    name: Kanboard SQLite (${{ matrix.kanboard }}, PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - kanboard: oldest-supported
+            ref: v1.2.20
+            php: '8.1'
+          - kanboard: latest-stable
+            ref: latest
+            php: '8.5'
+
+    steps:
+      - name: Checkout Portfolio
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240  # v2.37.2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: ctype, dom, filter, gd, mbstring, openssl, pdo_sqlite, session, simplexml, sqlite3, xml
+
+      - name: Install Kanboard fixture
+        env:
+          GH_TOKEN: ${{ github.token }}
+          KANBOARD_REF: ${{ matrix.ref }}
+        run: |
+          if [ "$KANBOARD_REF" = "latest" ]; then
+            KANBOARD_REF=$(gh api repos/kanboard/kanboard/releases/latest --jq .tag_name)
+          fi
+
+          git clone --depth 1 --branch "$KANBOARD_REF" https://github.com/kanboard/kanboard.git "$RUNNER_TEMP/kanboard"
+          mkdir -p "$RUNNER_TEMP/kanboard/plugins/Portfolio"
+          rsync -a --delete \
+            --exclude '.git/' \
+            --exclude 'vendor/' \
+            "$GITHUB_WORKSPACE/" "$RUNNER_TEMP/kanboard/plugins/Portfolio/"
+
+      - name: Run real Kanboard smoke test
+        run: php "$RUNNER_TEMP/kanboard/plugins/Portfolio/scripts/kanboard-smoke.php"
+
+  databases:
+    name: Kanboard database migrations (MySQL and PostgreSQL)
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: kanboard
+          MYSQL_USER: kanboard
+          MYSQL_PASSWORD: kanboard
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --host=127.0.0.1 --user=kanboard --password=kanboard"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: kanboard
+          POSTGRES_USER: kanboard
+          POSTGRES_PASSWORD: kanboard
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready --username=kanboard --dbname=kanboard"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - name: Checkout Portfolio
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240  # v2.37.2
+        with:
+          php-version: '8.3'
+          extensions: ctype, dom, filter, gd, mbstring, openssl, pdo_mysql, pdo_pgsql, session, simplexml, xml
+
+      - name: Install latest stable Kanboard fixtures
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          KANBOARD_REF=$(gh api repos/kanboard/kanboard/releases/latest --jq .tag_name)
+          git clone --depth 1 --branch "$KANBOARD_REF" https://github.com/kanboard/kanboard.git "$RUNNER_TEMP/kanboard-mysql"
+          cp -a "$RUNNER_TEMP/kanboard-mysql" "$RUNNER_TEMP/kanboard-postgres"
+
+          for fixture in "$RUNNER_TEMP/kanboard-mysql" "$RUNNER_TEMP/kanboard-postgres"; do
+            mkdir -p "$fixture/plugins/Portfolio"
+            rsync -a --delete \
+              --exclude '.git/' \
+              --exclude 'vendor/' \
+              "$GITHUB_WORKSPACE/" "$fixture/plugins/Portfolio/"
+          done
+
+      - name: Run MySQL smoke test
+        env:
+          DATABASE_URL: mysql://kanboard:kanboard@127.0.0.1:3306/kanboard
+        run: php "$RUNNER_TEMP/kanboard-mysql/plugins/Portfolio/scripts/kanboard-smoke.php"
+
+      - name: Run PostgreSQL smoke test
+        env:
+          DATABASE_URL: postgres://kanboard:kanboard@127.0.0.1:5432/kanboard
+        run: php "$RUNNER_TEMP/kanboard-postgres/plugins/Portfolio/scripts/kanboard-smoke.php"
+
+  integration-gate:
+    name: Kanboard Integration Gate
+    if: ${{ always() }}
+    needs: [sqlite, databases]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify integration jobs
+        env:
+          SQLITE_RESULT: ${{ needs.sqlite.result }}
+          DATABASE_RESULT: ${{ needs.databases.result }}
+        run: |
+          if [ "$SQLITE_RESULT" != "success" ] || [ "$DATABASE_RESULT" != "success" ]; then
+            echo "Kanboard integration failed: sqlite=$SQLITE_RESULT databases=$DATABASE_RESULT"
+            exit 1
+          fi

@@ -131,8 +131,8 @@ Both run: PHP lint → PHPCS (PSR-12) → PHPStan (level 5) → PHPUnit across P
 | `docs/specs/001-kanboard-portfolio.md` §5 | Route table, access maps, controller method signatures |
 
 **Rules:**
-- Controllers extend `Kanboard\Core\Base`
-- All form POSTs must call `$this->checkCSRFParam()`
+- Controllers extend `Kanboard\Controller\BaseController`
+- Form POST handlers must read `$this->request->getValues()` exactly once; Kanboard validates and consumes the CSRF token there. Use `$this->checkCSRFParam()` only for token-protected GET actions.
 - Fetch route params with `$this->request->getIntegerParam('portfolio_id')`
 - Read-only routes: `Role::APP_USER`; write routes: `Role::APP_MANAGER`
 - For portfolio membership settings, load current members via `portfolioProjectModel->getProjects()` and compute addable projects by subtracting membership IDs from `projectModel->getAll()` so add/remove forms stay deterministic across runtimes
@@ -230,7 +230,7 @@ Both run: PHP lint → PHPCS (PSR-12) → PHPStan (level 5) → PHPUnit across P
 - Test access control (unauthorized → error)
 - If Kanboard runtime dependencies are unavailable locally, model tests may use an in-memory SQLite harness plus a minimal `Kanboard\Core\Base` stub and PicoDb-like adapter to validate behavior deterministically
 - If full HTTP functional helpers are unavailable, controller integration tests may execute controller actions directly using lightweight stubs for request/response/template/flash services, while still asserting rendered templates, redirects, and access-map role wiring
-- Shared test stubs guarded by `class_exists()` should keep `Kanboard\Core\Base::checkCSRFParam()` behavior compatible with controller harnesses (token compare + `RuntimeException`) to avoid cross-suite interference when PHPUnit load order changes
+- Shared request stubs guarded by `class_exists()` should keep `getValues()` behavior compatible with Kanboard controller harnesses (single read plus CSRF validation) to avoid cross-suite interference when PHPUnit load order changes
 
 ---
 
@@ -261,7 +261,7 @@ Both run: PHP lint → PHPCS (PSR-12) → PHPStan (level 5) → PHPUnit across P
 3. **Model** — Implement business logic. Use PicoDb. Follow return type conventions.
 4. **API** — Register JSON-RPC method in `Plugin.php`. Add access map entry if write operation.
 5. **Validator** — Add input validation rules for new fields
-6. **Controller** — Add routes and controller methods. CSRF on POSTs. Access map entry.
+6. **Controller** — Add routes and controller methods. Read POST data once with `getValues()` for CSRF validation. Add the access-map entry.
 7. **Templates** — Create views. Escape output. Use `t()` for strings.
 8. **Events** — If the feature involves task state changes, check if event listeners need updating
 9. **Tests** — Unit tests for model, integration tests for controller
@@ -363,7 +363,7 @@ Before marking any task as complete, verify:
 - [ ] New model methods have unit tests
 - [ ] New controller actions have integration tests
 - [ ] API return types match Kanboard conventions (`int|false`, `bool`, `dict|null`, `array`)
-- [ ] CSRF protection on all form POST handlers
+- [ ] Form POST handlers call `getValues()` once so Kanboard validates CSRF tokens
 - [ ] Access control enforced (check access map in `Plugin.php`)
 
 ### Cross-DB Compatibility

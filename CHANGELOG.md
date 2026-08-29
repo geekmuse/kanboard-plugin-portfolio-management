@@ -1,5 +1,33 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- **Real Kanboard integration coverage** — smoke-test plugin loading, migrations, service registration, and model persistence against the oldest supported and latest stable Kanboard releases, with SQLite, MySQL, and PostgreSQL coverage.
+- **Release consistency verification** — validate release tags against `Plugin.php`, `README.md`, and this changelog before publishing an archive.
+
+### Changed
+
+- **Expanded CI compatibility matrix** — include current supported PHP releases and add strict Composer manifest validation and vulnerability auditing.
+- **Dependency updates** — `actions/checkout` 6.0.2 → 7.0.0, `shivammathur/setup-php` 2.37.0 → 2.37.2, PHPStan 2.1.46 → 2.2.5, and PHP_CodeSniffer 4.0.1 → 4.0.2.
+- **Documentation alignment** — corrected repository URLs, current version references, PHP requirements, controller base class, and Kanboard CSRF handling guidance.
+
+### Fixed
+
+- **Model create return values** — portfolio and milestone creation now use PicoDb `persist()` so their documented `int|false` API contracts return the new entity ID instead of `true`.
+- **PHP_CodeSniffer command injection advisory** — upgraded to patched version 4.0.2 for GHSA-hmqg-cxww-wqhq / CVE-2026-67434.
+
+## [1.22.4] — 2026-04-02
+
+### Added
+
+- **Automated release workflows** — GitHub Actions and Forgejo Actions now build correctly structured `Portfolio-<version>.zip` archives and publish releases when semantic-version tags are pushed.
+
+### Changed
+
+- **Plugin version** — bumped release metadata to 1.22.4.
+
 ## [1.22.3] — 2026-04-02
 
 ### Changed

@@ -31,6 +31,9 @@ jobs:
             echo "prerelease=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Verify release metadata
+        run: bash scripts/check-release-consistency.sh "${{ steps.version.outputs.version }}"
+
       # Build a distributable plugin ZIP.
       # Kanboard's plugin installer expects a ZIP containing a single root
       # directory named exactly after the plugin class: Portfolio.
