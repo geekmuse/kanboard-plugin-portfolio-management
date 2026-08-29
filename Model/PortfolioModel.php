@@ -25,7 +25,7 @@ class PortfolioModel extends Base
 
         $timestamp = time();
 
-        return $this->db->table(self::TABLE)->insert([
+        return $this->db->table(self::TABLE)->persist([
             'name' => $name,
             'description' => (string) ($values['description'] ?? ''),
             'owner_id' => (int) ($values['owner_id'] ?? 0),
