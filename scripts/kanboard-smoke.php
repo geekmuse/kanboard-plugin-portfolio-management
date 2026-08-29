@@ -105,15 +105,24 @@ foreach (['task.close', 'task.open', 'task_internal_link.create_update', 'task_i
     );
 }
 
-// Symfony changed dispatch() from (name, event) to (event, name). Exercise a
-// real Portfolio listener with the signature used by the installed Kanboard.
+// Invoke Portfolio's listener directly with a real Kanboard TaskEvent. A full
+// dispatcher call would also invoke unrelated core listeners that require a
+// complete task/project payload and an authenticated application session.
 $taskEvent = new \Kanboard\Event\TaskEvent(['task_id' => 0]);
-$dispatchParameters = (new ReflectionMethod($dispatcher, 'dispatch'))->getParameters();
-if ($dispatchParameters[0]->getName() === 'eventName') {
-    $dispatcher->dispatch('task.close', $taskEvent);
-} else {
-    $dispatcher->dispatch($taskEvent, 'task.close');
-}
+$portfolioTaskCloseListeners = array_filter(
+    $dispatcher->getListeners('task.close'),
+    static function ($listener): bool {
+        if (! $listener instanceof Closure) {
+            return false;
+        }
+
+        $filename = (new ReflectionFunction($listener))->getFileName();
+
+        return is_string($filename) && realpath($filename) === realpath(dirname(__DIR__) . '/Plugin.php');
+    }
+);
+assertSmoke($portfolioTaskCloseListeners !== [], 'Unable to identify Portfolio task.close listener');
+reset($portfolioTaskCloseListeners)($taskEvent);
 
 fwrite(
     STDOUT,
