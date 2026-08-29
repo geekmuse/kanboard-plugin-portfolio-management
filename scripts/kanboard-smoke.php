@@ -72,12 +72,47 @@ assertSmoke($container['milestoneModel']->getById($milestoneId) !== null, 'Persi
 assertSmoke($container['portfolioModel']->remove($portfolioId), 'Persisted portfolio could not be removed');
 assertSmoke($container['milestoneModel']->getById($milestoneId) === null, 'Portfolio deletion did not cascade to milestones');
 
+assertSmoke(
+    $container['hook']->exists('template:layout:css'),
+    'Portfolio did not register its global CSS hook'
+);
+
+foreach (
+    [
+        \Kanboard\Plugin\Portfolio\Action\NotifyDependencyResolved::class,
+        \Kanboard\Plugin\Portfolio\Action\CommentDependencyResolved::class,
+    ] as $actionClass
+) {
+    assertSmoke(
+        $container['actionManager']->getAction($actionClass) instanceof $actionClass,
+        sprintf('Automatic action was not registered: %s', $actionClass)
+    );
+}
+
+assertSmoke(
+    array_key_exists(
+        \Kanboard\Plugin\Portfolio\Notification\DependencyResolvedType::EVENT_NAME,
+        $container['eventManager']->getAll()
+    ),
+    'Dependency-resolved event type was not registered'
+);
+
 $dispatcher = $container['dispatcher'];
 foreach (['task.close', 'task.open', 'task_internal_link.create_update', 'task_internal_link.delete'] as $eventName) {
     assertSmoke(
         count($dispatcher->getListeners($eventName)) > 0,
         sprintf('No Portfolio listener registered for %s', $eventName)
     );
+}
+
+// Symfony changed dispatch() from (name, event) to (event, name). Exercise a
+// real Portfolio listener with the signature used by the installed Kanboard.
+$taskEvent = new \Kanboard\Event\TaskEvent(['task_id' => 0]);
+$dispatchParameters = (new ReflectionMethod($dispatcher, 'dispatch'))->getParameters();
+if ($dispatchParameters[0]->getName() === 'eventName') {
+    $dispatcher->dispatch('task.close', $taskEvent);
+} else {
+    $dispatcher->dispatch($taskEvent, 'task.close');
 }
 
 fwrite(
