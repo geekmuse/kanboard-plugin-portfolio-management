@@ -93,14 +93,14 @@ No external PHP dependencies (Composer packages) are required. D3.js v7 is bundl
 cd /path/to/kanboard/plugins
 
 # Clone the repository
-git clone https://github.com/geekmuse/kanboard-plugin-portfolio-mgmt.git Portfolio
+git clone https://github.com/geekmuse/kanboard-plugin-portfolio-management.git Portfolio
 
 # That's it — Kanboard auto-discovers plugins and runs migrations on next page load
 ```
 
 ### Option 2: Download Release
 
-1. Download the latest release archive from the [Releases](https://github.com/geekmuse/kanboard-plugin-portfolio-mgmt/releases) page
+1. Download the latest release archive from the [Releases](https://github.com/geekmuse/kanboard-plugin-portfolio-management/releases) page
 2. Extract into `plugins/Portfolio/` within your Kanboard installation
 3. Ensure the directory is named exactly `Portfolio` (Kanboard uses the directory name for the namespace)
 
@@ -111,7 +111,7 @@ Once published, install directly from Kanboard's **Settings → Plugins → Plug
 ### Post-Install Verification
 
 1. Navigate to **Settings → Plugins** in Kanboard
-2. Confirm "Portfolio" appears in the installed plugins list with version `1.22.3`
+2. Confirm "Portfolio" appears in the installed plugins list with version `1.22.4`
 3. Check that the "Portfolios" link appears in the header navigation
 
 Database tables (`portfolios`, `portfolio_has_projects`, `milestones`, `milestone_has_tasks`) are created automatically on first page load.

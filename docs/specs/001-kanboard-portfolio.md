@@ -1370,7 +1370,7 @@ Read-only API methods (`getPortfolio`, `getAllPortfolios`, `getPortfolioTasks`, 
 
 ### 5.3 Controller Classes
 
-All controllers extend `Kanboard\Core\Base` (via the plugin's own base or directly) and access models through the DI container.
+All controllers extend `Kanboard\Controller\BaseController` and access models through the DI container.
 
 #### `PortfolioListController`
 
@@ -1403,7 +1403,7 @@ All methods: fetch `portfolio_id` via `$this->request->getIntegerParam('portfoli
 | `remove()` | `GET /portfolio/:portfolio_id/remove` | Show delete confirmation |
 | `delete()` | `POST` | Process deletion |
 
-All write methods validate CSRF token: `$this->checkCSRFParam()`.
+POST write methods read `$this->request->getValues()` exactly once; Kanboard validates and consumes the form CSRF token during that call. Token-protected GET actions use `$this->checkCSRFParam()`.
 
 #### `MilestoneController`
 
@@ -1739,7 +1739,7 @@ $atRiskThreshold = (int) $this->configModel->get('portfolio_milestone_at_risk_th
 | Requirement | Version | Notes |
 |-------------|---------|-------|
 | **Kanboard** | >= 1.2.20 | Required for all template hooks used. Pin via `getCompatibleVersion()`. |
-| **PHP** | >= 7.4 | Match Kanboard's own minimum. Use PHP 7.4 syntax (typed properties, arrow functions). |
+| **PHP** | >= 8.1 | Matches `composer.json`, the CI matrix, and current supported Kanboard releases. |
 | **Database** | SQLite 3.x, MySQL 5.7+ / MariaDB 10.2+, PostgreSQL 9.5+ | All three supported via separate migration files. |
 
 ### 9.2 Bundled Libraries
@@ -1758,7 +1758,7 @@ The plugin uses only Kanboard's built-in libraries:
 - Symfony EventDispatcher (events)
 - JsonRPC PHP library (API)
 
-No Composer dependencies are introduced.
+No production Composer dependencies are introduced. Composer development dependencies provide PHPUnit, PHP_CodeSniffer, and PHPStan for repository verification only; they are excluded from release archives.
 
 ### 9.4 Optional Peer Plugins
 
@@ -1870,7 +1870,7 @@ All user input is validated in the `Validator/PortfolioValidator.php` class and 
 
 ### 11.3 CSRF Protection
 
-All form submissions in controllers are protected with `$this->checkCSRFParam()`, which validates the CSRF token automatically inserted by Kanboard's form helpers.
+Form helpers insert a CSRF token into every POST form. Controller handlers read POST data once with `$this->request->getValues()`, which validates and consumes that token; an invalid token yields an empty values array and no mutation. Token-protected GET actions use `$this->checkCSRFParam()`.
 
 API methods (JSON-RPC) do not use CSRF — they rely on HTTP Basic Auth authentication which is validated per-request by Kanboard's core API layer.
 
@@ -2000,7 +2000,7 @@ These tests use Kanboard's functional test helpers to simulate HTTP requests thr
 | Board shows blocking indicators | Template hook integration test |
 | D3.js graph renders with correct data | Controller returns valid JSON; JS tests deferred to Phase 3 |
 | Notifications fire on dependency resolution | Event listener test |
-| CSRF protection on all forms | Controller test: POST without token returns 403 |
+| CSRF protection on all forms | Controller test: POST without a valid token is rejected and performs no mutation |
 | Plugin uninstallable without data loss to core | Manual verification |
 
 ---

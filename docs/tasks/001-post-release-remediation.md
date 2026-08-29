@@ -1,12 +1,16 @@
 # Issue Analysis & Remediation Plan
 
+**Status:** ✅ Complete — shipped in v1.18.0 and v1.19.0
+
+**Document type:** Historical remediation record; all issues below are resolved.
+
 ## Issue Classification & Root Cause Analysis
 
 ### ~~ISSUE-1: Bump to 1.17.0~~ ✅ DONE
 
 ---
 
-### ISSUE-2: Update Plugin.php with correct user/URL refs
+### ~~ISSUE-2: Update Plugin.php with correct user/URL refs~~ ✅ DONE — v1.18.0
 
 | Field | Value |
 |-------|-------|
@@ -25,7 +29,7 @@
 
 ---
 
-### ISSUE-3: Critical flag for milestone tasks doesn't render
+### ~~ISSUE-3: Critical flag for milestone tasks doesn't render~~ ✅ DONE — v1.18.0
 
 | Field | Value |
 |-------|-------|
@@ -63,7 +67,7 @@ Apply the same pattern to `removeTask()` (line 252).
 
 ---
 
-### ISSUE-4: Board stacks items horizontally instead of vertical swimlanes
+### ~~ISSUE-4: Board stacks items horizontally instead of vertical swimlanes~~ ✅ DONE — v1.18.0
 
 | Field | Value |
 |-------|-------|
@@ -86,7 +90,7 @@ Apply the same pattern to `removeTask()` (line 252).
 
 ---
 
-### ISSUE-5: Movable cards in board view
+### ~~ISSUE-5: Movable cards in board view~~ ✅ DONE — v1.18.0/v1.19.0
 
 | Field | Value |
 |-------|-------|
@@ -110,7 +114,7 @@ Add a link on each card that opens the task in the project's native board (which
 
 ---
 
-### ISSUE-6: Timeline milestone "Project" column
+### ~~ISSUE-6: Timeline milestone "Project" column~~ ✅ DONE — v1.18.0
 
 | Field | Value |
 |-------|-------|
@@ -126,7 +130,7 @@ Add a link on each card that opens the task in the project's native board (which
 
 ---
 
-### ISSUE-7: Critical path should flow L-to-R, top-to-bottom
+### ~~ISSUE-7: Critical path should flow L-to-R, top-to-bottom~~ ✅ DONE — v1.18.0
 
 | Field | Value |
 |-------|-------|
@@ -150,7 +154,7 @@ Add a link on each card that opens the task in the project's native board (which
 
 ---
 
-### ISSUE-8: Gantt view needed
+### ~~ISSUE-8: Gantt view needed~~ ✅ DONE — v1.18.0
 
 | Field | Value |
 |-------|-------|
@@ -169,7 +173,7 @@ The existing `portfolio-gantt.js` is a simple marker renderer. It would need to 
 
 ---
 
-### ISSUE-9: Task list filters stacked vertically, consuming too much page space
+### ~~ISSUE-9: Task list filters stacked vertically, consuming too much page space~~ ✅ DONE — v1.18.0
 
 | Field | Value |
 |-------|-------|
@@ -201,7 +205,7 @@ This makes filters flow L-to-R in a responsive grid, collapsing to fewer columns
 
 ---
 
-### ISSUE-10: Dashboard stats as vertical list — should be a compact table
+### ~~ISSUE-10: Dashboard stats as vertical list — should be a compact table~~ ✅ DONE — v1.18.0
 
 | Field | Value |
 |-------|-------|
@@ -230,7 +234,7 @@ Each stat becomes a card-style cell showing the label and value.
 
 ---
 
-## Prioritized Remediation Plan
+## Prioritized Remediation Plan (Completed)
 
 | # | Issue | Type | Severity | Effort | Dependencies |
 |---|-------|------|----------|--------|-------------|
